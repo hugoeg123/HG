@@ -1,0 +1,361 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+:root {
+  /* Variáveis de tema compartilhadas */
+  /* Primary colors - Green */
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-primary-light: #34d399;
+  --color-primary-dark: #047857;
+  
+  /* Secondary colors - Teal */
+  --color-secondary: #0ea5e9;
+  --color-secondary-hover: #0284c7;
+  --color-secondary-light: #38bdf8;
+  --color-secondary-dark: #0369a1;
+  
+  /* Accent colors - Amber */
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+  --color-accent-light: #fbbf24;
+  --color-accent-dark: #b45309;
+  
+  /* Status colors */
+  --color-success: #10b981;
+  --color-success-light: #34d399;
+  --color-success-dark: #059669;
+  
+  --color-warning: #f59e0b;
+  --color-warning-light: #fbbf24;
+  --color-warning-dark: #d97706;
+  
+  --color-danger: #ef4444;
+  --color-danger-light: #f87171;
+  --color-danger-dark: #dc2626;
+  
+  --color-info: #3b82f6;
+  --color-info-light: #60a5fa;
+  --color-info-dark: #2563eb;
+}
+
+/* Dark theme (default) */
+.dark-mode, :root {
+  /* Dark theme colors - More gray/black */
+  --color-bg-dark: #111827; /* gray-900 */
+  --color-bg-light: #1f2937; /* gray-800 */
+  --color-bg-lighter: #374151; /* gray-700 */
+  --color-text-primary: #f3f4f6; /* gray-100 */
+  --color-text-secondary: #9ca3af; /* gray-400 */
+  
+  /* Border colors */
+  --color-border: #374151; /* gray-700 */
+  --color-border-light: #4b5563; /* gray-600 */
+  
+  color-scheme: dark;
+}
+
+/* Light theme */
+.light-mode {
+  /* Light theme colors */
+  --color-bg-dark: #f8fafc;
+  --color-bg-light: #f1f5f9;
+  --color-bg-lighter: #e2e8f0;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #475569;
+  
+  /* Border colors */
+  --color-border: #cbd5e1;
+  --color-border-light: #94a3b8;
+  
+  color-scheme: light;
+}
+
+html, body {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%; /* Para compatibilidade com WebKit */
+  text-size-adjust: 100%; /* Para compatibilidade geral */
+}
+
+/* Estilos para o layout de 3 colunas */
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-dark);
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Estilos para os painéis */
+.left-pane {
+  background-color: var(--color-bg-dark);
+  border-right: 1px solid var(--color-border);
+  width: 16rem; /* 64px */
+  flex-shrink: 0;
+  overflow-y: auto;
+  transition: all 300ms ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-pane.collapsed {
+  width: 0;
+  overflow: hidden;
+}
+
+.center-pane {
+  flex: 1;
+  background-color: var(--color-bg-light);
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.right-pane {
+  background-color: var(--color-bg-dark);
+  border-left: 1px solid var(--color-border);
+  width: 20rem; /* 80px */
+  flex-shrink: 0;
+  overflow-y: auto;
+  transition: all 300ms ease-in-out;
+}
+
+.right-pane.collapsed {
+  width: 0;
+  overflow: hidden;
+}
+
+/* Estilos para a lista de pacientes */
+.patient-list {
+  @apply divide-y divide-gray-700 flex-grow overflow-y-auto;
+}
+
+.patient-item {
+  @apply p-3 hover:bg-lightBg cursor-pointer transition-colors duration-150 flex items-center;
+}
+
+.patient-item.active {
+  @apply bg-primary-dark bg-opacity-30 border-l-4 border-primary;
+}
+
+/* Estilos para os botões fixos na parte inferior */
+.fixed-bottom-buttons {
+  @apply mt-auto p-4 border-t border-gray-700 flex justify-center space-x-2 bg-darkBg;
+}
+
+/* Estilos para o editor */
+.editor-container {
+  @apply p-4 h-full flex flex-col;
+}
+
+.editor-header {
+  @apply mb-4 pb-3 border-b border-gray-700;
+}
+
+.editor-content {
+  @apply flex-1 overflow-y-auto;
+}
+
+/* Estilos para tags */
+.tag {
+  @apply inline-flex items-center px-2 py-1 rounded-md text-xs font-medium mr-2 mb-2;
+}
+
+.tag-primary {
+  @apply bg-emerald-900 text-emerald-100;
+}
+
+.tag-secondary {
+  @apply bg-teal-900 text-teal-100;
+}
+
+.tag-success {
+  @apply bg-green-900 text-green-100;
+}
+
+.tag-warning {
+  @apply bg-yellow-900 text-yellow-100;
+}
+
+.tag-danger {
+  @apply bg-red-900 text-red-100;
+}
+
+/* Estilos para abas */
+.tabs {
+  @apply flex border-b border-gray-700;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-medium cursor-pointer;
+}
+
+.tab.active {
+  @apply text-emerald-400 border-b-2 border-emerald-400;
+}
+
+/* Estilos para botões */
+.btn {
+  @apply px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-darkBg;
+}
+
+.btn-primary {
+  @apply bg-primary hover:bg-primary-hover text-white focus:ring-primary-light;
+}
+
+.btn-secondary {
+  @apply bg-secondary hover:bg-secondary-hover text-white focus:ring-secondary-light;
+}
+
+.btn-success {
+  @apply bg-success hover:bg-success-dark text-white focus:ring-success-light;
+}
+
+.btn-danger {
+  @apply bg-danger hover:bg-danger-dark text-white focus:ring-danger-light;
+}
+
+.btn-outline {
+  @apply border border-gray-700 bg-transparent hover:bg-lightBg text-gray-300 focus:ring-gray-600;
+}
+
+/* Estilos para inputs */
+.input {
+  @apply bg-lightBg border border-gray-700 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+}
+
+/* Estilos para o campo de busca */
+.search-input {
+  @apply bg-lightBg border border-gray-700 rounded-md pl-10 pr-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full;
+}
+
+.search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+/* Estilos para o chat de IA */
+.chat-container {
+  @apply flex flex-col h-full;
+}
+
+.chat-messages {
+  @apply flex-1 overflow-y-auto p-4 space-y-4;
+}
+
+.chat-input {
+  @apply p-4 border-t border-gray-700;
+}
+
+.message {
+  @apply p-3 rounded-lg max-w-xs;
+}
+
+.message-user {
+  @apply bg-emerald-600 text-white ml-auto;
+}
+
+.message-ai {
+  @apply bg-gray-700 text-white;
+}
+
+/* Estilos para calculadoras */
+.calculator-container {
+  @apply p-4;
+}
+
+.calculator-item {
+  @apply bg-gray-800 p-4 rounded-lg mb-4 hover:bg-gray-700 cursor-pointer transition-colors duration-150;
+}
+
+/* Estilos para alertas */
+.alert {
+  @apply p-4 rounded-lg mb-4;
+}
+
+.alert-info {
+  @apply bg-blue-900 bg-opacity-50 text-blue-100 border border-blue-800;
+}
+
+.alert-warning {
+  @apply bg-yellow-900 bg-opacity-50 text-yellow-100 border border-yellow-800;
+}
+
+.alert-danger {
+  @apply bg-red-900 bg-opacity-50 text-red-100 border border-red-800;
+}
+
+/* Estilos para templates */
+.template-item {
+  @apply bg-gray-800 p-4 rounded-lg mb-4 hover:bg-gray-700 cursor-pointer transition-colors duration-150;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Cross-browser compatibility and accessibility improvements */
+
+/* Filter properties */
+.apply-filter {
+  -webkit-filter: grayscale(100%); /* IA prompt: Sugestão para extensão: Adicionar mais filtros como blur, sepia */
+  filter: grayscale(100%);
+}
+
+/* Text size adjustment */
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Backdrop filter (for frosted glass effect, etc.) */
+.apply-backdrop-filter {
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+/* User selection */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Image set for responsive images */
+.responsive-image {
+  background-image: -webkit-image-set(url('img.png') 1x, url('img@2x.png') 2x);
+  background-image: image-set(url('img.png') 1x, url('img@2x.png') 2x);
+}
+
+/* Conector: CSS modificado afeta todos os componentes que utilizam estas classes. */
+/* Mapa de Integrações:
+- `index.html` atualizado com meta tags.
+- CSS modificado em `index.css` afeta componentes React que aplicam as classes `.apply-filter`, `.apply-backdrop-filter`, `.no-select`, `.responsive-image`.
+- Fluxo: Alterações CSS -> Recompilação do frontend -> Aplicação nos elementos HTML/React.
+*/

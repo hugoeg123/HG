@@ -1,0 +1,51 @@
+{
+  "mcpServers": {
+    
+    "file-context-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "env": {}
+    },
+    "todoist": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@abhiz123/todoist-mcp-server"],
+      "env": {
+        "TODOIST_API_TOKEN": "${TODOIST_API_TOKEN}"
+      }
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": "10000"
+      }
+    },
+    "persistent-kg": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@itseasy21/mcp-knowledge-graph"],
+      "env": {
+        "MEMORY_FILE_PATH": "memory.jsonl"
+      }
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "memory.json"
+      }
+    },
+    "taskmanager": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@kazuph/mcp-taskmanager"],
+      "env": {
+        "TASK_MANAGER_FILE_PATH": "${TASK_MANAGER_FILE_PATH}"
+      }
+    }
+  }
+}

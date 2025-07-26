@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste API - Health Guardian</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 10px; }
+        #result { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Teste de API - Health Guardian</h1>
+    
+    <div class="test-section">
+        <h3>Testes de Conectividade</h3>
+        <button onclick="testHealth()">Testar Health API</button>
+        <button onclick="testLogin()">Testar Login</button>
+        <button onclick="testFrontend()">Testar Frontend</button>
+        <button onclick="clearStorage()">Limpar Storage</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Informações do Sistema</h3>
+        <button onclick="showSystemInfo()">Mostrar Info do Sistema</button>
+        <button onclick="showNetworkInfo()">Mostrar Info de Rede</button>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const result = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            result.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        }
+        
+        function clearResult() {
+            document.getElementById('result').innerHTML = '';
+        }
+
+        async function testHealth() {
+            clearResult();
+            log('Testando endpoint de health...');
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Health API OK - Status: ${data.status}`, 'success');
+                    log(`Dados: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    log(`❌ Health API falhou - Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro ao conectar com Health API: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            clearResult();
+            log('Testando login com credenciais de teste...');
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: '123456'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Login bem-sucedido!', 'success');
+                    log(`Token recebido: ${data.token ? 'Sim' : 'Não'}`);
+                    log(`Usuário: ${data.user ? data.user.nome : 'N/A'}`);
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Login falhou - Status: ${response.status}`, 'error');
+                    log(`Erro: ${errorData.message || 'Erro desconhecido'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro ao fazer login: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFrontend() {
+            clearResult();
+            log('Testando frontend...');
+            try {
+                const response = await fetch('http://localhost:3000/');
+                if (response.ok) {
+                    log('✅ Frontend acessível na porta 3000', 'success');
+                } else {
+                    log(`❌ Frontend não acessível - Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro ao acessar frontend: ${error.message}`, 'error');
+            }
+            
+            // Testar porta 3001 também
+            try {
+                const response = await fetch('http://localhost:3001/');
+                if (response.ok) {
+                    log('⚠️ Algo está rodando na porta 3001!', 'error');
+                } else {
+                    log('✅ Porta 3001 não está em uso', 'success');
+                }
+            } catch (error) {
+                log('✅ Porta 3001 não está em uso (erro esperado)', 'success');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('🧹 Storage limpo', 'success');
+        }
+
+        function showSystemInfo() {
+            clearResult();
+            log('=== INFORMAÇÕES DO SISTEMA ===');
+            log(`User Agent: ${navigator.userAgent}`);
+            log(`URL atual: ${window.location.href}`);
+            log(`Protocolo: ${window.location.protocol}`);
+            log(`Host: ${window.location.host}`);
+            log(`Porta: ${window.location.port || 'padrão'}`);
+            
+            // Verificar localStorage
+            const authStorage = localStorage.getItem('auth-storage');
+            if (authStorage) {
+                log('📦 Auth storage encontrado');
+                try {
+                    const parsed = JSON.parse(authStorage);
+                    log(`Token presente: ${parsed.state?.token ? 'Sim' : 'Não'}`);
+                    log(`Usuário: ${parsed.state?.user?.nome || 'N/A'}`);
+                } catch (e) {
+                    log('❌ Erro ao parsear auth storage', 'error');
+                }
+            } else {
+                log('📦 Nenhum auth storage encontrado');
+            }
+        }
+
+        function showNetworkInfo() {
+            clearResult();
+            log('=== INFORMAÇÕES DE REDE ===');
+            log(`Online: ${navigator.onLine}`);
+            log(`Connection: ${navigator.connection ? navigator.connection.effectiveType : 'N/A'}`);
+            
+            // Testar diferentes portas
+            const ports = [3000, 3001, 5000];
+            ports.forEach(async (port) => {
+                try {
+                    const response = await fetch(`http://localhost:${port}/`, { 
+                        method: 'HEAD',
+                        mode: 'no-cors'
+                    });
+                    log(`✅ Porta ${port}: Acessível`);
+                } catch (error) {
+                    log(`❌ Porta ${port}: ${error.message}`);
+                }
+            });
+        }
+        
+        // Auto-executar testes básicos ao carregar
+        window.onload = function() {
+            log('🚀 Página carregada. Execute os testes manualmente.');
+        };
+    </script>
+</body>
+</html>

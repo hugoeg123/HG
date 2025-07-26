@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  penpot-server:
+    image: penpot/penpot:latest
+    ports:
+      - "9001:9001"
+    environment:
+      PENPOT_HOST: "0.0.0.0"

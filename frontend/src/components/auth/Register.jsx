@@ -1,0 +1,236 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
+import { FaUser, FaEnvelope, FaLock, FaUserMd, FaIdCard, FaStethoscope } from 'react-icons/fa';
+
+/**
+ * Register component - Formulário de registro
+ * 
+ * @component
+ * @example
+ * return (
+ *   <Register />
+ * )
+ */
+const Register = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    professionalType: 'medico',
+    professionalId: '',
+    specialty: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { register, login, error, clearError } = useAuthStore();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+    
+    // Limpar mensagens de erro ao editar
+    if (error) clearError();
+    if (passwordError) setPasswordError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validar senhas
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError('As senhas não coincidem');
+      return;
+    }
+    
+    setIsLoading(true);
+    // Enviar dados para registro
+    const success = await register({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      professionalType: formData.professionalType,
+      professionalId: formData.professionalId || undefined,
+      specialty: formData.specialty || undefined
+    });
+    
+    if (success) {
+      // Logar automaticamente o usuário após o registro bem-sucedido
+      const loginSuccess = await login(formData.email, formData.password);
+      if (loginSuccess) {
+        navigate('/'); // Redirecionar para o dashboard
+      } else {
+        // Se o login automático falhar, redirecionar para a página de login
+        navigate('/login');
+      }
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="animate-fade-in">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-500 text-sm animate-shake">
+            {error}
+          </div>
+        )}
+        
+        <div className="relative">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+            Nome Completo
+          </label>
+          <FaUser className="absolute left-3 top-9 text-gray-400" />
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            placeholder="Dr. João Silva"
+            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            autoComplete="name"
+          />
+        </div>
+        
+        <div className="relative">
+          <label htmlFor="professionalType" className="block text-sm font-medium mb-1">
+            Tipo de Profissional
+          </label>
+          <FaUserMd className="absolute left-3 top-9" />
+          <select
+            id="professionalType"
+            name="professionalType"
+            value={formData.professionalType}
+            onChange={handleChange}
+            required
+            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+          >
+            <option value="medico">Médico</option>
+            <option value="enfermeiro">Enfermeiro</option>
+            <option value="fisioterapeuta">Fisioterapeuta</option>
+            <option value="psicologo">Psicólogo</option>
+            <option value="nutricionista">Nutricionista</option>
+            <option value="farmaceutico">Farmacêutico</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        
+        <div className="relative">
+          <label htmlFor="professionalId" className="block text-sm font-medium text-gray-300 mb-1">
+            Registro Profissional (CRM, COREN, etc.)
+          </label>
+          <FaIdCard className="absolute left-3 top-9 text-gray-400" />
+          <input
+            type="text"
+            id="professionalId"
+            name="professionalId"
+            value={formData.professionalId}
+            onChange={handleChange}
+            placeholder="CRM 12345/SP"
+            className="w-full pl-10 pr-3 py-2 bg-darkBg border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white transition-all duration-200"
+          />
+        </div>
+        
+        <div className="relative">
+          <label htmlFor="specialty" className="block text-sm font-medium text-gray-300 mb-1">
+            Especialidade
+          </label>
+          <FaStethoscope className="absolute left-3 top-9 text-gray-400" />
+          <input
+            type="text"
+            id="specialty"
+            name="specialty"
+            value={formData.specialty}
+            onChange={handleChange}
+            placeholder="Cardiologia, Clínica Geral, etc."
+            className="w-full pl-10 pr-3 py-2 bg-darkBg border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white transition-all duration-200"
+          />
+        </div>
+        
+        <div className="relative">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+            Email
+          </label>
+          <FaEnvelope className="absolute left-3 top-9 text-gray-400" />
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="joao.silva@example.com"
+            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            autoComplete="email"
+          />
+        </div>
+        
+        <div className="relative">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+            Senha
+          </label>
+          <FaLock className="absolute left-3 top-9 text-gray-400" />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            minLength={6}
+            className="w-full pl-10 pr-3 py-2 bg-darkBg border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white transition-all duration-200"
+            autoComplete="new-password"
+          />
+        </div>
+        
+        <div className="relative">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+            Confirmar Senha
+          </label>
+          <FaLock className="absolute left-3 top-9 text-gray-400" />
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+            minLength={6}
+            placeholder="••••••••"
+            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            autoComplete="new-password"
+          />
+          {passwordError && (
+            <p className="mt-1 text-sm text-red-500 animate-shake">{passwordError}</p>
+          )}
+        </div>
+        
+        <div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 rounded-md text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50"
+          >
+            {isLoading ? 'Cadastrando...' : 'Cadastrar Profissional'}
+          </button>
+        </div>
+      </form>
+      
+      <div className="mt-6 text-center text-sm text-gray-400">
+        Já é cadastrado?{' '}
+        <Link to="/login" className="text-purple-500 hover:text-purple-400 transition-colors duration-200">
+          Faça login
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default Register;

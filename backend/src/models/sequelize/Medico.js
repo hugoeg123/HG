@@ -1,0 +1,75 @@
+/**
+ * Modelo Sequelize para Médicos
+ * 
+ * MISSÃO ZERO-DÉBITO: Modelo para isolamento por médico
+ * com autenticação JWT e gestão de tags personalizadas
+ */
+
+const { DataTypes } = require('sequelize');
+
+module.exports = (sequelize) => {
+  const Medico = sequelize.define('Medico', {
+    id: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4
+    },
+    email: {
+      type: 'CITEXT',
+      unique: true,
+      allowNull: false,
+      validate: {
+        isEmail: true
+      }
+    },
+    nome: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      validate: {
+        len: [2, 255]
+      }
+    },
+    senha_hash: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    professional_type: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: 'medico'
+    },
+    professional_id: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    specialty: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    }
+  }, {
+    tableName: 'medicos',
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['email']
+      }
+    ]
+  });
+
+  Medico.associate = (models) => {
+    // Um médico pode ter muitas tags personalizadas
+    Medico.hasMany(models.TagDinamica, {
+      foreignKey: 'medico_id',
+      as: 'tags'
+    });
+
+    // Um médico pode criar muitos registros
+    Medico.hasMany(models.Registro, {
+      foreignKey: 'medico_id',
+      as: 'registros'
+    });
+  };
+
+  return Medico;
+};

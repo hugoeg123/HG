@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Network</title>
+</head>
+<body>
+    <h1>Debug de Rede - Health Guardian</h1>
+    <div id="results"></div>
+    <button onclick="testConnections()">Testar Conexões</button>
+    <button onclick="clearCache()">Limpar Cache</button>
+    
+    <script>
+        function log(message) {
+            const results = document.getElementById('results');
+            results.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+        }
+        
+        async function testConnections() {
+            document.getElementById('results').innerHTML = '';
+            
+            // Testar diferentes portas
+            const ports = [3000, 3001, 5000];
+            
+            for (const port of ports) {
+                try {
+                    log(`Testando localhost:${port}...`);
+                    const response = await fetch(`http://localhost:${port}/`, { 
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+                    log(`✅ localhost:${port} - Resposta recebida`);
+                } catch (error) {
+                    log(`❌ localhost:${port} - Erro: ${error.message}`);
+                }
+            }
+            
+            // Testar API específica
+            try {
+                log('Testando API Health...');
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                log(`✅ API Health - Status: ${data.status}`);
+            } catch (error) {
+                log(`❌ API Health - Erro: ${error.message}`);
+            }
+            
+            // Verificar localStorage
+            log('Verificando localStorage...');
+            const authData = localStorage.getItem('auth-storage');
+            if (authData) {
+                log(`📦 Auth Storage encontrado: ${authData.substring(0, 100)}...`);
+            } else {
+                log('📦 Nenhum auth storage encontrado');
+            }
+        }
+        
+        function clearCache() {
+            // Limpar localStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            log('🧹 Cache limpo - localStorage e sessionStorage');
+            
+            // Tentar limpar cache do service worker se existir
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                        log('🧹 Service Worker removido');
+                    }
+                });
+            }
+        }
+        
+        // Auto-executar ao carregar
+        window.onload = function() {
+            testConnections();
+        };
+    </script>
+</body>
+</html>

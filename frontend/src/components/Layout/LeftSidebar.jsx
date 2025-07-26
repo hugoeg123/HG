@@ -1,0 +1,400 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { usePatientStore } from '../../store/patientStore';
+
+/**
+ * LeftSidebar component - Displays the patient list and search functionality
+ * 
+ * @component
+ * @example
+ * return (
+ *   <LeftSidebar collapsed={false} />
+ * )
+ * 
+ * Integra com: services/api.js para calls a /patients/, e store/patientStore.js para usePatientStore
+ * 
+ * IA prompt: Adicionar filtros avançados por tags e datas de consulta
+ */
+const LeftSidebar = ({ collapsed }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedPatient, setExpandedPatient] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState(null);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Usar o store para gerenciar pacientes
+  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient } = usePatientStore();
+
+  // Carregar a lista de pacientes
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
+
+  // Filtrar pacientes com base na pesquisa
+  const filteredPatients = Array.isArray(patients) ? patients.filter(patient => {
+    const patientName = patient.name ? patient.name.toLowerCase() : '';
+    return patientName.includes(searchQuery.toLowerCase()) || 
+           patient.id.toString().includes(searchQuery) ||
+           (patient.tags && patient.tags.some(tag => 
+             tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+           ));
+  }) : [];
+
+  // Manipular clique no paciente
+  const handlePatientClick = (patient) => {
+    if (expandedPatient === patient.id) {
+      setExpandedPatient(null);
+    } else {
+      setExpandedPatient(patient.id);
+      setCurrentPatient(patient);
+      navigate(`/patients/${patient.id}`);
+    }
+  };
+
+  // Mostrar modal de confirmação de exclusão
+  const handleDeletePatient = (patient, event) => {
+    event.stopPropagation(); // Evitar que o clique propague para o item do paciente
+    
+    if (!patient || !patient.id || patient.id === 'undefined') {
+      console.error('Paciente inválido para exclusão - ID não encontrado');
+      alert('Erro: Não foi possível identificar o paciente para exclusão.');
+      return;
+    }
+    
+    setPatientToDelete(patient);
+    setShowDeleteModal(true);
+  };
+
+  // Confirmar exclusão do paciente
+  const confirmDeletePatient = async () => {
+    if (!patientToDelete || !patientToDelete.id || patientToDelete.id === 'undefined') {
+      console.error('Erro: ID do paciente não encontrado para exclusão');
+      alert('Erro: Não foi possível identificar o paciente para exclusão.');
+      setShowDeleteModal(false);
+      setPatientToDelete(null);
+      return;
+    }
+    
+    try {
+      const success = await deletePatient(patientToDelete.id);
+      if (success) {
+        // Se o paciente excluído estava sendo visualizado, navegar para a página inicial
+        if (location.pathname.includes(`/patients/${patientToDelete.id}`)) {
+          navigate('/');
+        }
+        // Atualizar a lista de pacientes
+        await fetchPatients();
+        // Mostrar mensagem de sucesso
+        console.log(`Paciente ${patientToDelete.name} excluído com sucesso`);
+      } else {
+        console.error('Falha ao excluir paciente - operação retornou false');
+        alert('Erro ao excluir paciente. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir paciente:', error);
+      alert('Erro ao excluir paciente. Verifique sua conexão e tente novamente.');
+    } finally {
+      setShowDeleteModal(false);
+      setPatientToDelete(null);
+    }
+  };
+
+  // Cancelar exclusão
+  const cancelDeletePatient = () => {
+    setShowDeleteModal(false);
+    setPatientToDelete(null);
+  };
+
+  // Manipular clique em um registro específico
+  const handleRecordClick = (patientId, recordId) => {
+    navigate(`/patients/${patientId}/records/${recordId}`);
+  };
+
+  // Criar novo paciente
+  const handleNewPatient = async () => {
+    try {
+      const { createPatient } = usePatientStore.getState();
+      const newPatient = await createPatient({
+        name: 'Sem Nome',
+        dateOfBirth: new Date(),
+        gender: 'não informado',
+        email: null,
+        phone: null,
+        cpf: null,
+        street: null,
+        city: null,
+        state: null,
+        zipCode: null,
+        country: 'Brasil',
+        bloodType: 'Desconhecido',
+        allergies: [],
+        chronicConditions: [],
+        medications: [],
+        familyHistory: []
+      });
+      
+      if (newPatient && newPatient.id) {
+        // Atualizar a lista de pacientes
+        await fetchPatients();
+        // Navegar para o novo paciente
+        navigate(`/patients/${newPatient.id}`);
+      }
+    } catch (err) {
+      console.error('Erro ao criar paciente:', err);
+    }
+  };
+
+  // Importar pacientes
+  const handleImportPatients = () => {
+    navigate('/patients/import');
+  };
+
+  return (
+    <div className={`left-pane ${collapsed ? 'collapsed' : ''}`}>
+      <div className="p-4 pb-20">
+        <h2 className="text-xl font-semibold mb-4">Pacientes</h2>
+        
+        {/* Campo de pesquisa */}
+        <div className="relative mb-4">
+          <input
+            type="text"
+            placeholder="Buscar"
+            className="search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="search-icon h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        {/* Lista de pacientes */}
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+          </div>
+        ) : error ? (
+          <div className="text-red-400 text-center py-4">{error}</div>
+        ) : filteredPatients.length === 0 ? (
+          <div className="text-gray-400 text-center py-4 flex flex-col items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+            </svg>
+            {searchQuery ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
+            <p className="text-sm text-gray-500 mt-2">Clique em "Novo Paciente" para começar</p>
+          </div>
+        ) : (
+          <ul className="patient-list">
+            {filteredPatients.map((patient, index) => {
+              // Validar dados do paciente
+              const patientName = patient?.name || 'Sem Nome';
+              const patientId = patient?.id || `temp-patient-${index}-${Date.now()}`;
+              
+              return (
+                <li key={`patient-${patientId}`}>
+                  <div
+                    className={`patient-item group ${expandedPatient === patientId ? 'active' : ''}`}
+                    onClick={() => handlePatientClick(patient)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`h-5 w-5 mr-2 transition-transform ${expandedPatient === patientId ? 'transform rotate-90' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                    <span className="flex-1">
+                      {patientName}
+                    </span>
+                    <button
+                      onClick={(e) => handleDeletePatient(patient, e)}
+                      className="btn btn-ghost btn-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Excluir paciente"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Registros do paciente (expandidos) */}
+                  {expandedPatient === patientId && patient.records && patient.records.length > 0 ? (
+                    <ul className="ml-6 mt-1 mb-2 space-y-1">
+                      {patient.records.map((record, recordIndex) => {
+                        const recordTitle = record?.title || 'Consulta';
+                        const recordId = record?.id || `temp-record-${patientId}-${recordIndex}-${Date.now()}`;
+                        const recordDate = record?.date || new Date().toISOString();
+                        const recordTags = record?.tags || [];
+                        
+                        return (
+                          <li key={`record-${recordId}`}>
+                            <div
+                              className="p-2 hover:bg-gray-700 rounded-md cursor-pointer flex items-center"
+                              onClick={() => handleRecordClick(patientId, recordId)}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 mr-2 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                              </svg>
+                              <div className="flex-1">
+                                <div className="text-sm">{recordTitle}</div>
+                                <div className="text-xs text-gray-400">
+                                  {new Date(recordDate).toLocaleDateString('pt-BR')}
+                                </div>
+                                {/* Tags */}
+                                {recordTags.length > 0 && (
+                                  <div className="flex flex-wrap mt-1">
+                                    {recordTags.slice(0, 2).map((tag, tagIndex) => {
+                                      const tagName = tag?.name || 'Tag';
+                                      const tagId = tag?.id || `${recordId}-tag-${tagIndex}`;
+                                      
+                                      return (
+                                        <span
+                                          key={`tag-${tagId}-${tagIndex}`}
+                                          className="text-xs bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded mr-1"
+                                        >
+                                          #{tagName}
+                                        </span>
+                                      );
+                                    })}
+                                    {recordTags.length > 2 && (
+                                      <span key={`more-tags-${recordId}`} className="text-xs text-gray-400">+{recordTags.length - 2}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : expandedPatient === patientId && (
+                    <div className="ml-6 mt-1 mb-2 text-sm text-gray-400">
+                      Nenhum registro encontrado
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+      </div>
+      
+      {/* Botões de ação fixos na parte inferior */}
+      <div className="fixed-bottom-buttons">
+        <button
+          onClick={handleNewPatient}
+          className="btn btn-primary flex items-center justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Novo Paciente
+        </button>
+        <button
+          onClick={handleImportPatients}
+          className="btn btn-secondary flex items-center justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          Importar
+        </button>
+      </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Confirmar Exclusão</h3>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              Tem certeza que deseja excluir o paciente <strong>"{patientToDelete?.name || 'Sem Nome'}"</strong>?
+              <br /><br />
+              Esta ação não pode ser desfeita e todos os registros médicos associados serão perdidos.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDeletePatient}
+                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeletePatient}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Sim, Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default LeftSidebar;
+
+// Conector: Integra com App.jsx para exibição na interface principal e com PatientDetail.jsx para navegação
