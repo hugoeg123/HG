@@ -33,6 +33,13 @@ O MVP do Health Guardian inclui as funcionalidades essenciais para um sistema de
 - **Backend**: Node.js, Express
 - **Banco de Dados**: PostgreSQL
 - **Autenticação**: JWT (JSON Web Tokens)
+  - Middleware de proteção para rotas privadas
+  - Hash de senhas com bcrypt
+  - Validação de dados com Joi
+  - Gestão de sessões com Zustand
+  - Interceptors Axios para injeção automática de token
+  - Utilitário global `window.healthGuardianUtils` para gerenciamento de tokens
+  - Persistência dupla em localStorage (`hg_token` e Zustand storage)
 
 ## Configuração do Ambiente de Desenvolvimento
 

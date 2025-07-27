@@ -33,11 +33,20 @@ const Alerts = () => {
       try {
         setIsLoading(true);
         const response = await alertService.getAll();
-        setAlerts(response.data);
+        
+        // Connector: Backend retorna { alerts: [...], pagination: {...} }
+        // Extrair array de alertas da resposta
+        const alertsData = response.data?.alerts || response.data || [];
+        
+        // Garantir que sempre seja um array
+        setAlerts(Array.isArray(alertsData) ? alertsData : []);
         setError(null);
+        
+        console.log('Alertas carregados:', alertsData);
       } catch (err) {
         console.error('Erro ao carregar alertas:', err);
-        setError('Não foi possível carregar os alertas');
+        setError(err.response?.data?.message || 'Não foi possível carregar os alertas');
+        setAlerts([]); // Garantir array vazio em caso de erro
       } finally {
         setIsLoading(false);
       }
@@ -77,7 +86,9 @@ const Alerts = () => {
     try {
       setIsLoading(true);
       const response = await alertService.create(newAlert);
-      setAlerts([...alerts, response.data]);
+      // Hook: Garantir que alerts seja array antes de adicionar novo item
+      const currentAlerts = Array.isArray(alerts) ? alerts : [];
+      setAlerts([...currentAlerts, response.data]);
       setNewAlert({
         title: '',
         description: '',
@@ -100,7 +111,9 @@ const Alerts = () => {
   const handleMarkAsDone = async (alertId) => {
     try {
       await alertService.markAsDone(alertId);
-      setAlerts(alerts.map(alert => 
+      // Hook: Garantir que alerts seja array antes de usar map
+      const currentAlerts = Array.isArray(alerts) ? alerts : [];
+      setAlerts(currentAlerts.map(alert => 
         alert.id === alertId ? { ...alert, status: 'completed' } : alert
       ));
     } catch (err) {
@@ -117,16 +130,19 @@ const Alerts = () => {
 
     try {
       await alertService.delete(alertId);
-      setAlerts(alerts.filter(alert => alert.id !== alertId));
+      // Hook: Garantir que alerts seja array antes de usar filter
+      const currentAlerts = Array.isArray(alerts) ? alerts : [];
+      setAlerts(currentAlerts.filter(alert => alert.id !== alertId));
     } catch (err) {
       console.error('Erro ao excluir alerta:', err);
       setError('Erro ao excluir o alerta');
     }
   };
 
-  // Filtrar alertas por status
-  const pendingAlerts = alerts.filter(alert => alert.status === 'pending');
-  const completedAlerts = alerts.filter(alert => alert.status === 'completed');
+  // Filtrar alertas por status - Hook: Proteção contra dados inválidos
+  const safeAlerts = Array.isArray(alerts) ? alerts : [];
+  const pendingAlerts = safeAlerts.filter(alert => alert.status === 'pending');
+  const completedAlerts = safeAlerts.filter(alert => alert.status === 'completed');
 
   // Verificar se um alerta está atrasado
   const isOverdue = (dueDate) => {

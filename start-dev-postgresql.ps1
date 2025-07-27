@@ -71,7 +71,7 @@ if (-not $SkipDatabase) {
     Write-ColorMessage "🔄 Iniciando o PostgreSQL com Docker Compose..." "Blue"
     
     try {
-        docker-compose up -d postgres
+        docker-compose -f docker-compose-postgres.yml up -d postgres
         if ($LASTEXITCODE -ne 0) {
             Write-ColorMessage "❌ Falha ao iniciar o PostgreSQL com Docker Compose." "Red"
             exit 1

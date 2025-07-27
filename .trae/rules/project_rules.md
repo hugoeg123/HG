@@ -1,24 +1,171 @@
-# Project Rules for Health-Guardian
+# Health-Guardian Project Rules
 
-## Code Style
-- Modularidade: Arquivos <200 linhas; cada app/componente autônomo com README.md interno contendo "Ganchos de Integração: [ex: patients/models.py integra com records/models.py via ForeignKey Patient in Record]".
-- Backend (Django): Use DRF para todos endpoints; em models.py, adicione docstring com "Conector: Referenciado em [ex: records/serializers.py via ForeignKey]". Signals em models.py devem incluir "Hook: Dispara generate_alerts em alerts/services/rules.py".
-- Frontend (React): Componentes em pastas dedicadas; em cada .jsx, adicione JSDoc com "Integra com: [ex: services/api.js para calls a /patients/, e store/index.js para useStore]". Parsing de tags em CenterPane/Editor.jsx deve documentar "Conector: Envia data para backend/records via createRecord".
-- AI Integration: Prompts em ai/services/ollama.py devem ser contextuais (inclua record.content); docstring com "Hook: Chamado de ai/views.py e integra com records/models.py via record_id". Use formatos MDC-like para prompts, com metadata (ex: description, globs) para reusabilidade.
+## Code Architecture & Style
 
-## Features
-- Tags: Formato #TAG: valor; em records/models.py, docstring de TagDefinition inclui "Conector: Usado em records/serializers.py para data estruturada e em frontend CenterPane para parsing".
-- Roadmap Adherence: Para novas features (ex: FHIR), adicione export em records/views.py com "Gancho: Baseado em docs FHIR adicionados como contexto; integra com ai para sugestões".
-- Testing: Gere tests automáticos por módulo (ex: test_patient_crud em patients/tests.py); inclua "Hook de Teste: Verifica integração com [ex: ai/chat via mock Ollama]". Para AI, teste prompts com mocks e valide outputs contra padrões (ex: FHIR compliance).
+### Modularity Standards
+- **File Size Limit**: Keep files under 200 lines for maintainability
+- **Component Autonomy**: Each app/component should be self-contained with internal README.md
+- **Integration Documentation**: Every module must document its connections:
+  ```
+  # Integration Hooks:
+  # - patients/models.py → records/models.py (via ForeignKey Patient in Record)
+  # - alerts/services/rules.py ← triggered by Patient model signals
+  ```
+### Backend (Django/DRF)
+- **API Standards**: Use Django REST Framework for all endpoints
+- **Model Documentation**: Include docstrings with connection mapping:
+  ```python
+  class Patient(models.Model):
+      """
+      Core patient model.
+      
+      Connectors:
+      - Referenced in records/serializers.py via ForeignKey
+      - Triggers alerts via post_save signal → alerts/services/rules.py
+      """
+  ```
+- **Signal Documentation**: Document signal hooks in models.py:
+  ```python
+  # Hook: post_save signal triggers generate_alerts in alerts/services/rules.py
+  ```
+### Frontend (React)
+- **Component Structure**: Organize components in dedicated folders
+- **JSDoc Integration**: Document component connections:
+  ```javascript
+  /**
+   * PatientForm Component
+   * 
+   * Integrates with:
+   * - services/api.js for /patients/ API calls
+   * - store/patientStore.js for state management
+   * - CenterPane/Editor.jsx for data parsing
+   */
+  ```
+- **Data Flow**: Document data parsing and backend integration:
+  ```javascript
+  // Connector: Sends parsed data to backend/records via createRecord API
+  ```
+### AI Integration
+- **Contextual Prompts**: Include relevant context in ai/services/ollama.py:
+  ```python
+  def generate_analysis(record_id):
+      """
+      Generate medical analysis using AI.
+      
+      Hook: Called from ai/views.py
+      Integrates with: records/models.py via record_id parameter
+      Context: Includes record.content, patient.history, relevant_tags
+      """
+  ```
+- **Prompt Standards**: Use structured format with metadata:
+  ```python
+  ANALYSIS_PROMPT = {
+      "description": "Medical record analysis with FHIR compliance",
+      "context_fields": ["record.content", "patient.demographics", "relevant_tags"],
+      "output_format": "structured_json",
+      "safety_rules": ["no_executable_code", "hipaa_compliant"]
+  }
+  ```
+## Core Features
+### Tag System
+- **Format**: Use `#TAG: value` syntax consistently
+- **Model Integration**: TagDefinition in records/models.py with proper documentation:
+  ```python
+  class TagDefinition(models.Model):
+      """
+      Defines structured tags for medical records.
+      
+      Connectors:
+      - Used in records/serializers.py for data validation
+      - Parsed in frontend CenterPane/TagParser.jsx
+      - Referenced in ai/services for context building
+      """
+  ```
+### FHIR Compliance
+- **Export Standards**: Implement FHIR-compliant exports in records/views.py
+- **AI Integration**: Include FHIR validation in AI suggestions
+- **Documentation Hook**: 
+  ```python
+  # Integration: Uses FHIR schemas as AI context for compliant outputs
+  ```
 
-## Security/Standards
-- Healthcare: Sugira compliance FHIR em exports; evite eval() em ai/models.py (use ast.literal_eval); documente "Conector: Formula em Calculator integra com ai/views.py via safe exec". Em prompts AI, force safe practices como evitar código executável não sanitizado.
-- Errors: Handlers em views/services com logs; adicione comment "Hook: Erros propagam para frontend via API response, exibidos em RightPane".
-- Documentação de Fluxo: Toda sugestão deve terminar com "Mapa de Integrações: - [Arquivo novo] conecta com [existente] via [import/FK/call]. - Fluxo: [passo1] -> [passo2]".
+## Testing Strategy
+### Automated Testing
+- **Module Coverage**: Generate tests for each module (e.g., `test_patient_crud.py`)
+- **Integration Testing**: Document test hooks:
+  ```python
+  # Test Hook: Verifies ai/chat integration via mocked Ollama responses
+  ```
+- **AI Testing**: Mock AI services and validate outputs against standards:
+  ```python
+  def test_fhir_compliance():
+      """Test AI-generated exports meet FHIR standards"""
+      # Mock Ollama response and validate structure
+  ```
 
-## AI-Assisted Development
-- Use ferramentas de IA para geração de código; configure regras de projeto em arquivos versionados (ex: .trae/rules) para enforçar padrões: ex: arquivos <200 linhas, docstrings com "Conector/Hook", naming conventions (snake_case em backend).
-- Regras globais: Aplique estilos consistentes (ex: "Sempre adicione JSDoc em React components com 'Integra com:'").
-- Regras scoped: Para apps específicas (ex: ai/), inclua contexto domain-specific como "Inclua FHIR compliance em sugestões de export".
-- Hooks: Documente em README.md "AI Rule Hook: Regra [nome] em .trae/rules enforces [ex: modularidade via globs em models.py]".
-- Baseado em experiências recentes: Teste AI outputs manualmente antes de commit; evite over-reliance em AI para security-critical code (ex: autenticação).
+## Security & Compliance
+### Healthcare Standards
+- **FHIR Compliance**: Enforce in all data exports and AI suggestions
+- **Safe Code Practices**: 
+  - Never use `eval()` in ai/models.py
+  - Use `ast.literal_eval()` for safe parsing
+  - Document safety measures:
+    ```python
+    # Connector: Calculator formula integrates with ai/views.py via safe_exec wrapper
+    ```
+### Error Handling
+- **Centralized Logging**: Implement error handlers in views/services
+- **User Feedback**: Document error propagation:
+  ```python
+  # Hook: Errors propagate to frontend via API response → RightPane display
+  ```
+## Development Workflow
+### Planning Phase
+1. **Plan Creation**: Write detailed plan to `.plans/TASK_NAME.md` before implementation
+2. **Research Requirements**: Gather external dependencies and knowledge
+3. **MVP Focus**: Prioritize essential features for incremental progress
+4. **Approval Gate**: Present plan for review before proceeding
+
+### Implementation Phase
+1. **Stage-by-Stage**: Break work into clear, reviewable stages
+2. **Documentation**: Explain every change with integration context
+3. **Milestone Review**: Re-evaluate plan at key checkpoints
+4. **Integration Mapping**: Document all new connections and dependencies
+
+### Quality Assurance
+1. **Coherence Check**: Assess overall system integration
+2. **Redundancy Elimination**: Remove duplicate code/functionality
+3. **Documentation Update**: Maintain current integration maps
+4. **Pattern Compliance**: Ensure adherence to established standards
+
+## Integration Documentation Template
+
+### For New Features
+Every new feature must include:
+```markdown
+## Integration Map
+- **New File**: `path/to/new_file.py`
+- **Connects To**: 
+  - `existing/module.py` via import/ForeignKey/API call
+  - `frontend/component.jsx` via API endpoint
+- **Data Flow**: 
+  1. User input → Frontend component
+  2. API call → Backend service
+  3. Database update → Signal trigger
+  4. AI processing → Result display
+
+## Hooks & Dependencies
+- **Triggers**: What events cause this to run
+- **Dependencies**: What this feature requires
+- **Side Effects**: What else this affects
+```
+
+---
+
+## Development Standards Summary
+- Keep files < 200 lines
+- Document all integrations with "Connector/Hook" comments
+- Use structured AI prompts with safety measures
+- Implement comprehensive testing with mocks
+- Follow FHIR compliance for healthcare data
+- Maintain clear integration documentation

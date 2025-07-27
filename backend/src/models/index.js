@@ -9,11 +9,15 @@ const Patient = require('./sequelize/Patient');
 const Record = require('./sequelize/Record');
 const Tag = require('./sequelize/Tag');
 const Template = require('./sequelize/Template');
+const Calculator = require('./sequelize/Calculator');
+const Alert = require('./sequelize/Alert');
 
 module.exports = {
   User,
   Patient,
   Record,
   Tag,
-  Template
+  Template,
+  Calculator,
+  Alert
 };

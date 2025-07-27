@@ -12,6 +12,28 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Remover tabelas existentes da migração anterior se existirem
+    try {
+      await queryInterface.dropTable('records');
+    } catch (error) {
+      // Tabela pode não existir
+    }
+    try {
+      await queryInterface.dropTable('tags');
+    } catch (error) {
+      // Tabela pode não existir
+    }
+    try {
+      await queryInterface.dropTable('patients');
+    } catch (error) {
+      // Tabela pode não existir
+    }
+    try {
+      await queryInterface.dropTable('users');
+    } catch (error) {
+      // Tabela pode não existir
+    }
+
     // Criar extensões necessárias
     await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
     await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "citext";');

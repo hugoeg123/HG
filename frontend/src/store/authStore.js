@@ -22,6 +22,12 @@ const useAuthStore = create(
           // Configurar o token no cabeçalho para futuras requisições
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
+          // Salvar token no localStorage padrão e no utilitário global
+          localStorage.setItem('hg_token', token);
+          if (window.healthGuardianUtils?.setToken) {
+            window.healthGuardianUtils.setToken(token);
+          }
+          
           set({ token, user, isAuthenticated: true, isLoading: false });
           reconnectSocket(); // Reconectar socket após login
           console.log('Login successful, token:', token, 'user:', user); // Log para depuração
@@ -44,6 +50,12 @@ const useAuthStore = create(
           // Configurar o token no cabeçalho para futuras requisições
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
+          // Salvar token no localStorage padrão e no utilitário global
+          localStorage.setItem('hg_token', token);
+          if (window.healthGuardianUtils?.setToken) {
+            window.healthGuardianUtils.setToken(token);
+          }
+          
           // Fazer login automático após registro
           set({ token, user, isAuthenticated: true, isLoading: false });
           return response.data;
@@ -60,6 +72,12 @@ const useAuthStore = create(
         disconnectSocket(); // Desconecta o socket ao fazer logout
         // Remover o token do cabeçalho
         delete api.defaults.headers.common['Authorization'];
+        
+        // Limpar tokens do localStorage
+        localStorage.removeItem('hg_token');
+        if (window.healthGuardianUtils?.clearToken) {
+          window.healthGuardianUtils.clearToken();
+        }
         
         set({ token: null, user: null, isAuthenticated: false });
       },

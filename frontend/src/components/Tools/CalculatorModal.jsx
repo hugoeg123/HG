@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
-import { calculatorService } from '../../services/api';
+import { calculatorService, tagService } from '../../services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
  * CalculatorModal component - Modal para criar, editar e usar calculadoras médicas
@@ -28,16 +38,34 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
     formula: '',
     fields: [],
     isPersonal: true,
+    tagIds: [],
   });
   const [fieldValues, setFieldValues] = useState({});
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [newField, setNewField] = useState({ name: '', unit: '', type: 'number' });
+  const [newField, setNewField] = useState({ name: '', label: '', unit: '', type: 'number' });
+  const [availableTags, setAvailableTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+
+  // Carregar tags disponíveis
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await tagService.getAll();
+        setAvailableTags(response.data || []);
+      } catch (err) {
+        console.error('Erro ao carregar tags:', err);
+        // Não mostrar erro para tags, pois não é crítico
+      }
+    };
+    fetchTags();
+  }, []);
 
   // Inicializar dados do formulário
   useEffect(() => {
     if (calculator) {
+      const tagIds = calculator.tagIds || calculator.tags?.map(tag => tag.id) || [];
       setFormData({
         name: calculator.name || '',
         description: calculator.description || '',
@@ -45,7 +73,9 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
         formula: calculator.formula || '',
         fields: Array.isArray(calculator.fields) ? [...calculator.fields] : [],
         isPersonal: calculator.isPersonal !== undefined ? calculator.isPersonal : true,
+        tagIds: tagIds,
       });
+      setSelectedTags(tagIds);
 
       // Inicializar valores dos campos para cálculo
       if (calculator.fields && calculator.fields.length > 0) {
@@ -75,10 +105,23 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
     });
   };
 
+  const handleTagToggle = (tagId) => {
+    const newSelectedTags = selectedTags.includes(tagId)
+      ? selectedTags.filter(id => id !== tagId)
+      : [...selectedTags, tagId];
+    setSelectedTags(newSelectedTags);
+    setFormData({ ...formData, tagIds: newSelectedTags });
+  };
+
   // Adicionar novo campo à calculadora
   const handleAddField = () => {
     if (newField.name.trim() === '') {
       setError('O nome do campo é obrigatório');
+      return;
+    }
+
+    if (newField.label.trim() === '') {
+      setError('O rótulo do campo é obrigatório');
       return;
     }
 
@@ -88,7 +131,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
     });
 
     // Resetar o formulário de novo campo
-    setNewField({ name: '', unit: '', type: 'number' });
+    setNewField({ name: '', label: '', unit: '', type: 'number' });
     setError(null);
   };
 
@@ -129,7 +172,28 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
         return;
       }
 
-      const calculatorData = { ...formData };
+      // Validar tags selecionadas
+      const invalidTags = selectedTags.filter(tagId => 
+        !availableTags.some(tag => tag.id === tagId)
+      );
+      if (invalidTags.length > 0) {
+        setError('Uma ou mais tags selecionadas não são mais válidas.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Garantir que os campos tenham o formato correto para o backend
+      const calculatorData = {
+        ...formData,
+        fields: formData.fields.map(field => ({
+          name: field.name,
+          label: field.label || field.name, // usar label ou name como fallback
+          type: field.type,
+          unit: field.unit,
+          required: field.required || false
+        })),
+        tagIds: selectedTags
+      };
       
       let response;
       if (isNew) {
@@ -281,7 +345,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                 {formData.fields.map((field, index) => (
                   <div key={index} className="flex flex-col">
                     <label className="text-gray-300 mb-1">
-                      {field.name}{field.unit ? ` (${field.unit})` : ''}
+                      {field.label || field.name}{field.unit ? ` (${field.unit})` : ''}
                     </label>
                     <input
                       type={field.type === 'number' ? 'number' : 'text'}
@@ -362,6 +426,41 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
               </div>
 
               <div>
+                <label className="block text-gray-300 mb-2">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-gray-600 rounded-md p-2 bg-gray-700">
+                  {availableTags.length > 0 ? (
+                    availableTags.map((tag) => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => handleTagToggle(tag.id)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                          selectedTags.includes(tag.id)
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                        }`}
+                      >
+                        {tag.name}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-400">
+                      Nenhuma tag disponível
+                    </span>
+                  )}
+                </div>
+                {selectedTags.length > 0 && (
+                  <div className="mt-2">
+                    <span className="text-sm text-gray-400">
+                      {selectedTags.length} tag(s) selecionada(s)
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-gray-300 mb-1">Fórmula</label>
                 <input
                   type="text"
@@ -386,9 +485,9 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                     {formData.fields.map((field, index) => (
                       <div key={index} className="flex items-center bg-gray-700 p-2 rounded">
                         <div className="flex-1">
-                          <div className="text-white font-medium">{field.name}</div>
+                          <div className="text-white font-medium">{field.label || field.name}</div>
                           <div className="text-xs text-gray-400">
-                            {field.type === 'number' ? 'Número' : 'Texto'}
+                            Nome: {field.name} • {field.type === 'number' ? 'Número' : 'Texto'}
                             {field.unit && ` • Unidade: ${field.unit}`}
                           </div>
                         </div>
@@ -422,7 +521,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
 
                 <div className="bg-gray-700 p-3 rounded">
                   <h4 className="text-white font-medium mb-2">Adicionar novo campo</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                     <div>
                       <input
                         type="text"
@@ -430,9 +529,21 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                         value={newField.name}
                         onChange={handleNewFieldChange}
                         className="input w-full"
-                        placeholder="Nome do campo"
+                        placeholder="Nome do campo (ex: peso)"
                       />
                     </div>
+                    <div>
+                      <input
+                        type="text"
+                        name="label"
+                        value={newField.label}
+                        onChange={handleNewFieldChange}
+                        className="input w-full"
+                        placeholder="Rótulo (ex: Peso do paciente)"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div>
                       <input
                         type="text"
@@ -440,7 +551,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                         value={newField.unit}
                         onChange={handleNewFieldChange}
                         className="input w-full"
-                        placeholder="Unidade (opcional)"
+                        placeholder="Unidade (ex: kg)"
                       />
                     </div>
                     <div>

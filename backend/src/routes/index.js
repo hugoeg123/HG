@@ -13,6 +13,8 @@ const tagsRoutes = require('./tag.routes');
 const patientRoutes = require('./patient.routes');
 const recordRoutes = require('./record.routes');
 const templateRoutes = require('./template.routes');
+const calculatorRoutes = require('./calculator.routes');
+const alertRoutes = require('./alert.routes');
 
 // Middleware para logging de requests (desenvolvimento)
 if (process.env.NODE_ENV === 'development') {
@@ -44,6 +46,8 @@ router.use('/tags', tagsRoutes);
 router.use('/patients', patientRoutes);
 router.use('/records', recordRoutes);
 router.use('/templates', templateRoutes);
+router.use('/calculators', calculatorRoutes);
+router.use('/alerts', alertRoutes);
 
 // Rota 404 para endpoints não encontrados
 router.use('*', (req, res) => {

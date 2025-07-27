@@ -16,6 +16,16 @@ A maioria dos endpoints requer autenticação via token JWT. O token deve ser in
 Authorization: Bearer <seu_token_jwt>
 ```
 
+### Endpoints que Requerem Autenticação
+
+Todos os endpoints abaixo requerem o header de autorização:
+
+```
+GET /api/calculators
+Headers:
+  Authorization: Bearer <token>
+```
+
 ### Endpoints de Autenticação
 
 #### Registro de Usuário

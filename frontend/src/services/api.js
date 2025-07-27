@@ -15,7 +15,17 @@ api.interceptors.request.use(
       return config;
     }
     
-    // Se não, tentar obter do localStorage
+    // Tentar obter token do window.healthGuardianUtils se disponível
+    const token = window.healthGuardianUtils?.getToken() || 
+                  localStorage.getItem('hg_token');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('Token adicionado ao header:', token.substring(0, 20) + '...');
+      return config;
+    }
+    
+    // Fallback: tentar obter do localStorage do Zustand
     const authStorage = localStorage.getItem('auth-storage');
     if (authStorage) {
       try {
@@ -32,7 +42,7 @@ api.interceptors.request.use(
         // Verificar se tem o token no formato do Zustand
         if (parsedAuth && parsedAuth.state && parsedAuth.state.token) {
           config.headers.Authorization = `Bearer ${parsedAuth.state.token}`;
-          console.log('Token adicionado ao header:', parsedAuth.state.token.substring(0, 20) + '...');
+          console.log('Token do Zustand adicionado ao header:', parsedAuth.state.token.substring(0, 20) + '...');
         }
       } catch (error) {
         console.warn('Storage de auth inválido, limpando:', error);
@@ -114,6 +124,7 @@ export const alertService = {
   create: (data) => api.post('/alerts', data),
   update: (id, data) => api.put(`/alerts/${id}`, data),
   delete: (id) => api.delete(`/alerts/${id}`),
+  markAsDone: (id) => api.put(`/alerts/${id}`, { status: 'completed' }),
 };
 
 export const aiService = {

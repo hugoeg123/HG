@@ -29,7 +29,9 @@ const Calculators = () => {
       try {
         setIsLoading(true);
         const response = await calculatorService.getAll();
-        setCalculators(response.data);
+        // Backend agora retorna array diretamente
+        const calculatorsList = Array.isArray(response.data) ? response.data : [];
+        setCalculators(calculatorsList);
         setError(null);
       } catch (err) {
         console.error('Erro ao carregar calculadoras:', err);
@@ -43,13 +45,14 @@ const Calculators = () => {
   }, []);
 
   // Filtrar calculadoras com base na pesquisa
-  const filteredCalculators = calculators.filter(calculator => {
+  const filteredCalculators = Array.isArray(calculators) ? calculators.filter(calculator => {
+    if (!calculator) return false;
     return (
-      calculator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      calculator.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      calculator.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      (calculator.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (calculator.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (calculator.category || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
-  });
+  }) : [];
 
   // Agrupar calculadoras por tipo (minhas/públicas)
   const myCalculators = filteredCalculators.filter(calc => calc.isPersonal);

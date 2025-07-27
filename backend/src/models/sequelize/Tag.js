@@ -24,20 +24,38 @@ Tag.init({
     primaryKey: true
   },
   // Nome da tag (único)
-  name: {
+  nome: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
     set(value) {
       // Converter para maiúsculas para consistência
-      this.setDataValue('name', value.toUpperCase());
+      this.setDataValue('nome', value.toUpperCase());
     }
   },
-  // Cor da tag
+  // Cor da tag (hexadecimal)
   color: {
     type: DataTypes.STRING,
     allowNull: true,
-    defaultValue: '#3B82F6' // Azul padrão
+    defaultValue: '#6366f1',
+    validate: {
+      isValidColor(value) {
+        if (value && !/^#[0-9A-F]{6}$/i.test(value)) {
+          throw new Error('Cor deve estar no formato hexadecimal (#RRGGBB)');
+        }
+      }
+    }
+  },
+  
+  // Campo virtual para compatibilidade com frontend
+  name: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      return this.nome;
+    },
+    set(value) {
+      this.setDataValue('nome', value);
+    }
   },
   // Descrição da tag
   description: {
@@ -66,7 +84,7 @@ Tag.init({
   indexes: [
     // Índice para busca por nome
     {
-      fields: ['name']
+      fields: ['nome']
     }
   ]
 });

@@ -101,7 +101,16 @@ const PatientView = () => {
     }
     
     try {
-      const result = await updatePatient(currentPatient.id, { gender: editedGender });
+      // Mapear valores do frontend para o formato esperado pelo backend
+      const genderMap = {
+        'Masculino': 'masculino',
+        'Feminino': 'feminino',
+        'Outro': 'outro'
+      };
+      
+      const mappedGender = genderMap[editedGender] || editedGender.toLowerCase();
+      
+      const result = await updatePatient(currentPatient.id, { gender: mappedGender });
       if (result) {
         setIsEditingGender(false);
       } else {
@@ -357,12 +366,14 @@ const PatientView = () => {
                       <option value="Outro">Outro</option>
                     </select>
                     <button
+                      type="button"
                       onClick={handleSaveGender}
                       className="btn btn-xs btn-primary mr-1"
                     >
                       ✓
                     </button>
                     <button
+                      type="button"
                       onClick={() => setIsEditingGender(false)}
                       className="btn btn-xs btn-ghost"
                     >
@@ -441,22 +452,7 @@ const PatientView = () => {
         </div>
       </div>
       
-      {/* Seção centralizada para Nova Consulta */}
-      <div className="flex justify-center mb-6">
-        <button 
-          onClick={() => {
-            clearCurrentRecord();
-            setShowEditor(true);
-            setActiveTab('anamnese');
-          }} 
-          className="btn btn-lg btn-primary flex items-center shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Nova Consulta / Registro
-        </button>
-      </div>
+
 
       {/* Abas de navegação */}
       <div className="tabs tabs-boxed mb-4">

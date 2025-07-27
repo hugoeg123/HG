@@ -14,9 +14,13 @@ const { Op } = require('sequelize');
 const { Medico } = require('../models/sequelize');
 
 // Função auxiliar para gerar token JWT
-const generateToken = (medicoId) => {
+const generateToken = (medicoId, role = 'medico') => {
   return jwt.sign(
-    { sub: medicoId },
+    { 
+      sub: medicoId,
+      role: role,
+      roles: [role]
+    },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
   );

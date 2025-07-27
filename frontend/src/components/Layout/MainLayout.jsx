@@ -25,12 +25,23 @@ const MainLayout = () => {
         onToggleLeftSidebar={toggleLeftSidebar} 
         onToggleRightSidebar={toggleRightSidebar} 
       />
-      <div className="main-content">
-        <LeftSidebar collapsed={leftSidebarCollapsed} />
-        <main className="center-pane p-4">
-          <Outlet />
+      <div className="main-content flex min-h-screen">
+        {/* Left Sidebar */}
+        <aside className={`transition-all duration-300 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
+          <LeftSidebar collapsed={leftSidebarCollapsed} />
+        </aside>
+        
+        {/* Main Content */}
+        <main className="flex-1 p-4 bg-gray-900 rounded-lg shadow-lg mx-2 my-2 overflow-y-auto">
+          <div className="max-w-6xl mx-auto">
+            <Outlet />
+          </div>
         </main>
-        <RightSidebar collapsed={rightSidebarCollapsed} />
+        
+        {/* Right Sidebar */}
+        <aside className={`transition-all duration-300 ${rightSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
+          <RightSidebar collapsed={rightSidebarCollapsed} />
+        </aside>
       </div>
     </div>
   );

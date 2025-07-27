@@ -74,21 +74,83 @@ export const checkAuthStorage = () => {
 };
 
 /**
- * Função para ser executada no console do browser
+ * Obtém o token do localStorage
  */
-window.healthGuardianUtils = {
-  clearAllStorage,
-  clearAuthStorage,
-  checkAuthStorage,
-  fixCorruptedAuth: () => {
-    const check = checkAuthStorage();
-    if (!check.valid) {
-      clearAuthStorage();
-      console.log('🔧 Auth storage corrompido foi limpo. Recarregue a página.');
-    } else {
-      console.log('✅ Auth storage está OK!');
-    }
+export const getToken = () => {
+  try {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (!authStorage) return null;
+    
+    const parsed = JSON.parse(authStorage);
+    return parsed?.state?.token || null;
+  } catch (error) {
+    console.error('Erro ao obter token:', error);
+    return null;
   }
 };
 
-console.log('🛠️ Health Guardian Utils carregados! Use window.healthGuardianUtils no console.');
+/**
+ * Define o token no localStorage
+ */
+export const setToken = (token) => {
+  try {
+    const authStorage = localStorage.getItem('auth-storage');
+    let parsed = authStorage ? JSON.parse(authStorage) : { state: {} };
+    
+    if (!parsed.state) parsed.state = {};
+    parsed.state.token = token;
+    
+    localStorage.setItem('auth-storage', JSON.stringify(parsed));
+    console.log('✅ Token salvo no localStorage');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar token:', error);
+    return false;
+  }
+};
+
+/**
+ * Remove o token do localStorage
+ */
+export const clearToken = () => {
+  try {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      if (parsed.state) {
+        delete parsed.state.token;
+        localStorage.setItem('auth-storage', JSON.stringify(parsed));
+      }
+    }
+    console.log('✅ Token removido do localStorage');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao remover token:', error);
+    return false;
+  }
+};
+
+/**
+ * Função para ser executada no console do browser
+ */
+if (typeof window !== 'undefined') {
+  window.healthGuardianUtils = {
+    clearAllStorage,
+    clearAuthStorage,
+    checkAuthStorage,
+    getToken,
+    setToken,
+    clearToken,
+    fixCorruptedAuth: () => {
+      const check = checkAuthStorage();
+      if (!check.valid) {
+        clearAuthStorage();
+        console.log('🔧 Auth storage corrompido foi limpo. Recarregue a página.');
+      } else {
+        console.log('✅ Auth storage está OK!');
+      }
+    }
+  };
+
+  console.log('🛠️ Health Guardian Utils carregados! Use window.healthGuardianUtils no console.');
+}

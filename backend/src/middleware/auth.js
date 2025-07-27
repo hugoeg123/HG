@@ -84,7 +84,9 @@ const authMiddleware = async (req, res, next) => {
       email: medico.email,
       nome: medico.nome,
       iat: decoded.iat,
-      exp: decoded.exp
+      exp: decoded.exp,
+      role: decoded.role || 'medico',
+      roles: decoded.roles || [decoded.role || 'medico']
     };
     console.log('Auth Middleware: User attached to request:', req.user); // Log para depuração
 

@@ -106,10 +106,7 @@ exports.createPatient = async (req, res) => {
     });
     console.log(`Paciente criado por: ${req.user.sub}`);
     
-    res.status(201).json({
-      message: 'Paciente criado com sucesso',
-      patient
-    });
+    res.status(201).json(patient);
   } catch (error) {
     console.error('Erro ao criar paciente:', error.message, error.stack);
     res.status(500).json({ message: 'Erro ao criar paciente' });
@@ -135,10 +132,7 @@ exports.updatePatient = async (req, res) => {
     // Atualizar paciente
     await patient.update(req.body);
     
-    res.json({
-      message: 'Paciente atualizado com sucesso',
-      patient
-    });
+    res.json(patient);
   } catch (error) {
     console.error('Erro ao atualizar paciente:', error);
     res.status(500).json({ message: 'Erro ao atualizar paciente' });

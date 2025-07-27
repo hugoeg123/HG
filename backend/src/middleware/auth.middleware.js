@@ -6,7 +6,7 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { Medico } = require('../models/sequelize');
 
 // Middleware para verificar autenticação
 exports.authenticate = async (req, res, next) => {
@@ -24,23 +24,25 @@ exports.authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Decoded token:', decoded);
 
-    // Verificar se o usuário existe
-    const user = await User.findByPk(decoded.sub || decoded.id, { 
-      attributes: ['id', 'email', 'name'] 
+    // Verificar se o médico existe
+    const medico = await Medico.findByPk(decoded.sub || decoded.id, { 
+      attributes: ['id', 'email', 'nome'] 
     });
-    console.log('User found:', user);
+    console.log('Medico found:', medico);
     
-    if (!user) {
-      console.log('User not found for ID:', decoded.sub || decoded.id);
+    if (!medico) {
+      console.log('Medico not found for ID:', decoded.sub || decoded.id);
       return res.status(401).json({ message: 'Usuário não encontrado' });
     }
 
     // Adicionar usuário à requisição
     req.user = {
-      id: user.id,
-      sub: user.id,
-      name: user.name,
-      email: user.email
+      id: medico.id,
+      sub: medico.id,
+      name: medico.nome,
+      email: medico.email,
+      role: decoded.role || 'medico',
+      roles: decoded.roles || [decoded.role || 'medico']
     };
 
     next();
@@ -59,14 +61,14 @@ exports.authenticate = async (req, res, next) => {
 // Middleware para verificar permissões de admin (opcional)
 exports.isAdmin = async (req, res, next) => {
   try {
-    // Verificar se o usuário é admin
-    const user = await User.findByPk(req.user.id);
-    if (!user) {
+    // Verificar se o médico é admin
+    const medico = await Medico.findByPk(req.user.id);
+    if (!medico) {
       return res.status(403).json({ message: 'Acesso negado: usuário não encontrado' });
     }
 
-    // Verificar se o usuário tem permissões de admin
-    if (!user.isAdmin) {
+    // Verificar se o médico tem permissões de admin (assumindo que existe um campo isAdmin)
+    if (!medico.isAdmin) {
       return res.status(403).json({ message: 'Acesso negado: permissões insuficientes' });
     }
 

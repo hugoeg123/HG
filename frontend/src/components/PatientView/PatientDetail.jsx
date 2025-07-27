@@ -70,11 +70,37 @@ const PatientDetail = ({ patient, onUpdate }) => {
       [name]: value,
     });
   };
+
+  // Mapear valores de gênero do frontend para backend
+  const mapGenderToBackend = (frontendGender) => {
+    const genderMap = {
+      'Masculino': 'masculino',
+      'Feminino': 'feminino', 
+      'Outro': 'outro'
+    };
+    return genderMap[frontendGender] || 'não informado';
+  };
+
+  // Mapear valores de gênero do backend para frontend
+  const mapGenderToFrontend = (backendGender) => {
+    const genderMap = {
+      'masculino': 'Masculino',
+      'feminino': 'Feminino',
+      'outro': 'Outro',
+      'não informado': ''
+    };
+    return genderMap[backendGender] || '';
+  };
   
   // Iniciar edição
   const handleEdit = () => {
     setIsEditing(true);
-    setFormData(patientData);
+    // Mapear dados do backend para o frontend
+    setFormData({
+      ...patientData,
+      gender: mapGenderToFrontend(patientData.gender),
+      birthDate: patientData.dateOfBirth ? patientData.dateOfBirth.split('T')[0] : ''
+    });
   };
   
   // Cancelar edição
@@ -87,7 +113,13 @@ const PatientDetail = ({ patient, onUpdate }) => {
     e.preventDefault();
     
     try {
-      await updatePatient(patient.id, formData);
+      // Mapear dados do frontend para o backend
+      const backendData = {
+        ...formData,
+        gender: mapGenderToBackend(formData.gender)
+      };
+      
+      await updatePatient(patient.id, backendData);
       setIsEditing(false);
       if (onUpdate) onUpdate();
     } catch (error) {

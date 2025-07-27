@@ -15,6 +15,9 @@ const Patient = require('./Patient');
 const Record = require('./Record');
 const Tag = require('./Tag');
 const Template = require('./Template');
+const Alert = require('./Alert');
+const Calculator = require('./Calculator');
+const CalculatorTag = require('./CalculatorTag');
 
 // Novos modelos do sistema de tags dinâmicas
 const Medico = require('./Medico')(sequelize);
@@ -46,6 +49,30 @@ Tag.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 // Associações de Template
 Template.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 
+// Associações de Alert
+Alert.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Alert.belongsTo(Record, { foreignKey: 'record_id', as: 'record' });
+User.hasMany(Alert, { foreignKey: 'user_id', as: 'alerts' });
+Record.hasMany(Alert, { foreignKey: 'record_id', as: 'alerts' });
+
+// Associações de Calculator
+Calculator.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
+User.hasMany(Calculator, { foreignKey: 'owner_id', as: 'calculators' });
+
+// Associações many-to-many Calculator-Tag
+Calculator.belongsToMany(Tag, {
+  through: CalculatorTag,
+  foreignKey: 'calculator_id',
+  otherKey: 'tag_id',
+  as: 'tags'
+});
+Tag.belongsToMany(Calculator, {
+  through: CalculatorTag,
+  foreignKey: 'tag_id',
+  otherKey: 'calculator_id',
+  as: 'calculators'
+});
+
 // Definir associações entre novos modelos
 const models = {
   Medico,
@@ -71,6 +98,9 @@ module.exports = {
   Record,
   Tag,
   Template,
+  Alert,
+  Calculator,
+  CalculatorTag,
   // Novos modelos do sistema de tags dinâmicas
   Medico,
   Paciente,
