@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { calculatorService } from '../../services/api';
 import CalculatorModal from './CalculatorModal';
+import CalculatorCard from './CalculatorCard';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 /**
  * Calculators component - Displays and manages medical calculators
@@ -18,6 +22,7 @@ import CalculatorModal from './CalculatorModal';
 const Calculators = () => {
   const [calculators, setCalculators] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCalculator, setSelectedCalculator] = useState(null);
@@ -44,19 +49,31 @@ const Calculators = () => {
     fetchCalculators();
   }, []);
 
-  // Filtrar calculadoras com base na pesquisa
+  // Get unique categories for filter options
+  const categories = Array.isArray(calculators) ? 
+    [...new Set(calculators.map(calc => calc.category).filter(Boolean))] : [];
+
+  // Filter calculators based on search and category
   const filteredCalculators = Array.isArray(calculators) ? calculators.filter(calculator => {
     if (!calculator) return false;
-    return (
+    
+    // Search filter
+    const matchesSearch = (
       (calculator.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (calculator.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (calculator.category || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
+    
+    // Category filter
+    const matchesCategory = selectedCategory === 'all' || 
+      calculator.category === selectedCategory ||
+      (selectedCategory === 'personal' && calculator.isPersonal) ||
+      (selectedCategory === 'public' && !calculator.isPersonal);
+    
+    return matchesSearch && matchesCategory;
   }) : [];
 
-  // Agrupar calculadoras por tipo (minhas/públicas)
-  const myCalculators = filteredCalculators.filter(calc => calc.isPersonal);
-  const publicCalculators = filteredCalculators.filter(calc => !calc.isPersonal);
+  // Hook: filteredCalculators now contains all filtered results, no need for separate grouping
 
   // Abrir modal da calculadora
   const openCalculator = (calculator) => {
@@ -85,32 +102,108 @@ const Calculators = () => {
 
   return (
     <div className="calculator-container">
-      {/* Campo de pesquisa */}
-      <div className="relative mb-4">
-        <input
-          type="text"
-          placeholder="Procurar calculadora..."
-          className="input w-full pl-9"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 absolute left-2 top-2.5 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      {/* Header with search and filters */}
+      <div className="mb-6">
+        {/* Search field */}
+        <div className="relative mb-4">
+          <Input
+            type="text"
+            placeholder="Procurar calculadora..."
+            className="w-full pl-9 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 absolute left-2 top-2 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        {/* Category filters */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <Badge
+            variant={selectedCategory === 'all' ? 'default' : 'secondary'}
+            className={`cursor-pointer transition-colors ${
+              selectedCategory === 'all' 
+                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            onClick={() => setSelectedCategory('all')}
+          >
+            Todas
+          </Badge>
+          <Badge
+            variant={selectedCategory === 'personal' ? 'default' : 'secondary'}
+            className={`cursor-pointer transition-colors ${
+              selectedCategory === 'personal' 
+                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            onClick={() => setSelectedCategory('personal')}
+          >
+            Minhas
+          </Badge>
+          <Badge
+            variant={selectedCategory === 'public' ? 'default' : 'secondary'}
+            className={`cursor-pointer transition-colors ${
+              selectedCategory === 'public' 
+                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            onClick={() => setSelectedCategory('public')}
+          >
+            Públicas
+          </Badge>
+          {categories.map(category => (
+            <Badge
+              key={category}
+              variant={selectedCategory === category ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === category 
+                  ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory(category)}
+            >
+              {category}
+            </Badge>
+          ))}
+        </div>
+
+        {/* Create new calculator button */}
+        <Button
+          onClick={handleNewCalculator}
+          className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white mb-4"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          + Criar Nova Calculadora
+        </Button>
       </div>
 
-      {/* Conteúdo principal */}
+      {/* Main content */}
       {isLoading ? (
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
@@ -119,123 +212,78 @@ const Calculators = () => {
         <div className="text-red-400 text-center py-4">{error}</div>
       ) : (
         <div>
-          {/* Minhas calculadoras */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-white mb-3">Minhas Calculadoras</h3>
-            {myCalculators.length === 0 ? (
-              <div className="text-gray-400 text-center py-4">
-                {searchQuery ? 'Nenhuma calculadora pessoal encontrada' : 'Você não tem calculadoras personalizadas'}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {myCalculators.map((calculator) => (
-                  <div
-                    key={calculator.id}
-                    className="calculator-item"
-                    onClick={() => openCalculator(calculator)}
-                  >
-                    <div className="flex items-start">
-                      <div className="mr-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6 text-purple-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-medium">{calculator.name}</h4>
-                        <p className="text-sm text-gray-400">{calculator.description}</p>
-                        {calculator.lastUsed && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Usado recentemente
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Results summary */}
+          <div className="mb-4">
+            <p className="text-gray-400 text-sm">
+              {filteredCalculators.length === 0 
+                ? 'Nenhuma calculadora encontrada' 
+                : `${filteredCalculators.length} calculadora${filteredCalculators.length !== 1 ? 's' : ''} encontrada${filteredCalculators.length !== 1 ? 's' : ''}`
+              }
+              {searchQuery && ` para "${searchQuery}"`}
+              {selectedCategory !== 'all' && ` na categoria "${selectedCategory === 'personal' ? 'Minhas' : selectedCategory === 'public' ? 'Públicas' : selectedCategory}"`}
+            </p>
           </div>
 
-          {/* Calculadoras públicas */}
-          <div>
-            <h3 className="text-lg font-medium text-white mb-3">Públicas</h3>
-            {publicCalculators.length === 0 ? (
-              <div className="text-gray-400 text-center py-4">
-                {searchQuery ? 'Nenhuma calculadora pública encontrada' : 'Não há calculadoras públicas disponíveis'}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {publicCalculators.map((calculator) => (
-                  <div
-                    key={calculator.id}
-                    className="calculator-item"
-                    onClick={() => openCalculator(calculator)}
-                  >
-                    <div className="flex items-start">
-                      <div className="mr-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6 text-blue-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-medium">{calculator.name}</h4>
-                        <p className="text-sm text-gray-400">{calculator.description}</p>
-                        {calculator.category && (
-                          <span className="text-xs bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded mt-1 inline-block">
-                            {calculator.category}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Botão para criar nova calculadora */}
-          <button
-            onClick={handleNewCalculator}
-            className="mt-6 w-full btn btn-primary flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Nova Calculadora
-          </button>
+          {/* Calculators grid */}
+          {filteredCalculators.length === 0 ? (
+            <div className="text-center py-12">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-500 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-300 mb-2">
+                {searchQuery || selectedCategory !== 'all' 
+                  ? 'Nenhuma calculadora encontrada' 
+                  : 'Nenhuma calculadora disponível'
+                }
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {searchQuery || selectedCategory !== 'all'
+                  ? 'Tente ajustar os filtros ou criar uma nova calculadora.'
+                  : 'Comece criando sua primeira calculadora médica.'
+                }
+              </p>
+              <Button
+                onClick={handleNewCalculator}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Criar Primeira Calculadora
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCalculators.map((calculator) => (
+                <CalculatorCard
+                  key={calculator.id}
+                  calculator={calculator}
+                  onUse={openCalculator}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

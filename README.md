@@ -92,4 +92,23 @@ curl -X POST http://localhost:5000/api/auth/register \
 
 ## Próximos Passos
 
+### Melhorias na Calculadora (Story 1.1)
+
+Implementamos uma refatoração significativa no módulo de calculadoras, transformando a lista simples em uma galeria interativa e funcional. As principais melhorias incluem:
+
+-   **Layout de Galeria Responsivo**: Calculadoras exibidas como cards em um grid responsivo.
+-   **Cards Detalhados**: Cada card mostra nome, categoria, descrição e botões de ação.
+-   **Filtros e Busca**: Funcionalidades de busca e filtros por categoria para facilitar a localização de calculadoras.
+-   **Criação Simplificada**: Botão proeminente para criar novas calculadoras.
+
+### Como Enviar Suas Mudanças (Git)
+
+Para subir as alterações para o repositório principal, siga estes passos:
+
+```bash
+git add .
+git commit -m "feat: Melhoria na calculadora - Galeria interativa e filtros (Story 1.1)"
+git push origin main # ou 'master', dependendo da sua branch principal
+```
+
 Consulte o `README-MVP.md` para entender as funcionalidades planejadas e o roadmap do projeto.
