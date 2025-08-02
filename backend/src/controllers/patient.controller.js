@@ -26,11 +26,9 @@ exports.getAllPatients = async (req, res) => {
     // Opções de filtro - incluir filtro por usuário
     const where = {};
     
-    // Filtrar pacientes por usuário (se o campo createdBy existir)
-    // Comentado temporariamente até que a relação seja estabelecida
-    // if (req.user && req.user.id) {
-    //   where.createdBy = req.user.id;
-    // }
+    if (req.user && req.user.id) {
+      where.createdBy = req.user.id;
+    }
     
     if (req.query.search) {
       const { Op } = require('sequelize');
@@ -93,18 +91,15 @@ exports.createPatient = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
     
-    // Verificar se o usuário está autenticado e tem um ID
     if (!req.user || !req.user.sub) {
       console.error('Erro ao criar paciente: Usuário não autenticado ou ID ausente.');
       return res.status(401).json({ message: 'Autenticação necessária para criar paciente.' });
     }
 
-    // Criar paciente (removendo createdBy temporariamente para evitar erro de foreign key)
     const patient = await Patient.create({
-      ...req.body
-      // createdBy: req.user.sub // Comentado temporariamente
+      ...req.body,
+      createdBy: req.user.sub
     });
-    console.log(`Paciente criado por: ${req.user.sub}`);
     
     res.status(201).json(patient);
   } catch (error) {
@@ -157,5 +152,38 @@ exports.deletePatient = async (req, res) => {
   } catch (error) {
     console.error('Erro ao excluir paciente:', error);
     res.status(500).json({ message: 'Erro ao excluir paciente' });
+  }
+};
+
+// Obter dashboard consolidado do paciente
+exports.getPatientDashboard = async (req, res) => {
+  try {
+    const patientId = req.params.id;
+    
+    // Verificar se o paciente existe
+    const patient = await Patient.findByPk(patientId);
+    if (!patient) {
+      return res.status(404).json({ message: 'Paciente não encontrado' });
+    }
+    
+    // Importar serviço do dashboard
+    const patientDashboardService = require('../services/patientDashboard.service');
+    
+    // Buscar dados consolidados do dashboard
+    const dashboardData = await patientDashboardService.getPatientDashboardData(patientId);
+    
+    res.json({
+      patientId,
+      patientName: patient.name,
+      lastUpdated: new Date().toISOString(),
+      ...dashboardData
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar dashboard do paciente:', error);
+    res.status(500).json({ 
+      message: 'Erro ao buscar dados do dashboard',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

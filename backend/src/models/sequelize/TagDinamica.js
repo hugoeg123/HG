@@ -46,11 +46,8 @@ module.exports = (sequelize) => {
       }
     },
     tipo_dado: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      validate: {
-        isIn: [['texto', 'numero', 'data', 'booleano', 'bp']]
-      }
+      type: DataTypes.ENUM('texto', 'numero', 'data', 'booleano', 'bp'),
+      allowNull: false
     },
     regras_validacao: {
       type: DataTypes.JSONB,

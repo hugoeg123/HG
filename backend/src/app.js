@@ -35,8 +35,37 @@ app.use(helmet({
 }));
 
 // CORS configurado para desenvolvimento e produção
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://localhost:3004',
+  'http://localhost:3005',
+  'http://localhost:5173', // Vite default port
+  'http://localhost:5174', // Vite alternative port
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:3002',
+  'http://127.0.0.1:3003',
+  'http://127.0.0.1:3004',
+  'http://127.0.0.1:3005',
+  'http://127.0.0.1:5173'
+];
+
 const corsOptions = {
-  origin: '*',
+  origin: function (origin, callback) {
+    // Durante desenvolvimento, permitir todas as origens
+    // Em produção, usar a lista allowedOrigins
+    if (process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -44,32 +73,53 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Handler explícito para preflight requests (OPTIONS)
+// Connector: Ensures CORS preflight requests are handled correctly
+app.options('*', cors(corsOptions));
+
 // Compressão de respostas
 app.use(compression());
 
-// Rate limiting
+// Rate limiting configurado por ambiente
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Rate limiting geral - muito permissivo em desenvolvimento
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // requests por IP
+  max: isDevelopment ? 100000 : 100, // Extremamente permissivo em dev
   message: {
     error: 'Muitas tentativas. Tente novamente em 15 minutos.',
     code: 'RATE_LIMIT_EXCEEDED'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  // Skip rate limiting completely for development
+  skip: (req) => {
+    if (isDevelopment) {
+      return true; // Skip all rate limiting in development
+    }
+    return false;
+  }
 });
 
 app.use('/api', limiter);
 
-// Rate limiting mais restritivo para autenticação
+// Rate limiting para autenticação - desabilitado em desenvolvimento
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // máximo 5 tentativas de login por IP
+  max: isDevelopment ? 100000 : 5, // Sem limite em dev, 5 tentativas em prod
   message: {
     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
     code: 'AUTH_RATE_LIMIT_EXCEEDED'
   },
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
+  // Skip rate limiting completely for development
+  skip: (req) => {
+    if (isDevelopment) {
+      return true; // Skip all auth rate limiting in development
+    }
+    return false;
+  }
 });
 
 app.use('/api/auth/login', authLimiter);
@@ -89,9 +139,22 @@ app.use(express.urlencoded({
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
     const start = Date.now();
+    
+    // Log detalhado para requisições CORS e OPTIONS
+    if (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/')) {
+      console.log(`[CORS-DEBUG] ${req.method} ${req.originalUrl}`);
+      console.log(`[CORS-DEBUG] Origin: ${req.headers.origin}`);
+      console.log(`[CORS-DEBUG] Headers: ${JSON.stringify(req.headers)}`);
+    }
+    
     res.on('finish', () => {
       const duration = Date.now() - start;
       console.log(`${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+      
+      // Log adicional para respostas CORS
+      if (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/')) {
+        console.log(`[CORS-DEBUG] Response Headers: ${JSON.stringify(res.getHeaders())}`);
+      }
     });
     next();
   });

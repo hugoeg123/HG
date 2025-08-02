@@ -72,6 +72,68 @@ module.exports = {
         regras_validacao: JSON.stringify({}),
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      // Tags estruturadas com validação - Story 2.1
+      {
+        id: uuidv4(),
+        medico_id: null, // Tag global
+        parent_id: null,
+        codigo: '#PESO',
+        nome: 'Peso do Paciente',
+        tipo_dado: 'numero',
+        regras_validacao: JSON.stringify({
+          unidade: 'kg',
+          min: 0.5,
+          max: 500,
+          decimais: 1,
+          sufixos_aceitos: ['kg', 'quilos', 'kilos']
+        }),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        medico_id: null, // Tag global
+        parent_id: null,
+        codigo: '#ALTURA',
+        nome: 'Altura do Paciente',
+        tipo_dado: 'numero',
+        regras_validacao: JSON.stringify({
+          unidade: 'm',
+          min: 0.3,
+          max: 2.5,
+          decimais: 2,
+          sufixos_aceitos: ['m', 'metros', 'cm', 'centimetros'],
+          conversoes: {
+            'cm': 0.01,
+            'centimetros': 0.01
+          }
+        }),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        medico_id: null, // Tag global
+        parent_id: null,
+        codigo: '#PA',
+        nome: 'Pressão Arterial',
+        tipo_dado: 'bp',
+        regras_validacao: JSON.stringify({
+          unidade: 'mmHg',
+          sistolica: {
+            min: 60,
+            max: 250
+          },
+          diastolica: {
+            min: 30,
+            max: 150
+          },
+          formato: 'sistolica/diastolica',
+          separadores_aceitos: ['/', 'x', 'por']
+        }),
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ];
     

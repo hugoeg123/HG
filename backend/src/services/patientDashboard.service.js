@@ -1,0 +1,304 @@
+/**
+ * Serviço do Dashboard do Paciente
+ * 
+ * Consolida dados de registros médicos para exibição no dashboard
+ * 
+ * Conector: Integra com models/Record.js e shared/parser.js
+ * Hook: Usado por controllers/patient.controller.js no endpoint /dashboard
+ */
+
+const { Record, Tag } = require('../models');
+const { parseSections, calculateStats } = require('../../../shared/parser');
+const { Op } = require('sequelize');
+
+/**
+ * Busca e consolida dados do dashboard para um paciente
+ * @param {string} patientId - UUID do paciente
+ * @returns {Promise<Object>} Dados consolidados do dashboard
+ * 
+ * IA prompt: Expandir para incluir análise de tendências e alertas automáticos
+ * Performance Analysis: Adicionado profiling detalhado para identificar gargalos
+ */
+async function getPatientDashboardData(patientId) {
+  console.time('🔍 Dashboard Total Time');
+  console.time('📊 Database Queries');
+  
+  try {
+    // Buscar todos os registros do paciente (não deletados)
+    console.time('📋 Records Query');
+    const records = await Record.findAll({
+      where: {
+        patientId,
+        isDeleted: false
+      },
+      order: [['date', 'DESC']],
+      limit: 20 // Limitar para performance otimizada
+    });
+    console.timeEnd('📋 Records Query');
+    console.log(`📊 Records encontrados: ${records.length}`);
+
+    // Buscar todas as tags disponíveis para parsing
+    console.time('🏷️ Tags Query');
+    const tags = await Tag.findAll({
+      attributes: ['id', 'medico_id', 'parent_id', 'codigo', 'nome', 'tipo_dado', 'regras_validacao', 'createdAt', 'updatedAt']
+    });
+    const tagMap = new Map(tags.map(t => [t.id, t]));
+    console.timeEnd('🏷️ Tags Query');
+    console.log(`🏷️ Tags carregadas: ${tags.length}`);
+    console.timeEnd('📊 Database Queries');
+
+    // Inicializar estrutura do dashboard
+    console.time('🏗️ Data Processing');
+    const dashboardData = {
+      problemasAtivos: [],
+      alergias: [],
+      medicamentosEmUso: [],
+      investigacoesEmAndamento: [],
+      resultadosRecentes: [],
+      historicoConsultas: []
+    };
+
+    // Processar cada registro
+    let processedRecords = 0;
+    let errorCount = 0;
+    
+    for (const record of records) {
+      try {
+        console.time(`📝 Parse Record ${record.id}`);
+        // Parsear o conteúdo do registro usando o parser compartilhado
+        const sections = parseSections(record.content, tags);
+        console.timeEnd(`📝 Parse Record ${record.id}`);
+        
+        console.time(`🔍 Extract Info ${record.id}`);
+        // Extrair informações relevantes baseadas nas tags
+        await extractDashboardInfo(sections, tagMap, record, dashboardData);
+        console.timeEnd(`🔍 Extract Info ${record.id}`);
+        
+        processedRecords++;
+      } catch (parseError) {
+        errorCount++;
+        console.error(`❌ Erro ao processar registro ${record.id}:`, parseError.message);
+        // Continuar processamento mesmo com erro de parsing
+      }
+    }
+    
+    console.log(`✅ Registros processados: ${processedRecords}, Erros: ${errorCount}`);
+
+    // Ordenar e limitar resultados
+    console.time('📊 Data Consolidation');
+    dashboardData.problemasAtivos = dashboardData.problemasAtivos.slice(0, 10);
+    dashboardData.alergias = dashboardData.alergias.slice(0, 10);
+    dashboardData.medicamentosEmUso = dashboardData.medicamentosEmUso.slice(0, 15);
+    dashboardData.investigacoesEmAndamento = dashboardData.investigacoesEmAndamento.slice(0, 10);
+    dashboardData.resultadosRecentes = dashboardData.resultadosRecentes.slice(0, 20);
+    dashboardData.historicoConsultas = dashboardData.historicoConsultas.slice(0, 10);
+    console.timeEnd('📊 Data Consolidation');
+    console.timeEnd('🏗️ Data Processing');
+    
+    
+    
+    console.timeEnd('🔍 Dashboard Total Time');
+    return dashboardData;
+
+  } catch (error) {
+    console.timeEnd('🔍 Dashboard Total Time');
+    console.error('❌ Erro ao buscar dados do dashboard:', error);
+    throw new Error('Falha ao consolidar dados do dashboard');
+  }
+}
+
+/**
+ * Extrai informações específicas do dashboard a partir das seções parseadas
+ * @param {Array} sections - Seções parseadas do registro
+ * @param {Map} tagMap - Map de tags disponíveis (id -> tag)
+ * @param {Object} record - Registro original
+ * @param {Object} dashboardData - Objeto para acumular dados do dashboard
+ * 
+ * Conector: Utiliza tags estruturadas para categorizar informações médicas
+ */
+async function extractDashboardInfo(sections, tagMap, record, dashboardData) {
+  for (const section of sections) {
+    const tag = tagMap.get(section.tag_id);
+    if (!tag) continue;
+
+    const info = {
+      data: record.date,
+      fonte: record.title,
+      registroId: record.id,
+      valor: section.valor_raw,
+      valorParseado: section.parsed_value
+    };
+
+    // Categorizar baseado no código da tag
+    switch (tag.codigo) {
+      case '#DX': // Diagnósticos
+      case '#PROBLEMA':
+        dashboardData.problemasAtivos.push({
+          ...info,
+          problema: section.valor_raw,
+          status: 'ativo' // Assumir ativo por padrão
+        });
+        break;
+
+      case '#ALERGIA':
+      case '#ALERGIAS':
+        dashboardData.alergias.push({
+          ...info,
+          alergia: section.valor_raw,
+          tipo: 'medicamento' // Assumir medicamento por padrão
+        });
+        break;
+
+      case '#MEDICAMENTO':
+      case '#MEDICAMENTOS':
+      case '#PLANO': // Plano pode conter medicamentos
+        // Extrair medicamentos do texto
+        const medicamentos = extractMedicamentos(section.valor_raw);
+        medicamentos.forEach(med => {
+          dashboardData.medicamentosEmUso.push({
+            ...info,
+            medicamento: med,
+            status: 'em_uso'
+          });
+        });
+        break;
+
+      case '#EXAME':
+      case '#LABORATORIO':
+      case '#RESULTADO':
+        dashboardData.resultadosRecentes.push({
+          ...info,
+          exame: section.valor_raw,
+          tipo: 'laboratorio'
+        });
+        break;
+
+      case '#INVESTIGACAO':
+      case '#PENDENTE':
+        dashboardData.investigacoesEmAndamento.push({
+          ...info,
+          investigacao: section.valor_raw,
+          status: 'pendente'
+        });
+        break;
+
+      case '#QP': // Queixa Principal
+      case '#HDA': // História da Doença Atual
+      case '#EF': // Exame Físico
+        dashboardData.historicoConsultas.push({
+          ...info,
+          tipo: getConsultaType(tag.codigo),
+          resumo: section.valor_raw.substring(0, 200) + (section.valor_raw.length > 200 ? '...' : '')
+        });
+        break;
+
+      case '#PA': // Pressão Arterial
+        if (section.parsed_value && section.parsed_value.sistolica) {
+          dashboardData.resultadosRecentes.push({
+            ...info,
+            exame: 'Pressão Arterial',
+            resultado: `${section.parsed_value.sistolica}/${section.parsed_value.diastolica} mmHg`,
+            tipo: 'sinal_vital'
+          });
+        }
+        break;
+
+      default:
+        // Para outras tags, adicionar ao histórico de consultas
+        if (section.valor_raw.length > 10) { // Apenas se tiver conteúdo significativo
+          dashboardData.historicoConsultas.push({
+            ...info,
+            tipo: 'outros',
+            resumo: section.valor_raw.substring(0, 200) + (section.valor_raw.length > 200 ? '...' : '')
+          });
+        }
+        break;
+    }
+  }
+}
+
+/**
+ * Extrai nomes de medicamentos de um texto
+ * @param {string} texto - Texto contendo medicamentos
+ * @returns {Array<string>} Lista de medicamentos encontrados
+ * 
+ * IA prompt: Implementar NLP para melhor extração de medicamentos
+ */
+function extractMedicamentos(texto) {
+  // Implementação simples - pode ser melhorada com NLP
+  const medicamentos = [];
+  
+  // Padrões comuns de medicamentos
+  const patterns = [
+    /\b\w+\s*\d+\s*mg\b/gi, // Ex: Paracetamol 500mg
+    /\b\w+\s*\d+\s*mcg\b/gi, // Ex: Levotiroxina 50mcg
+    /\b\w+\s*\d+\s*g\b/gi, // Ex: Amoxicilina 1g
+  ];
+
+  patterns.forEach(pattern => {
+    const matches = texto.match(pattern);
+    if (matches) {
+      medicamentos.push(...matches);
+    }
+  });
+
+  // Se não encontrou padrões específicos, dividir por vírgulas/quebras de linha
+  if (medicamentos.length === 0) {
+    const linhas = texto.split(/[,\n;]/);
+    linhas.forEach(linha => {
+      const limpa = linha.trim();
+      if (limpa.length > 3 && limpa.length < 100) {
+        medicamentos.push(limpa);
+      }
+    });
+  }
+
+  return [...new Set(medicamentos)]; // Remover duplicatas
+}
+
+/**
+ * Mapeia código de tag para tipo de consulta
+ * @param {string} codigo - Código da tag
+ * @returns {string} Tipo de consulta
+ */
+function getConsultaType(codigo) {
+  const mapping = {
+    '#QP': 'queixa_principal',
+    '#HDA': 'historia_doenca',
+    '#EF': 'exame_fisico',
+    '#PLANO': 'plano_terapeutico'
+  };
+  return mapping[codigo] || 'outros';
+}
+
+/**
+ * Busca registros recentes de um paciente para análise de tendências
+ * @param {string} patientId - UUID do paciente
+ * @param {number} days - Número de dias para buscar (padrão: 30)
+ * @returns {Promise<Array>} Registros recentes
+ * 
+ * Hook: Pode ser usado para análise de tendências e alertas
+ */
+async function getRecentRecords(patientId, days = 30) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  return await Record.findAll({
+    where: {
+      patientId,
+      isDeleted: false,
+      date: {
+        [Op.gte]: startDate
+      }
+    },
+    order: [['date', 'DESC']]
+  });
+}
+
+module.exports = {
+  getPatientDashboardData,
+  extractDashboardInfo,
+  extractMedicamentos,
+  getConsultaType,
+  getRecentRecords
+};

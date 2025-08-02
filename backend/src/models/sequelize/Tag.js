@@ -23,30 +23,47 @@ Tag.init({
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  // Nome da tag (único)
-  nome: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    set(value) {
-      // Converter para maiúsculas para consistência
-      this.setDataValue('nome', value.toUpperCase());
-    }
-  },
-  // Cor da tag (hexadecimal)
-  color: {
-    type: DataTypes.STRING,
+  // ID do médico que criou a tag
+  medico_id: {
+    type: DataTypes.UUID,
     allowNull: true,
-    defaultValue: '#6366f1',
-    validate: {
-      isValidColor(value) {
-        if (value && !/^#[0-9A-F]{6}$/i.test(value)) {
-          throw new Error('Cor deve estar no formato hexadecimal (#RRGGBB)');
-        }
-      }
+    references: {
+      model: 'medicos',
+      key: 'id'
     }
   },
-  
+  // ID da tag pai (para hierarquia)
+  parent_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'tags',
+      key: 'id'
+    }
+  },
+  // Código da tag (ex: #DX, #MEDICAMENTO)
+  codigo: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      is: /^#\w+|>>\w+/
+    }
+  },
+  // Nome da tag
+  nome: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  // Tipo de dado da tag
+  tipo_dado: {
+    type: DataTypes.ENUM('texto', 'numero', 'data', 'booleano', 'bp'),
+    allowNull: false
+  },
+  // Regras de validação (JSON)
+  regras_validacao: {
+    type: DataTypes.JSONB,
+    defaultValue: {}
+  },
   // Campo virtual para compatibilidade com frontend
   name: {
     type: DataTypes.VIRTUAL,
@@ -55,25 +72,6 @@ Tag.init({
     },
     set(value) {
       this.setDataValue('nome', value);
-    }
-  },
-  // Descrição da tag
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  // Metadados adicionais
-  metadata: {
-    type: DataTypes.JSONB,
-    defaultValue: {}
-  },
-  // ID do usuário que criou a tag
-  createdBy: {
-    type: DataTypes.UUID,
-    allowNull: true,
-    references: {
-      model: 'users',
-      key: 'id'
     }
   }
 }, {

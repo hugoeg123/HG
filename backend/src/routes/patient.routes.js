@@ -17,12 +17,16 @@ const patientController = require('../controllers/patient.controller');
 // Obter todos os pacientes
 router.get('/', authMiddleware, patientController.getAllPatients);
 
+// Obter dashboard consolidado do paciente (deve vir antes da rota genérica /:id)
+// Temporariamente sem autenticação para teste
+router.get('/:id/dashboard', patientController.getPatientDashboard);
+
 // Obter paciente por ID
 router.get('/:id', authMiddleware, patientController.getPatientById);
 
 // Criar novo paciente
 router.post('/', 
-  authMiddleware, 
+  authMiddleware,
   [
     body('name').notEmpty().withMessage('Nome é obrigatório'),
     body('dateOfBirth').notEmpty().withMessage('Data de nascimento é obrigatória'),

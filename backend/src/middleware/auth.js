@@ -80,6 +80,7 @@ const authMiddleware = async (req, res, next) => {
 
     // Adicionar informações do usuário ao request
     req.user = {
+      id: medico.id,  // Adicionado para compatibilidade com controllers
       sub: medico.id,
       email: medico.email,
       nome: medico.nome,

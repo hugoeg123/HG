@@ -84,33 +84,67 @@ exports.register = async (req, res) => {
 
 // Login de médico
 exports.login = async (req, res) => {
+  const startTime = Date.now();
+  const requestId = Math.random().toString(36).substr(2, 9);
+  
   try {
+    console.log(`[LOGIN-${requestId}] Iniciando tentativa de login`, {
+      email: req.body?.email,
+      hasPassword: !!req.body?.password,
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.connection.remoteAddress
+    });
+
     // Validar entrada
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log(`[LOGIN-${requestId}] Erro de validação:`, errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log(`[LOGIN-${requestId}] Campos obrigatórios ausentes:`, { email: !!email, password: !!password });
       return res.status(400).json({ message: 'Campos obrigatórios ausentes' });
     }
 
     // Buscar médico
+    console.log(`[LOGIN-${requestId}] Buscando médico no banco de dados...`);
     const medico = await Medico.findOne({ where: { email } });
+    
     if (!medico) {
+      console.log(`[LOGIN-${requestId}] Médico não encontrado para email:`, email);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
+    
+    console.log(`[LOGIN-${requestId}] Médico encontrado:`, {
+      id: medico.id,
+      nome: medico.nome,
+      email: medico.email,
+      hasPasswordHash: !!medico.senha_hash
+    });
 
     // Verificar senha
+    console.log(`[LOGIN-${requestId}] Verificando senha...`);
     const isMatch = await bcrypt.compare(password, medico.senha_hash);
+    
     if (!isMatch) {
+      console.log(`[LOGIN-${requestId}] Senha incorreta para médico:`, medico.id);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
+    
+    console.log(`[LOGIN-${requestId}] Senha verificada com sucesso`);
 
     // Gerar token
+    console.log(`[LOGIN-${requestId}] Gerando token JWT...`);
     const token = generateToken(medico.id);
+    
+    const loginDuration = Date.now() - startTime;
+    console.log(`[LOGIN-${requestId}] Login realizado com sucesso em ${loginDuration}ms`, {
+      medicoId: medico.id,
+      tokenLength: token.length
+    });
 
     res.json({
       message: 'Login realizado com sucesso',
@@ -125,8 +159,24 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erro ao fazer login:', error);
-    res.status(500).json({ message: 'Erro ao fazer login', details: error.message });
+    const loginDuration = Date.now() - startTime;
+    console.error(`[LOGIN-${requestId}] Erro crítico no login após ${loginDuration}ms:`, {
+      error: error.message,
+      stack: error.stack,
+      email: req.body?.email,
+      errorType: error.constructor.name,
+      sqlState: error.parent?.sqlState,
+      sqlMessage: error.parent?.sqlMessage
+    });
+    
+    // Garantir que sempre retornamos uma resposta JSON válida
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        message: 'Erro interno do servidor durante o login',
+        requestId: requestId,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
   }
 };
 

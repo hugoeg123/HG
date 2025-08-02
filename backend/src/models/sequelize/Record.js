@@ -68,7 +68,7 @@ Record.init({
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'medicos',
       key: 'id'
     }
   },
@@ -77,7 +77,7 @@ Record.init({
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'users',
+      model: 'medicos',
       key: 'id'
     }
   },

@@ -105,6 +105,8 @@ exports.getRecordById = async (req, res) => {
 // Criar novo registro
 exports.createRecord = async (req, res) => {
   try {
+    console.log('CreateRecord: req.user =', req.user); // Debug log
+    
     // Validar entrada
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
