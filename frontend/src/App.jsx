@@ -12,6 +12,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
 
+// Error Handling & Notifications
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider } from './components/ui/Toast';
+
 // Layouts
 import MainLayout from './components/Layout/MainLayout';
 import AuthLayout from './components/Layout/AuthLayout';
@@ -45,9 +49,11 @@ function App() {
   const { isDarkMode } = useThemeStore();
   
   // Verificar autenticação ao iniciar
+  // Hook: Removed checkAuth from dependencies to prevent infinite loop
+  // since Zustand functions are recreated on each render
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
   
   // Aplicar classe de tema ao elemento html
   useEffect(() => {
@@ -62,30 +68,38 @@ function App() {
   }, [isDarkMode]);
   
   return (
-    <Routes>
-      {/* Rota de teste (temporária) */}
-      <Route path="/test" element={<TestLayout />} />
-      
-      {/* Rotas de autenticação */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Route>
-      
-      {/* Rotas protegidas */}
-      <Route element={
-        <ProtectedRoute>
-          <MainLayout />
-        </ProtectedRoute>
-      }>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/patients/new" element={<NewPatient />} />
-        <Route path="/patients/:id" element={<PatientView />} />
-      </Route>
-      
-      {/* Rota 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <ErrorBoundary fallbackTitle="Erro na Aplicação">
+      <ToastProvider>
+        <Routes>
+          {/* Rota de teste (temporária) */}
+          <Route path="/test" element={<TestLayout />} />
+          
+          {/* Rotas de autenticação */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+          
+          {/* Rotas protegidas */}
+          <Route element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/patients/new" element={<NewPatient />} />
+            <Route path="/patients/:id" element={
+              <ErrorBoundary fallbackTitle="Erro no Dashboard do Paciente" showDetails={true}>
+                <PatientView />
+              </ErrorBoundary>
+            } />
+          </Route>
+          
+          {/* Rota 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 

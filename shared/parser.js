@@ -70,11 +70,11 @@ function parseSections(rawText, tags) {
 }
 
 /**
- * Valida e parseia um valor de acordo com o tipo e regras
+ * Valida e parseia um valor de acordo com o tipo e regras da tag
  * @param {string} raw - Valor bruto
- * @param {string} tipo - Tipo de dado
- * @param {Object} rules - Regras de validação
- * @returns {any} Valor parseado
+ * @param {string} tipo - Tipo de dado da tag
+ * @param {Object} rules - Regras de validação da tag
+ * @returns {any} Valor parseado e normalizado
  */
 function validateAndParse(raw, tipo, rules = {}) {
   if (!raw || raw.trim() === '') {
@@ -94,60 +94,193 @@ function validateAndParse(raw, tipo, rules = {}) {
   // Parsear de acordo com o tipo
   switch (tipo) {
     case 'texto':
+      // Validar comprimento se especificado
+      if (rules.min_length && trimmedRaw.length < rules.min_length) {
+        throw new Error(`Texto deve ter pelo menos ${rules.min_length} caracteres`);
+      }
+      if (rules.max_length && trimmedRaw.length > rules.max_length) {
+        throw new Error(`Texto deve ter no máximo ${rules.max_length} caracteres`);
+      }
       return trimmedRaw;
 
     case 'numero':
-      const numero = Number(trimmedRaw);
-      if (isNaN(numero)) {
-        throw new Error('Valor deve ser um número válido');
-      }
-      return numero;
+      return parseNumero(trimmedRaw, rules);
 
     case 'data':
-      const data = new Date(trimmedRaw);
-      if (isNaN(data.getTime())) {
-        throw new Error('Valor deve ser uma data válida');
-      }
-      return data.toISOString();
+      return parseData(trimmedRaw, rules);
 
     case 'booleano':
-      const valorLower = trimmedRaw.toLowerCase();
-      if (['true', 'sim', 's', '1', 'verdadeiro'].includes(valorLower)) {
-        return true;
-      }
-      if (['false', 'não', 'n', '0', 'falso'].includes(valorLower)) {
-        return false;
-      }
-      throw new Error('Valor deve ser verdadeiro ou falso');
+      return parseBooleano(trimmedRaw, rules);
 
     case 'bp': // Pressão arterial
-      const bpMatch = trimmedRaw.match(/^(\d{2,3})\/(\d{2,3})$/);
-      if (!bpMatch) {
-        throw new Error('Pressão arterial deve estar no formato XXX/YYY');
-      }
-      const sistolica = parseInt(bpMatch[1]);
-      const diastolica = parseInt(bpMatch[2]);
-      
-      // Validações básicas de PA
-      if (sistolica < 50 || sistolica > 300) {
-        throw new Error('Pressão sistólica deve estar entre 50 e 300 mmHg');
-      }
-      if (diastolica < 30 || diastolica > 200) {
-        throw new Error('Pressão diastólica deve estar entre 30 e 200 mmHg');
-      }
-      if (sistolica <= diastolica) {
-        throw new Error('Pressão sistólica deve ser maior que a diastólica');
-      }
-      
-      return {
-        sistolica,
-        diastolica,
-        texto: trimmedRaw
-      };
+      return parsePressaoArterial(trimmedRaw, rules);
 
     default:
       throw new Error(`Tipo de dado não suportado: ${tipo}`);
   }
+}
+
+/**
+ * Parseia e normaliza valores numéricos
+ * @param {string} raw - Valor bruto
+ * @param {Object} rules - Regras de validação
+ * @returns {number} Valor numérico normalizado
+ */
+function parseNumero(raw, rules) {
+  let valorLimpo = raw.toLowerCase().replace(',', '.');
+  let fatorConversao = 1;
+  
+  // Detectar e remover sufixos, aplicando conversões se necessário
+  if (rules.sufixos_aceitos) {
+    // Ordenar sufixos por comprimento decrescente para testar os mais específicos primeiro
+    const sufixosOrdenados = [...rules.sufixos_aceitos].sort((a, b) => b.length - a.length);
+    
+    for (const sufixo of sufixosOrdenados) {
+      const sufixoLower = sufixo.toLowerCase();
+      const regex = new RegExp('\\s*' + sufixoLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
+      
+      if (regex.test(valorLimpo)) {
+        // Remover o sufixo completo
+        valorLimpo = valorLimpo.replace(regex, '').trim();
+        
+        // Aplicar conversão se especificada
+        if (rules.conversoes && rules.conversoes[sufixo]) {
+          fatorConversao = rules.conversoes[sufixo];
+        }
+        break;
+      }
+    }
+  }
+  
+  const numero = parseFloat(valorLimpo) * fatorConversao;
+  
+  if (isNaN(numero)) {
+    throw new Error('Valor deve ser um número válido');
+  }
+  
+  // Validar limites
+  if (rules.min !== undefined && numero < rules.min) {
+    throw new Error(`Valor deve ser maior ou igual a ${rules.min}`);
+  }
+  if (rules.max !== undefined && numero > rules.max) {
+    throw new Error(`Valor deve ser menor ou igual a ${rules.max}`);
+  }
+  
+  // Aplicar arredondamento se especificado
+  if (rules.decimais !== undefined) {
+    return Math.round(numero * Math.pow(10, rules.decimais)) / Math.pow(10, rules.decimais);
+  }
+  
+  return numero;
+}
+
+/**
+ * Parseia valores de data
+ * @param {string} raw - Valor bruto
+ * @param {Object} rules - Regras de validação
+ * @returns {string} Data em formato ISO
+ */
+function parseData(raw, rules) {
+  const data = new Date(raw);
+  if (isNaN(data.getTime())) {
+    throw new Error('Valor deve ser uma data válida');
+  }
+  
+  // Validar limites de data se especificados
+  if (rules.data_min) {
+    const dataMin = new Date(rules.data_min);
+    if (data < dataMin) {
+      throw new Error(`Data deve ser posterior a ${rules.data_min}`);
+    }
+  }
+  if (rules.data_max) {
+    const dataMax = new Date(rules.data_max);
+    if (data > dataMax) {
+      throw new Error(`Data deve ser anterior a ${rules.data_max}`);
+    }
+  }
+  
+  return data.toISOString();
+}
+
+/**
+ * Parseia valores booleanos
+ * @param {string} raw - Valor bruto
+ * @param {Object} rules - Regras de validação
+ * @returns {boolean} Valor booleano
+ */
+function parseBooleano(raw, rules) {
+  const valorLower = raw.toLowerCase();
+  
+  const valoresVerdadeiros = rules.valores_verdadeiros || 
+    ['true', 'sim', 's', '1', 'verdadeiro', 'yes', 'y'];
+  const valoresFalsos = rules.valores_falsos || 
+    ['false', 'não', 'nao', 'n', '0', 'falso', 'no'];
+  
+  if (valoresVerdadeiros.includes(valorLower)) {
+    return true;
+  }
+  if (valoresFalsos.includes(valorLower)) {
+    return false;
+  }
+  
+  throw new Error('Valor deve ser verdadeiro ou falso');
+}
+
+/**
+ * Parseia valores de pressão arterial
+ * @param {string} raw - Valor bruto
+ * @param {Object} rules - Regras de validação
+ * @returns {Object} Objeto com sistólica, diastólica e texto original
+ */
+function parsePressaoArterial(raw, rules) {
+  // Detectar separadores aceitos
+  const separadores = rules.separadores_aceitos || ['/', 'x', 'por'];
+  let separadorEncontrado = null;
+  
+  for (const sep of separadores) {
+    if (raw.includes(sep)) {
+      separadorEncontrado = sep;
+      break;
+    }
+  }
+  
+  if (!separadorEncontrado) {
+    throw new Error(`Pressão arterial deve usar um dos separadores: ${separadores.join(', ')}`);
+  }
+  
+  const partes = raw.split(separadorEncontrado);
+  if (partes.length !== 2) {
+    throw new Error('Pressão arterial deve ter exatamente dois valores');
+  }
+  
+  const sistolica = parseInt(partes[0].trim());
+  const diastolica = parseInt(partes[1].trim());
+  
+  if (isNaN(sistolica) || isNaN(diastolica)) {
+    throw new Error('Valores de pressão arterial devem ser números válidos');
+  }
+  
+  // Validar limites usando regras da tag
+  const limiteSistolica = rules.sistolica || { min: 50, max: 300 };
+  const limiteDiastolica = rules.diastolica || { min: 30, max: 200 };
+  
+  if (sistolica < limiteSistolica.min || sistolica > limiteSistolica.max) {
+    throw new Error(`Pressão sistólica deve estar entre ${limiteSistolica.min} e ${limiteSistolica.max} mmHg`);
+  }
+  if (diastolica < limiteDiastolica.min || diastolica > limiteDiastolica.max) {
+    throw new Error(`Pressão diastólica deve estar entre ${limiteDiastolica.min} e ${limiteDiastolica.max} mmHg`);
+  }
+  if (sistolica <= diastolica) {
+    throw new Error('Pressão sistólica deve ser maior que a diastólica');
+  }
+  
+  return {
+    sistolica,
+    diastolica,
+    texto: raw,
+    unidade: rules.unidade || 'mmHg'
+  };
 }
 
 /**
@@ -244,10 +377,30 @@ function calculateStats(sections, tags) {
   return stats;
 }
 
+// Exportações ES6 para frontend
+export {
+  parseSections,
+  validateAndParse,
+  parseNumero,
+  parseData,
+  parseBooleano,
+  parsePressaoArterial,
+  sectionsToText,
+  isValidTagCode,
+  extractTagCodes,
+  validateRequiredTags,
+  calculateStats
+};
+
 // Exportações para compatibilidade CommonJS (Node.js)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     parseSections,
+    validateAndParse,
+    parseNumero,
+    parseData,
+    parseBooleano,
+    parsePressaoArterial,
     sectionsToText,
     isValidTagCode,
     extractTagCodes,

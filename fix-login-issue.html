@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correção do Problema de Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Correção do Problema de Login</h1>
+    
+    <div class="step info">
+        <h3>Diagnóstico Automático</h3>
+        <div id="diagnosis">Executando diagnóstico...</div>
+    </div>
+    
+    <div class="step">
+        <h3>Ações de Correção</h3>
+        <button onclick="clearStorage()">Limpar localStorage</button>
+        <button onclick="testLogin()">Testar Login</button>
+        <button onclick="fixAndTest()">Corrigir e Testar</button>
+    </div>
+    
+    <div class="step">
+        <h3>Resultados</h3>
+        <div id="results">Aguardando ações...</div>
+    </div>
+    
+    <script>
+        let diagnosisResults = [];
+        
+        function addDiagnosis(message, type = 'info') {
+            diagnosisResults.push({ message, type });
+            updateDiagnosisDisplay();
+        }
+        
+        function updateDiagnosisDisplay() {
+            const diagnosisDiv = document.getElementById('diagnosis');
+            diagnosisDiv.innerHTML = diagnosisResults.map(result => 
+                `<div class="${result.type}">${result.message}</div>`
+            ).join('');
+        }
+        
+        function updateResults(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        // Diagnóstico automático
+        function runDiagnosis() {
+            addDiagnosis('🔍 Iniciando diagnóstico...');
+            
+            // Verificar localStorage
+            const authStorage = localStorage.getItem('auth-storage');
+            if (authStorage === '[object Object]') {
+                addDiagnosis('❌ PROBLEMA: localStorage corrompido detectado!', 'error');
+            } else if (authStorage) {
+                try {
+                    const parsed = JSON.parse(authStorage);
+                    addDiagnosis('✅ localStorage válido encontrado', 'success');
+                } catch (e) {
+                    addDiagnosis('❌ PROBLEMA: localStorage com JSON inválido', 'error');
+                }
+            } else {
+                addDiagnosis('ℹ️ Nenhum localStorage encontrado', 'info');
+            }
+            
+            // Verificar token
+            const token = localStorage.getItem('hg_token');
+            if (token) {
+                addDiagnosis('✅ Token encontrado no localStorage', 'success');
+            } else {
+                addDiagnosis('ℹ️ Nenhum token encontrado', 'info');
+            }
+            
+            // Verificar conectividade com backend
+            fetch('http://localhost:5000/api/health')
+                .then(response => {
+                    if (response.ok) {
+                        addDiagnosis('✅ Backend acessível', 'success');
+                    } else {
+                        addDiagnosis('❌ Backend retornou erro: ' + response.status, 'error');
+                    }
+                })
+                .catch(error => {
+                    addDiagnosis('❌ Erro de conectividade com backend: ' + error.message, 'error');
+                });
+        }
+        
+        function clearStorage() {
+            try {
+                localStorage.removeItem('auth-storage');
+                localStorage.removeItem('hg_token');
+                sessionStorage.clear();
+                updateResults('✅ localStorage limpo com sucesso!', 'success');
+                addDiagnosis('🧹 localStorage limpo', 'success');
+            } catch (error) {
+                updateResults('❌ Erro ao limpar localStorage: ' + error.message, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            updateResults('🔄 Testando login...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@healthguardian.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResults(`✅ Login bem-sucedido!<br>
+                        <strong>Token:</strong> ${data.token.substring(0, 30)}...<br>
+                        <strong>Usuário:</strong> ${data.user.name}<br>
+                        <strong>Email:</strong> ${data.user.email}`, 'success');
+                    
+                    // Salvar token para teste
+                    localStorage.setItem('hg_token', data.token);
+                    addDiagnosis('✅ Login testado com sucesso', 'success');
+                } else {
+                    const errorText = await response.text();
+                    updateResults(`❌ Erro no login (${response.status}): ${errorText}`, 'error');
+                }
+            } catch (error) {
+                updateResults(`❌ Erro na requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        async function fixAndTest() {
+            updateResults('🔧 Executando correção completa...');
+            
+            // Passo 1: Limpar storage
+            clearStorage();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Passo 2: Testar login
+            await testLogin();
+            
+            updateResults(document.getElementById('results').innerHTML + '<br><br>🎉 Correção completa! Agora teste no frontend React.', 'success');
+        }
+        
+        // Executar diagnóstico ao carregar
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnosis, 500);
+        });
+    </script>
+</body>
+</html>

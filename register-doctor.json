@@ -1,0 +1,8 @@
+{
+  "name": "Dr. João Silva",
+  "email": "dr.joao@example.com",
+  "password": "123456",
+  "professionalType": "medico",
+  "professionalId": "CRM12345",
+  "specialty": "Clínica Geral"
+}

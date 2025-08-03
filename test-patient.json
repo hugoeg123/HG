@@ -1,0 +1,7 @@
+{
+  "name": "Paciente Teste",
+  "dateOfBirth": "1990-01-01",
+  "gender": "masculino",
+  "email": "paciente.teste@example.com",
+  "phone": "(11) 99999-9999"
+}

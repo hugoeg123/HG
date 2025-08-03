@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Correção do Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        .log { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 3px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Teste de Correção do Login</h1>
+    
+    <div class="test-section info">
+        <h3>1. Verificação de Conectividade</h3>
+        <button onclick="testBackendHealth()">Testar Backend</button>
+        <div id="health-result">Aguardando teste...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Teste de Login com Credenciais Válidas</h3>
+        <input type="email" id="login-email" placeholder="Email" value="admin@healthguardian.com">
+        <input type="password" id="login-password" placeholder="Senha" value="admin123">
+        <button onclick="testLogin()">Testar Login</button>
+        <div id="login-result">Aguardando teste...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Teste de Login com Credenciais Inválidas</h3>
+        <input type="email" id="invalid-email" placeholder="Email" value="teste@invalid.com">
+        <input type="password" id="invalid-password" placeholder="Senha" value="senhaerrada">
+        <button onclick="testInvalidLogin()">Testar Login Inválido</button>
+        <div id="invalid-result">Aguardando teste...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Teste de Registro (Verificar Conflito)</h3>
+        <input type="email" id="register-email" placeholder="Email" value="hgarib94@gmail.com">
+        <input type="password" id="register-password" placeholder="Senha" value="123456">
+        <input type="text" id="register-name" placeholder="Nome" value="Teste Usuario">
+        <button onclick="testRegister()">Testar Registro</button>
+        <div id="register-result">Aguardando teste...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>5. Logs Detalhados</h3>
+        <button onclick="clearLogs()">Limpar Logs</button>
+        <div id="detailed-logs" class="log">Logs aparecerão aqui...</div>
+    </div>
+    
+    <script>
+        let logs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+            updateLogs();
+        }
+        
+        function updateLogs() {
+            document.getElementById('detailed-logs').innerHTML = logs.join('<br>');
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogs();
+        }
+        
+        function updateResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        async function testBackendHealth() {
+            addLog('Testando conectividade com backend...');
+            updateResult('health-result', '🔄 Testando conectividade...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Origin': 'http://localhost:3000'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`Backend respondeu: ${JSON.stringify(data)}`, 'success');
+                    updateResult('health-result', `✅ Backend funcionando!<br><strong>Status:</strong> ${data.status}<br><strong>Timestamp:</strong> ${data.timestamp}`, 'success');
+                } else {
+                    addLog(`Backend retornou erro: ${response.status}`, 'error');
+                    updateResult('health-result', `❌ Backend com erro: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Erro de conectividade: ${error.message}`, 'error');
+                updateResult('health-result', `❌ Erro de conectividade: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            addLog(`Testando login para: ${email}`);
+            updateResult('login-result', '🔄 Testando login...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addLog(`Login bem-sucedido para ${email}`, 'success');
+                    updateResult('login-result', `✅ Login bem-sucedido!<br><strong>Token:</strong> ${data.token.substring(0, 30)}...<br><strong>Usuário:</strong> ${data.user.name}`, 'success');
+                } else {
+                    addLog(`Login falhou: ${response.status} - ${data.message}`, 'error');
+                    updateResult('login-result', `❌ Login falhou (${response.status}): ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Erro na requisição de login: ${error.message}`, 'error');
+                updateResult('login-result', `❌ Erro na requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testInvalidLogin() {
+            const email = document.getElementById('invalid-email').value;
+            const password = document.getElementById('invalid-password').value;
+            
+            addLog(`Testando login inválido para: ${email}`);
+            updateResult('invalid-result', '🔄 Testando login inválido...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    addLog(`Login inválido rejeitado corretamente: ${data.message}`, 'success');
+                    updateResult('invalid-result', `✅ Erro 401 esperado: ${data.message}`, 'success');
+                } else if (response.ok) {
+                    addLog(`PROBLEMA: Login inválido foi aceito!`, 'error');
+                    updateResult('invalid-result', `❌ PROBLEMA: Login inválido foi aceito!`, 'error');
+                } else {
+                    addLog(`Erro inesperado: ${response.status} - ${data.message}`, 'warning');
+                    updateResult('invalid-result', `⚠️ Erro inesperado (${response.status}): ${data.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Erro na requisição: ${error.message}`, 'error');
+                updateResult('invalid-result', `❌ Erro na requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testRegister() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const name = document.getElementById('register-name').value;
+            
+            addLog(`Testando registro para: ${email}`);
+            updateResult('register-result', '🔄 Testando registro...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password, name, role: 'doctor' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.status === 409) {
+                    addLog(`Conflito esperado: ${data.message}`, 'warning');
+                    updateResult('register-result', `⚠️ Conflito esperado (409): ${data.message}<br><em>Este usuário já existe no sistema.</em>`, 'warning');
+                } else if (response.ok) {
+                    addLog(`Registro bem-sucedido para ${email}`, 'success');
+                    updateResult('register-result', `✅ Registro bem-sucedido!<br><strong>Usuário:</strong> ${data.user.name}`, 'success');
+                } else {
+                    addLog(`Erro no registro: ${response.status} - ${data.message}`, 'error');
+                    updateResult('register-result', `❌ Erro no registro (${response.status}): ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Erro na requisição de registro: ${error.message}`, 'error');
+                updateResult('register-result', `❌ Erro na requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        // Executar teste de conectividade automaticamente
+        window.addEventListener('load', () => {
+            setTimeout(testBackendHealth, 1000);
+        });
+    </script>
+</body>
+</html>

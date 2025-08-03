@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Login Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Login Frontend</h1>
+        <p>Este teste simula exatamente o que o frontend React faz para fazer login.</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="hgarib94@gmail.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" value="extra-300" required>
+            </div>
+            
+            <button type="submit" id="loginBtn">Fazer Login</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Configuração da API igual ao frontend React
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        // Função para fazer requisições (simula axios)
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            };
+            
+            const response = await fetch(url, config);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${data.message || response.statusText}`);
+            }
+            
+            return { data, status: response.status, headers: response.headers };
+        }
+        
+        // Função de login (simula authStore.login)
+        async function login(email, password) {
+            try {
+                showResult('🔄 Iniciando login...', 'info');
+                
+                const response = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const { token, user } = response.data;
+                
+                if (token) {
+                    // Simular armazenamento do token
+                    localStorage.setItem('auth-token', token);
+                    
+                    showResult(`✅ Login realizado com sucesso!\n\nToken: ${token.substring(0, 50)}...\nUsuário: ${user.name} (${user.email})\nID: ${user.id}`, 'success');
+                    
+                    // Testar requisição autenticada
+                    await testAuthenticatedRequest(token);
+                } else {
+                    throw new Error('Token não recebido');
+                }
+                
+            } catch (error) {
+                console.error('Erro no login:', error);
+                showResult(`❌ Erro no login:\n\n${error.message}`, 'error');
+            }
+        }
+        
+        // Testar requisição autenticada
+        async function testAuthenticatedRequest(token) {
+            try {
+                showResult('🔄 Testando requisição autenticada...', 'info');
+                
+                const response = await apiRequest('/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const { user } = response.data;
+                showResult(`✅ Requisição autenticada OK!\n\nDados do usuário:\n- Nome: ${user.name}\n- Email: ${user.email}\n- Tipo: ${user.professional_type}\n- ID: ${user.id}`, 'success');
+                
+            } catch (error) {
+                console.error('Erro na requisição autenticada:', error);
+                showResult(`⚠️ Login OK, mas erro na requisição autenticada:\n\n${error.message}`, 'error');
+            }
+        }
+        
+        // Mostrar resultado na tela
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+        
+        // Event listener para o formulário
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Fazendo login...';
+            
+            try {
+                await login(email, password);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Fazer Login';
+            }
+        });
+        
+        // Teste inicial de conectividade
+        window.addEventListener('load', async () => {
+            try {
+                showResult('🔄 Testando conectividade com o backend...', 'info');
+                const response = await apiRequest('/health');
+                showResult(`✅ Backend conectado!\nStatus: ${response.status}\nPronto para testar login.`, 'success');
+            } catch (error) {
+                showResult(`❌ Erro de conectividade:\n\n${error.message}\n\nVerifique se o backend está rodando na porta 5000.`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

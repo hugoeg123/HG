@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useToast } from '../ui/Toast';
 import { FaUser, FaEnvelope, FaLock, FaUserMd, FaIdCard, FaStethoscope } from 'react-icons/fa';
 
 /**
@@ -26,6 +27,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { register, login, error, clearError } = useAuthStore();
+  const { toast } = useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,37 +51,51 @@ const Register = () => {
     }
     
     setIsLoading(true);
-    // Enviar dados para registro
-    const success = await register({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      professionalType: formData.professionalType,
-      professionalId: formData.professionalId || undefined,
-      specialty: formData.specialty || undefined
-    });
     
-    if (success) {
-      // Logar automaticamente o usuário após o registro bem-sucedido
-      const loginSuccess = await login(formData.email, formData.password);
-      if (loginSuccess) {
-        navigate('/'); // Redirecionar para o dashboard
+    try {
+      // Enviar dados para registro
+      const result = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        professionalType: formData.professionalType,
+        professionalId: formData.professionalId || undefined,
+        specialty: formData.specialty || undefined
+      });
+      
+      if (result.success) {
+        // Registro bem-sucedido, usuário já está autenticado automaticamente
+        toast.success('Cadastro realizado com sucesso! Redirecionando...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       } else {
-        // Se o login automático falhar, redirecionar para a página de login
-        navigate('/login');
+        // Erro no registro - usar a nova estrutura de retorno
+        if (result.isDuplicateEmail || result.status === 409) {
+          toast.warning('Este e-mail já está cadastrado. Redirecionando para o login...');
+          setTimeout(() => {
+            navigate('/login', { state: { email: formData.email } });
+          }, 3000);
+        } else if (result.status === 429) {
+          toast.error('Muitas tentativas. Tente novamente em alguns minutos.');
+        } else {
+          toast.error(result.error || 'Erro ao realizar cadastro. Tente novamente.');
+        }
       }
+    } catch (err) {
+      console.error('Erro durante registro:', err);
+      toast.error('Erro inesperado', {
+        description: 'Algo deu errado. Tente novamente em alguns minutos.'
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
     <div className="animate-fade-in">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-500 text-sm animate-shake">
-            {error}
-          </div>
-        )}
+        {/* Errors are now handled by Toast notifications */}
         
         <div className="relative">
           <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">

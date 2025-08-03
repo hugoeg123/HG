@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste AuthStore</title>
+</head>
+<body>
+    <h1>Teste de Diagnóstico do AuthStore</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Simular o comportamento do React e Zustand
+        console.log('=== TESTE DE DIAGNÓSTICO DO AUTHSTORE ===');
+        
+        // Verificar se o localStorage tem dados corrompidos
+        const authStorage = localStorage.getItem('auth-storage');
+        console.log('Auth Storage atual:', authStorage);
+        
+        if (authStorage === '[object Object]') {
+            console.error('PROBLEMA ENCONTRADO: Storage corrompido detectado!');
+            localStorage.removeItem('auth-storage');
+            console.log('Storage corrompido removido.');
+        }
+        
+        // Testar se conseguimos fazer uma requisição de login
+        async function testLogin() {
+            try {
+                console.log('Testando login...');
+                
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@healthguardian.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                console.log('Status da resposta:', response.status);
+                console.log('Headers da resposta:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Login bem-sucedido:', data);
+                    
+                    // Testar se conseguimos salvar no localStorage
+                    try {
+                        localStorage.setItem('hg_token', data.token);
+                        console.log('Token salvo no localStorage com sucesso');
+                    } catch (e) {
+                        console.error('Erro ao salvar token:', e);
+                    }
+                    
+                    document.getElementById('results').innerHTML = `
+                        <h2 style="color: green;">✅ Login funcionando!</h2>
+                        <p><strong>Token:</strong> ${data.token.substring(0, 20)}...</p>
+                        <p><strong>Usuário:</strong> ${data.user.name}</p>
+                    `;
+                } else {
+                    const errorData = await response.text();
+                    console.error('Erro no login:', response.status, errorData);
+                    document.getElementById('results').innerHTML = `
+                        <h2 style="color: red;">❌ Erro no login</h2>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Erro:</strong> ${errorData}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                document.getElementById('results').innerHTML = `
+                    <h2 style="color: red;">❌ Erro de rede</h2>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Executar teste após carregar a página
+        window.addEventListener('load', () => {
+            setTimeout(testLogin, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useToast } from '../ui/Toast';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 
 /**
@@ -19,7 +20,24 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, error, clearError } = useAuthStore();
+  const { toast } = useToast();
+
+  // Pré-preencher email se veio do registro
+  useEffect(() => {
+    if (location.state?.email) {
+      setFormData(prev => ({
+        ...prev,
+        email: location.state.email
+      }));
+      
+      // Mostrar toast informativo
+      toast.info('Email pré-preenchido', {
+        description: 'Digite sua senha para fazer login'
+      });
+    }
+  }, [location.state?.email]); // Removido 'toast' da dependência para evitar loop infinito
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,21 +52,44 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const success = await login(formData.email, formData.password);
-    if (success) {
-      navigate('/');
+    
+    try {
+      const success = await login(formData.email, formData.password);
+      if (success) {
+        toast.success('Login realizado com sucesso!', {
+          description: 'Redirecionando para o dashboard...'
+        });
+        navigate('/');
+      } else {
+        // Tratar diferentes tipos de erro
+        if (error && error.includes('401')) {
+          toast.error('Credenciais inválidas', {
+            description: 'Email ou senha incorretos. Verifique e tente novamente.'
+          });
+        } else if (error && error.includes('429')) {
+          toast.warning('Muitas tentativas', {
+            description: 'Aguarde um momento antes de tentar novamente'
+          });
+        } else {
+          toast.error('Erro no login', {
+            description: error || 'Verifique suas credenciais e tente novamente'
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Erro durante login:', err);
+      toast.error('Erro inesperado', {
+        description: 'Algo deu errado. Tente novamente em alguns minutos.'
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
     <div className="animate-fade-in">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-500 text-sm animate-shake">
-            {error}
-          </div>
-        )}
+        {/* Errors are now handled by Toast notifications */}
         
         <div className="relative">
           <label htmlFor="email" className="block text-sm font-medium mb-1">

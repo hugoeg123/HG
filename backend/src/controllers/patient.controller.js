@@ -75,6 +75,13 @@ exports.getPatientById = async (req, res) => {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
     
+    // Verificar se o paciente pertence ao usuário autenticado
+    if (req.user && req.user.id && patient.createdBy !== req.user.id) {
+      return res.status(403).json({ 
+        message: 'Acesso negado. Você não tem permissão para visualizar este paciente.' 
+      });
+    }
+    
     res.json(patient);
   } catch (error) {
     console.error('Erro ao buscar paciente:', error);
@@ -124,6 +131,13 @@ exports.updatePatient = async (req, res) => {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
     
+    // Verificar se o paciente pertence ao usuário autenticado
+    if (req.user && req.user.id && patient.createdBy !== req.user.id) {
+      return res.status(403).json({ 
+        message: 'Acesso negado. Você não tem permissão para modificar este paciente.' 
+      });
+    }
+    
     // Atualizar paciente
     await patient.update(req.body);
     
@@ -141,6 +155,13 @@ exports.deletePatient = async (req, res) => {
     
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
+    }
+    
+    // Verificar se o paciente pertence ao usuário autenticado
+    if (req.user && req.user.id && patient.createdBy !== req.user.id) {
+      return res.status(403).json({ 
+        message: 'Acesso negado. Você não tem permissão para excluir este paciente.' 
+      });
     }
     
     await patient.destroy();
@@ -164,6 +185,13 @@ exports.getPatientDashboard = async (req, res) => {
     const patient = await Patient.findByPk(patientId);
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
+    }
+    
+    // Verificar se o paciente pertence ao usuário autenticado
+    if (req.user && req.user.id && patient.createdBy !== req.user.id) {
+      return res.status(403).json({ 
+        message: 'Acesso negado. Você não tem permissão para acessar os dados deste paciente.' 
+      });
     }
     
     // Importar serviço do dashboard

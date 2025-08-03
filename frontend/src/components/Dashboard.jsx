@@ -17,9 +17,11 @@ const Dashboard = () => {
   const { patients, currentPatient, fetchPatients, isLoading, error, createPatient } = usePatientStore();
   const navigate = useNavigate();
   
+  // Hook: Removed fetchPatients from dependencies to prevent infinite loop
+  // since Zustand functions are recreated on each render
   useEffect(() => {
     fetchPatients();
-  }, [fetchPatients]);
+  }, []);
   
   const handleNewPatient = async () => {
     try {

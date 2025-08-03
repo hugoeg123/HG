@@ -1,6 +1,55 @@
 import { create } from 'zustand';
 import api from '../services/api';
 import { recordService } from '../services/api';
+
+/**
+ * Request cache to prevent duplicate API calls
+ * Hook: Prevents ERR_INSUFFICIENT_RESOURCES by caching recent requests
+ */
+const requestCache = new Map();
+const CACHE_DURATION = 5000; // 5 seconds
+
+/**
+ * Active requests tracker to prevent duplicate simultaneous calls
+ * Connector: Integrates with all API methods to prevent resource exhaustion
+ */
+const activeRequests = new Map();
+
+/**
+ * Utility functions for request management
+ * Hook: Prevents duplicate requests and implements caching
+ */
+const getCacheKey = (method, url, params = {}) => {
+  return `${method}:${url}:${JSON.stringify(params)}`;
+};
+
+const getCachedResponse = (cacheKey) => {
+  const cached = requestCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedResponse = (cacheKey, data) => {
+  requestCache.set(cacheKey, {
+    data,
+    timestamp: Date.now()
+  });
+};
+
+const getActiveRequest = (requestKey) => {
+  return activeRequests.get(requestKey);
+};
+
+const setActiveRequest = (requestKey, promise) => {
+  activeRequests.set(requestKey, promise);
+  promise.finally(() => {
+    activeRequests.delete(requestKey);
+  });
+  return promise;
+};
+
 import { useAuthStore } from './authStore';
 
 /**
@@ -16,6 +65,7 @@ const usePatientStore = create((set, get) => ({
   patients: [],
   currentPatient: null,
   currentRecord: null,
+  dashboardData: null,
   isLoading: false,
   error: null,
   retryCount: 0,
@@ -125,65 +175,83 @@ const usePatientStore = create((set, get) => ({
       set({ 
         error: error.response?.data?.message || 'Erro ao carregar dados do paciente', 
         isLoading: false,
-        currentPatient: null
+        currentPatient: null,
+        records: [] // Clear records as well when patient fails to load
       });
       return null;
     }
   },
   
   createPatient: async (patientData) => {
+    // Prevent multiple simultaneous patient creation
+    const requestKey = `create-patient-${JSON.stringify(patientData)}`;
+    const activeRequest = getActiveRequest(requestKey);
+    if (activeRequest) {
+      console.log('Patient creation already in progress');
+      return activeRequest;
+    }
+    
     set({ isLoading: true, error: null });
     
-    // Gerar ID temporário para atualização otimista
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const tempPatient = {
-      ...patientData,
-      id: tempId,
-      isTemporary: true,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Atualização otimista - adicionar paciente temporário à UI
-    set(state => ({
-      patients: [...state.patients, tempPatient],
-      currentPatient: tempPatient,
-      isLoading: false
-    }));
-    
-    try {
-      const response = await api.post('/patients', patientData);
-      const realPatient = response.data;
+    const requestPromise = (async () => {
+      // Gerar ID temporário para atualização otimista
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const tempPatient = {
+        ...patientData,
+        id: tempId,
+        isTemporary: true,
+        createdAt: new Date().toISOString()
+      };
       
-      // Substituir paciente temporário pelo real
+      // Atualização otimista - adicionar paciente temporário à UI
       set(state => ({
-        patients: state.patients.map(p => 
-          p.id === tempId ? realPatient : p
-        ),
-        currentPatient: state.currentPatient?.id === tempId 
-          ? realPatient 
-          : state.currentPatient,
+        patients: [...state.patients, tempPatient],
+        currentPatient: tempPatient,
         isLoading: false
       }));
       
-      // Atualizar cache
-      localStorage.setItem('patients', JSON.stringify(get().patients));
-      
-      return realPatient;
-    } catch (error) {
-      console.error('Erro ao criar paciente:', error);
-      
-      // Rollback - remover paciente temporário em caso de erro
-      set(state => ({
-        patients: state.patients.filter(p => p.id !== tempId),
-        currentPatient: state.currentPatient?.id === tempId 
-          ? null 
-          : state.currentPatient,
-        error: error.response?.data?.message || 'Erro ao criar paciente', 
-        isLoading: false 
-      }));
-      
-      return null;
-    }
+      try {
+        const response = await api.post('/patients', patientData);
+        const realPatient = response.data;
+        
+        // Substituir paciente temporário pelo real
+        set(state => ({
+          patients: state.patients.map(p => 
+            p.id === tempId ? realPatient : p
+          ),
+          currentPatient: state.currentPatient?.id === tempId 
+            ? realPatient 
+            : state.currentPatient,
+          isLoading: false,
+          error: null
+        }));
+        
+        // Atualizar cache
+        localStorage.setItem('patients', JSON.stringify(get().patients));
+        
+        // Clear dashboard cache for new patient
+        const dashboardCacheKey = getCacheKey('GET', `/patients/${realPatient.id}/dashboard`);
+        requestCache.delete(dashboardCacheKey);
+        
+        return realPatient;
+      } catch (error) {
+        console.error('Erro ao criar paciente:', error);
+        
+        // Rollback - remover paciente temporário em caso de erro
+        set(state => ({
+          patients: state.patients.filter(p => p.id !== tempId),
+          currentPatient: state.currentPatient?.id === tempId 
+            ? null 
+            : state.currentPatient,
+          error: error.response?.data?.message || 'Erro ao criar paciente', 
+          isLoading: false 
+        }));
+        
+        throw error;
+      }
+    })();
+    
+    return setActiveRequest(requestKey, requestPromise);
   },
   
   updatePatient: async (patientId, patientData) => {
@@ -306,6 +374,14 @@ const usePatientStore = create((set, get) => ({
         // Excluir paciente real do backend
         await api.delete(`/patients/${patientId}`);
         set({ isLoading: false });
+        
+        // Refresh patient list to ensure consistency with server
+        // Hook: Ensures UI reflects actual server state after deletion
+        try {
+          await get().fetchPatients(false); // Force refresh without cache
+        } catch (fetchError) {
+          console.warn('Failed to refresh patient list after deletion:', fetchError);
+        }
       }
       
       // Atualizar cache no localStorage
@@ -567,12 +643,95 @@ const usePatientStore = create((set, get) => ({
     }
   },
   
+  // Dashboard
+  fetchPatientDashboard: async (patientId, options = {}) => {
+    if (!patientId || patientId === 'undefined') {
+      console.error('Erro: ID do paciente não encontrado para dashboard');
+      set({ error: 'ID do paciente não encontrado' });
+      return null;
+    }
+    
+    // Check cache first (unless force refresh is requested)
+    const cacheKey = getCacheKey('GET', `/patients/${patientId}/dashboard`);
+    const cachedData = getCachedResponse(cacheKey);
+    if (cachedData && !options.forceRefresh) {
+      console.debug('Using cached dashboard data for patient:', patientId);
+      set({ 
+        dashboardData: cachedData,
+        isLoading: false,
+        error: null
+      });
+      return cachedData;
+    }
+    
+    // Check if request is already in progress
+    const requestKey = `dashboard-${patientId}`;
+    const activeRequest = getActiveRequest(requestKey);
+    if (activeRequest) {
+      console.log('Dashboard request already in progress for patient:', patientId);
+      return activeRequest;
+    }
+    
+    set({ isLoading: true, error: null });
+    
+    const requestPromise = (async () => {
+      try {
+        const response = await api.get(`/patients/${patientId}/dashboard`, options);
+        const dashboardData = response.data;
+        
+        const processedData = {
+          historico: Array.isArray(dashboardData?.historico) ? dashboardData.historico : [],
+          investigacao: Array.isArray(dashboardData?.investigacao) ? dashboardData.investigacao : [],
+          planos: Array.isArray(dashboardData?.planos) ? dashboardData.planos : [],
+          ...dashboardData
+        };
+        
+        // Cache the response
+        setCachedResponse(cacheKey, processedData);
+        
+        set({ 
+          dashboardData: processedData, 
+          isLoading: false,
+          error: null
+        });
+        
+        return processedData;
+      } catch (error) {
+        // Don't set error state if request was aborted (expected behavior)
+        if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+          console.debug('Dashboard request was canceled (expected behavior)');
+          return;
+        }
+        
+        console.error(`Erro ao buscar dashboard do paciente ${patientId}:`, error);
+        set({ 
+          error: error.response?.data?.message || 'Erro ao carregar dashboard do paciente', 
+          isLoading: false,
+          dashboardData: null
+        });
+        throw error;
+      }
+    })();
+    
+    return setActiveRequest(requestKey, requestPromise);
+  },
+  
   // Utilitários
-  setCurrentPatient: (patient) => set({ currentPatient: patient }),
+  setCurrentPatient: (patient) => {
+    // Hook: Type validation to prevent rendering crashes
+    if (patient && typeof patient === 'object' && !Array.isArray(patient)) {
+      set({ currentPatient: patient });
+    } else {
+      console.warn('Invalid patient object passed to setCurrentPatient:', patient);
+      set({ currentPatient: null });
+    }
+  },
   setCurrentRecord: (record) => set({ currentRecord: record }),
-  clearCurrentPatient: () => set({ currentPatient: null, currentRecord: null }),
+  clearCurrentPatient: () => set({ currentPatient: null, currentRecord: null, dashboardData: null }),
   clearCurrentRecord: () => set({ currentRecord: null }),
   clearError: () => set({ error: null }),
+  // Hook: Force reset loading state to prevent stuck UI
+  forceResetLoading: () => set({ isLoading: false }),
 }));
 
 export { usePatientStore };

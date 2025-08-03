@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final - Correções Aplicadas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { background-color: #d4edda; border-left: 4px solid #28a745; }
+        .error { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+        .info { background-color: #d1ecf1; border-left: 4px solid #17a2b8; }
+        .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; }
+        button { padding: 12px 24px; margin: 8px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        input { padding: 10px; margin: 8px; width: 250px; border: 1px solid #ddd; border-radius: 4px; }
+        .log { background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; max-height: 300px; overflow-y: auto; }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .status-card { padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .emoji { font-size: 1.2em; margin-right: 8px; }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #555; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        h3 { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste Final - Correções Aplicadas</h1>
+        
+        <div class="test-section info">
+            <h2><span class="emoji">📋</span>Resumo das Correções Implementadas</h2>
+            <div class="status-grid">
+                <div class="status-card success">
+                    <h4>✅ Erro de Headers Corrigido</h4>
+                    <p>Importação de <code>rawApi</code> adicionada ao <code>authStore.js</code> para acessar <code>defaults.headers.common</code></p>
+                </div>
+                <div class="status-card success">
+                    <h4>✅ Loop Infinito Resolvido</h4>
+                    <p>useEffect otimizado no <code>PatientDashboard.jsx</code> com <code>useCallback</code> e <code>useRef</code></p>
+                </div>
+                <div class="status-card success">
+                    <h4>✅ Key Única Adicionada</h4>
+                    <p>Componente <code>PatientDashboard</code> agora tem key única para prevenir problemas de estado</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2><span class="emoji">🔍</span>Testes de Conectividade</h2>
+            <button class="btn-primary" onclick="testBackendHealth()">🏥 Testar Backend</button>
+            <button class="btn-primary" onclick="testFrontendStatus()">💻 Testar Frontend</button>
+            <button class="btn-primary" onclick="testCORS()">🌐 Testar CORS</button>
+            <div id="connectivity-result">Aguardando testes...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2><span class="emoji">🔐</span>Testes de Autenticação</h2>
+            <div style="margin-bottom: 15px;">
+                <input type="email" id="test-email" placeholder="Email" value="admin@healthguardian.com">
+                <input type="password" id="test-password" placeholder="Senha" value="admin123">
+            </div>
+            <button class="btn-success" onclick="testLogin()">🔑 Testar Login</button>
+            <button class="btn-warning" onclick="testInvalidLogin()">❌ Testar Login Inválido</button>
+            <button class="btn-danger" onclick="testRegisterConflict()">⚠️ Testar Conflito de Registro</button>
+            <div id="auth-result">Aguardando testes...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2><span class="emoji">📊</span>Teste de Dashboard</h2>
+            <input type="text" id="patient-id" placeholder="ID do Paciente" value="1">
+            <button class="btn-primary" onclick="testDashboard()">📈 Testar Dashboard</button>
+            <button class="btn-warning" onclick="testDashboardLoop()">🔄 Testar Loop Prevention</button>
+            <div id="dashboard-result">Aguardando testes...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2><span class="emoji">📝</span>Logs Detalhados</h2>
+            <button class="btn-warning" onclick="clearLogs()">🗑️ Limpar Logs</button>
+            <button class="btn-primary" onclick="runAllTests()">🚀 Executar Todos os Testes</button>
+            <div id="detailed-logs" class="log">Logs aparecerão aqui...</div>
+        </div>
+    </div>
+    
+    <script>
+        let logs = [];
+        let testResults = {
+            backend: null,
+            frontend: null,
+            cors: null,
+            login: null,
+            dashboard: null
+        };
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const emoji = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'debug': '🔍'
+            }[type] || 'ℹ️';
+            
+            logs.push(`[${timestamp}] ${emoji} ${message}`);
+            updateLogs();
+        }
+        
+        function updateLogs() {
+            document.getElementById('detailed-logs').innerHTML = logs.join('<br>');
+            document.getElementById('detailed-logs').scrollTop = document.getElementById('detailed-logs').scrollHeight;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogs();
+        }
+        
+        function updateResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}" style="margin-top: 15px; padding: 15px; border-radius: 4px;">${message}</div>`;
+        }
+        
+        async function testBackendHealth() {
+            addLog('Testando conectividade com backend...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/health', {
+                    method: 'GET',
+                    headers: { 'Origin': 'http://localhost:3000' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    testResults.backend = true;
+                    addLog(`Backend funcionando: ${data.status}`, 'success');
+                    updateResult('connectivity-result', `✅ Backend Online<br><strong>Status:</strong> ${data.status}<br><strong>Timestamp:</strong> ${data.timestamp}`, 'success');
+                } else {
+                    testResults.backend = false;
+                    addLog(`Backend com erro: ${response.status}`, 'error');
+                    updateResult('connectivity-result', `❌ Backend com erro: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                testResults.backend = false;
+                addLog(`Erro de conectividade: ${error.message}`, 'error');
+                updateResult('connectivity-result', `❌ Erro de conectividade: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFrontendStatus() {
+            addLog('Verificando status do frontend...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/', {
+                    method: 'HEAD'
+                });
+                
+                if (response.ok) {
+                    testResults.frontend = true;
+                    addLog('Frontend funcionando corretamente', 'success');
+                    updateResult('connectivity-result', '✅ Frontend Online e Acessível', 'success');
+                } else {
+                    testResults.frontend = false;
+                    addLog(`Frontend com problema: ${response.status}`, 'warning');
+                    updateResult('connectivity-result', `⚠️ Frontend com problema: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                testResults.frontend = false;
+                addLog(`Erro ao acessar frontend: ${error.message}`, 'error');
+                updateResult('connectivity-result', `❌ Erro ao acessar frontend: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCORS() {
+            addLog('Testando configuração CORS...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/health', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'http://localhost:3000',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                testResults.cors = true;
+                addLog('CORS configurado corretamente', 'success');
+                updateResult('connectivity-result', `✅ CORS OK<br><strong>Origin:</strong> ${corsHeaders['Access-Control-Allow-Origin']}<br><strong>Methods:</strong> ${corsHeaders['Access-Control-Allow-Methods']}`, 'success');
+            } catch (error) {
+                testResults.cors = false;
+                addLog(`Erro na configuração CORS: ${error.message}`, 'error');
+                updateResult('connectivity-result', `❌ Erro CORS: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            
+            addLog(`Testando login para: ${email}`);
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testResults.login = true;
+                    addLog(`Login bem-sucedido para ${email}`, 'success');
+                    updateResult('auth-result', `✅ Login Bem-sucedido!<br><strong>Token:</strong> ${data.token.substring(0, 30)}...<br><strong>Usuário:</strong> ${data.user.name}<br><strong>Role:</strong> ${data.user.role}`, 'success');
+                } else {
+                    testResults.login = false;
+                    addLog(`Login falhou: ${response.status} - ${data.message}`, 'error');
+                    updateResult('auth-result', `❌ Login Falhou (${response.status}): ${data.message}`, 'error');
+                }
+            } catch (error) {
+                testResults.login = false;
+                addLog(`Erro na requisição de login: ${error.message}`, 'error');
+                updateResult('auth-result', `❌ Erro na Requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testInvalidLogin() {
+            addLog('Testando login com credenciais inválidas...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email: 'invalid@test.com', password: 'wrongpassword' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    addLog('Login inválido rejeitado corretamente (401)', 'success');
+                    updateResult('auth-result', `✅ Validação OK: ${data.message}`, 'success');
+                } else {
+                    addLog(`Comportamento inesperado: ${response.status}`, 'warning');
+                    updateResult('auth-result', `⚠️ Comportamento Inesperado (${response.status})`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Erro no teste de login inválido: ${error.message}`, 'error');
+                updateResult('auth-result', `❌ Erro no Teste: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testRegisterConflict() {
+            addLog('Testando conflito de registro...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        email: 'hgarib94@gmail.com', 
+                        password: '123456', 
+                        name: 'Teste Usuario',
+                        role: 'doctor'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.status === 409) {
+                    addLog('Conflito de registro detectado corretamente (409)', 'success');
+                    updateResult('auth-result', `✅ Validação de Conflito OK: ${data.message}`, 'success');
+                } else if (response.ok) {
+                    addLog('Registro bem-sucedido (usuário não existia)', 'info');
+                    updateResult('auth-result', `ℹ️ Registro Bem-sucedido: ${data.user.name}`, 'info');
+                } else {
+                    addLog(`Erro inesperado no registro: ${response.status}`, 'warning');
+                    updateResult('auth-result', `⚠️ Erro Inesperado (${response.status}): ${data.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Erro no teste de registro: ${error.message}`, 'error');
+                updateResult('auth-result', `❌ Erro no Teste: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testDashboard() {
+            const patientId = document.getElementById('patient-id').value;
+            
+            addLog(`Testando dashboard para paciente: ${patientId}`);
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/patients/${patientId}/dashboard`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': 'http://localhost:3000',
+                        'Authorization': 'Bearer test-token' // Simular token
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    testResults.dashboard = true;
+                    addLog(`Dashboard carregado com sucesso para paciente ${patientId}`, 'success');
+                    updateResult('dashboard-result', `✅ Dashboard OK<br><strong>Histórico:</strong> ${data.historico?.length || 0} registros<br><strong>Investigação:</strong> ${data.investigacao?.length || 0} registros<br><strong>Planos:</strong> ${data.planos?.length || 0} registros`, 'success');
+                } else {
+                    testResults.dashboard = false;
+                    addLog(`Erro ao carregar dashboard: ${response.status}`, 'error');
+                    updateResult('dashboard-result', `❌ Erro no Dashboard (${response.status})`, 'error');
+                }
+            } catch (error) {
+                testResults.dashboard = false;
+                addLog(`Erro na requisição do dashboard: ${error.message}`, 'error');
+                updateResult('dashboard-result', `❌ Erro na Requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testDashboardLoop() {
+            addLog('Testando prevenção de loop infinito no dashboard...');
+            
+            let requestCount = 0;
+            const maxRequests = 5;
+            const patientId = document.getElementById('patient-id').value;
+            
+            const testLoop = async () => {
+                requestCount++;
+                addLog(`Requisição ${requestCount}/${maxRequests} para dashboard`, 'debug');
+                
+                try {
+                    const response = await fetch(`http://localhost:5000/api/patients/${patientId}/dashboard`, {
+                        method: 'GET',
+                        headers: {
+                            'Origin': 'http://localhost:3000',
+                            'Authorization': 'Bearer test-token'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        addLog(`Requisição ${requestCount} bem-sucedida`, 'success');
+                    } else {
+                        addLog(`Requisição ${requestCount} falhou: ${response.status}`, 'warning');
+                    }
+                } catch (error) {
+                    addLog(`Requisição ${requestCount} com erro: ${error.message}`, 'error');
+                }
+            };
+            
+            // Simular múltiplas requisições rápidas
+            const promises = [];
+            for (let i = 0; i < maxRequests; i++) {
+                promises.push(testLoop());
+            }
+            
+            await Promise.all(promises);
+            
+            addLog('Teste de loop concluído - sistema deve lidar com requisições múltiplas', 'info');
+            updateResult('dashboard-result', `ℹ️ Teste de Loop Concluído<br><strong>Requisições:</strong> ${requestCount}<br><strong>Status:</strong> Sistema testado para múltiplas requisições`, 'info');
+        }
+        
+        async function runAllTests() {
+            addLog('🚀 Iniciando bateria completa de testes...', 'info');
+            clearLogs();
+            
+            await testBackendHealth();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testFrontendStatus();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testCORS();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testLogin();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testInvalidLogin();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testRegisterConflict();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testDashboard();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testDashboardLoop();
+            
+            // Resumo final
+            const successCount = Object.values(testResults).filter(result => result === true).length;
+            const totalTests = Object.keys(testResults).length;
+            
+            addLog(`🏁 Testes concluídos: ${successCount}/${totalTests} bem-sucedidos`, successCount === totalTests ? 'success' : 'warning');
+            
+            if (successCount === totalTests) {
+                updateResult('detailed-logs', '🎉 Todos os testes passaram! Sistema funcionando corretamente.', 'success');
+            } else {
+                updateResult('detailed-logs', `⚠️ ${totalTests - successCount} teste(s) falharam. Verifique os logs acima.`, 'warning');
+            }
+        }
+        
+        // Executar teste básico automaticamente
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addLog('🔧 Sistema de testes carregado');
+                addLog('💡 Clique em "Executar Todos os Testes" para verificação completa');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

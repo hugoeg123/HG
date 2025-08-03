@@ -25,12 +25,16 @@ const LeftSidebar = ({ collapsed }) => {
   const location = useLocation();
   
   // Usar o store para gerenciar pacientes
-  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient } = usePatientStore();
+  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient } = usePatientStore();
 
   // Carregar a lista de pacientes
+  // Hook: Removed fetchPatients from dependencies to prevent infinite loop
+  // since Zustand functions are recreated on each render
   useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
+    if (!patients || patients.length === 0) {
+      fetchPatients();
+    }
+  }, []);
 
   // Filtrar pacientes com base na pesquisa
   const filteredPatients = Array.isArray(patients) ? patients.filter(patient => {
@@ -84,9 +88,7 @@ const LeftSidebar = ({ collapsed }) => {
         if (location.pathname.includes(`/patients/${patientToDelete.id}`)) {
           navigate('/');
         }
-        // Atualizar a lista de pacientes
-        await fetchPatients();
-        // Mostrar mensagem de sucesso
+        // Mostrar mensagem de sucesso (deletePatient já atualiza o estado)
         console.log(`Paciente ${patientToDelete.name} excluído com sucesso`);
       } else {
         console.error('Falha ao excluir paciente - operação retornou false');
@@ -115,10 +117,9 @@ const LeftSidebar = ({ collapsed }) => {
   // Criar novo paciente
   const handleNewPatient = async () => {
     try {
-      const { createPatient } = usePatientStore.getState();
       const newPatient = await createPatient({
         name: 'Sem Nome',
-        dateOfBirth: new Date(),
+        dateOfBirth: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
         gender: 'não informado',
         email: null,
         phone: null,
@@ -136,13 +137,12 @@ const LeftSidebar = ({ collapsed }) => {
       });
       
       if (newPatient && newPatient.id) {
-        // Atualizar a lista de pacientes
-        await fetchPatients();
-        // Navegar para o novo paciente
+        // Navegar para o novo paciente (createPatient já atualiza o estado)
         navigate(`/patients/${newPatient.id}`);
       }
     } catch (err) {
       console.error('Erro ao criar paciente:', err);
+      alert('Erro ao criar paciente. Tente novamente.');
     }
   };
 

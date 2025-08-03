@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import api from '../services/api';
+import api, { rawApi } from '../services/api';
 import { initSocket, disconnectSocket, reconnectSocket } from '../services/socket';
 import axios from 'axios';
 
@@ -15,12 +15,16 @@ const useAuthStore = create(
 
       login: async (email, password) => {
         set({ isLoading: true, error: null });
+        console.log('AuthStore: Iniciando login para:', email);
+        
         try {
           const response = await api.post('/auth/login', { email, password });
           const { token, user } = response.data;
           
+          console.log('AuthStore: Login bem-sucedido, configurando token');
+          
           // Configurar o token no cabeçalho para futuras requisições
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          rawApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           // Salvar token no localStorage padrão e no utilitário global
           localStorage.setItem('hg_token', token);
@@ -29,26 +33,90 @@ const useAuthStore = create(
           }
           
           set({ token, user, isAuthenticated: true, isLoading: false });
-          reconnectSocket(); // Reconectar socket após login
-          console.log('Login successful, token:', token, 'user:', user); // Log para depuração
-          return true;
+          
+          // Conectar socket após login bem-sucedido
+          initSocket(token);
+          
+          console.log('AuthStore: Login completo, usuário autenticado');
+          return response.data;
         } catch (error) {
+          const errorDetails = {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            message: error.response?.data?.message,
+            requestId: error.response?.data?.requestId,
+            url: error.config?.url,
+            method: error.config?.method,
+            email: email,
+            errorCode: error.code,
+            errorName: error.name,
+            hasResponse: !!error.response,
+            hasRequest: !!error.request
+          };
+          
+          console.error('AuthStore: Erro detalhado no login:', errorDetails);
+          
+          // Determinar mensagem de erro específica baseada no tipo de erro
+          let errorMessage;
+          
+          if (!error.response && !error.request) {
+            // Erro de configuração ou código
+            errorMessage = 'Erro de configuração. Tente novamente.';
+            console.error('AuthStore: Erro de configuração no login:', error.message);
+          } else if (!error.response && error.request) {
+            // Erro de rede - servidor não respondeu
+            errorMessage = 'Falha na conexão com o servidor. Verifique sua conexão de internet.';
+            console.error('AuthStore: Erro de rede - servidor não respondeu');
+          } else if (error.response) {
+            // Servidor respondeu com erro
+            switch (error.response.status) {
+              case 400:
+                errorMessage = error.response.data?.message || 'Dados de login inválidos';
+                break;
+              case 401:
+                errorMessage = 'Credenciais inválidas. Verifique seu email e senha.';
+                break;
+              case 429:
+                errorMessage = 'Muitas tentativas de login. Tente novamente em alguns minutos.';
+                break;
+              case 500:
+                errorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
+                if (error.response.data?.requestId) {
+                  console.error(`AuthStore: Erro do servidor com ID: ${error.response.data.requestId}`);
+                }
+                break;
+              case 503:
+                errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns minutos.';
+                break;
+              default:
+                errorMessage = error.response.data?.message || `Erro do servidor (${error.response.status})`;
+            }
+          } else {
+            // Fallback para casos não cobertos
+            errorMessage = 'Falha na autenticação. Verifique a conexão com o servidor.';
+          }
+          
           set({ 
-            error: error.response?.data?.message || 'Falha na autenticação', 
+            error: errorMessage, 
             isLoading: false 
           });
+          
           return false;
         }
       },
 
       register: async (userData) => {
         set({ isLoading: true, error: null });
+        console.log('AuthStore: Iniciando registro para:', userData.email);
+        
         try {
           const response = await api.post('/auth/register', userData);
           const { token, user } = response.data;
           
+          console.log('AuthStore: Registro bem-sucedido, configurando token');
+          
           // Configurar o token no cabeçalho para futuras requisições
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          rawApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           // Salvar token no localStorage padrão e no utilitário global
           localStorage.setItem('hg_token', token);
@@ -58,20 +126,64 @@ const useAuthStore = create(
           
           // Fazer login automático após registro
           set({ token, user, isAuthenticated: true, isLoading: false });
-          return response.data;
+          console.log('AuthStore: Registro completo, usuário autenticado');
+          return { success: true, data: response.data };
         } catch (error) {
+          const errorDetails = {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            message: error.response?.data?.message,
+            url: error.config?.url,
+            method: error.config?.method,
+            email: userData.email,
+            errorCode: error.code,
+            errorName: error.name,
+            hasResponse: !!error.response,
+            hasRequest: !!error.request
+          };
+          
+          console.error('AuthStore: Erro detalhado no registro:', errorDetails);
+          
+          // Determinar mensagem de erro específica
+          let errorMessage;
+          
+          if (error.response?.status === 409) {
+            errorMessage = 'Este email já está cadastrado. Tente fazer o login.';
+            console.log('AuthStore: Email duplicado detectado');
+          } else if (error.response?.status === 400) {
+            errorMessage = error.response.data?.message || 'Dados de registro inválidos';
+          } else if (error.response?.status === 429) {
+            errorMessage = 'Muitas tentativas de registro. Tente novamente em alguns minutos.';
+          } else if (!error.response && !error.request) {
+            // Erro de configuração ou código
+            errorMessage = 'Erro de configuração. Tente novamente.';
+            console.error('AuthStore: Erro de configuração no registro:', error.message);
+          } else if (!error.response && error.request) {
+            // Erro de rede - servidor não respondeu
+            errorMessage = 'Falha na conexão com o servidor. Verifique sua conexão de internet.';
+            console.error('AuthStore: Erro de rede no registro - servidor não respondeu');
+          } else {
+            errorMessage = error.response?.data?.message || 'Falha no registro';
+          }
+          
           set({ 
-            error: error.response?.data?.message || 'Falha no registro', 
+            error: errorMessage, 
             isLoading: false 
           });
-          return false;
+          
+          return { 
+            success: false, 
+            error: errorMessage,
+            status: error.response?.status,
+            isDuplicateEmail: error.response?.status === 409
+          };
         }
       },
 
       logout: () => {
         disconnectSocket(); // Desconecta o socket ao fazer logout
         // Remover o token do cabeçalho
-        delete api.defaults.headers.common['Authorization'];
+        delete rawApi.defaults.headers.common['Authorization'];
         
         // Limpar tokens do localStorage
         localStorage.removeItem('hg_token');
@@ -101,7 +213,7 @@ const useAuthStore = create(
 
         try {
           // Configurar o token no cabeçalho
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          rawApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           // Verificar se o token é válido
           const response = await api.get('/auth/me');
@@ -140,19 +252,7 @@ const useAuthStore = create(
   )
 );
 
-// Configurar interceptor de resposta para tratar erros 401
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      console.log('401 detectado no interceptor, fazendo logout');
-      const authStore = useAuthStore.getState();
-      authStore.logout();
-      localStorage.removeItem('auth-storage');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+// Interceptor de resposta removido para evitar duplicação
+// O tratamento de erros 401 está centralizado em services/api.js
 
 export { useAuthStore };

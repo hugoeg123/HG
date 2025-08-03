@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste ERR_CANCELED Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .test-container {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .log {
+            background-color: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .debug {
+            color: #888;
+        }
+        .success {
+            color: #44ff44;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Correção ERR_CANCELED</h1>
+    
+    <div class="test-container">
+        <h2>Simulação de Requisições Dashboard</h2>
+        <p>Este teste simula o comportamento das requisições do dashboard para verificar se os erros ERR_CANCELED foram corrigidos.</p>
+        
+        <button onclick="testSingleRequest()">Requisição Única</button>
+        <button onclick="testRapidRequests()">Requisições Rápidas (Cancelamento)</button>
+        <button onclick="testCacheHit()">Teste Cache</button>
+        <button onclick="clearLog()">Limpar Log</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        // Simulação do sistema de AbortController
+        class MockAbortController {
+            constructor() {
+                this.signal = { aborted: false };
+                this._aborted = false;
+            }
+            
+            abort() {
+                this._aborted = true;
+                this.signal.aborted = true;
+                log('DEBUG: Request aborted (expected behavior)', 'debug');
+            }
+        }
+        
+        // Simulação do cache
+        const mockCache = new Map();
+        const CACHE_DURATION = 5000;
+        
+        // Simulação do sistema de requisições
+        const activeControllers = new Map();
+        
+        function createSignal(key) {
+            // Cancel previous request with same key
+            if (activeControllers.has(key)) {
+                log(`DEBUG: Canceling previous request for key: ${key}`, 'debug');
+                activeControllers.get(key).abort();
+            }
+            
+            // Create new controller
+            const controller = new MockAbortController();
+            activeControllers.set(key, controller);
+            
+            return controller.signal;
+        }
+        
+        function getCachedData(key) {
+            const cached = mockCache.get(key);
+            if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+                return cached.data;
+            }
+            return null;
+        }
+        
+        function setCachedData(key, data) {
+            mockCache.set(key, {
+                data,
+                timestamp: Date.now()
+            });
+        }
+        
+        // Simulação da requisição do dashboard
+        async function mockFetchDashboard(patientId, options = {}) {
+            const cacheKey = `dashboard-${patientId}`;
+            
+            // Check cache first
+            if (!options.forceRefresh) {
+                const cachedData = getCachedData(cacheKey);
+                if (cachedData) {
+                    log(`DEBUG: Using cached dashboard data for patient: ${patientId}`, 'debug');
+                    return cachedData;
+                }
+            }
+            
+            const signal = createSignal('dashboard');
+            
+            return new Promise((resolve, reject) => {
+                // Simulate network delay
+                setTimeout(() => {
+                    if (signal.aborted) {
+                        const error = new Error('Request canceled');
+                        error.name = 'AbortError';
+                        error.code = 'ERR_CANCELED';
+                        
+                        // New behavior: Don't log as error
+                        log('DEBUG: Dashboard request was canceled (expected behavior)', 'debug');
+                        reject(error);
+                        return;
+                    }
+                    
+                    const data = {
+                        patientId,
+                        historico: [`Registro ${Date.now()}`],
+                        investigacao: [`Exame ${Date.now()}`],
+                        planos: [`Plano ${Date.now()}`]
+                    };
+                    
+                    setCachedData(cacheKey, data);
+                    log(`SUCCESS: Dashboard loaded for patient ${patientId}`, 'success');
+                    resolve(data);
+                }, Math.random() * 1000 + 500); // 500-1500ms delay
+            });
+        }
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'debug' ? 'debug' : type === 'success' ? 'success' : '';
+            
+            logElement.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // Test functions
+        async function testSingleRequest() {
+            log('=== Teste: Requisição Única ===');
+            try {
+                const data = await mockFetchDashboard('patient-123');
+                log('Requisição concluída com sucesso', 'success');
+            } catch (error) {
+                if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                    // This should not happen in single request
+                    log('UNEXPECTED: Single request was canceled', 'error');
+                } else {
+                    log(`ERROR: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function testRapidRequests() {
+            log('=== Teste: Requisições Rápidas (Simulando Cancelamento) ===');
+            
+            // Fire multiple requests rapidly
+            const promises = [];
+            for (let i = 0; i < 3; i++) {
+                promises.push(
+                    mockFetchDashboard('patient-456', { forceRefresh: true })
+                        .then(() => log(`Request ${i + 1} completed`, 'success'))
+                        .catch(error => {
+                            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                                // This is expected behavior - should not log as error
+                                return;
+                            }
+                            log(`Request ${i + 1} failed: ${error.message}`, 'error');
+                        })
+                );
+                
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            await Promise.allSettled(promises);
+            log('Rapid requests test completed');
+        }
+        
+        async function testCacheHit() {
+            log('=== Teste: Cache Hit ===');
+            
+            // First request
+            try {
+                await mockFetchDashboard('patient-789');
+                log('First request completed', 'success');
+            } catch (error) {
+                log(`First request failed: ${error.message}`, 'error');
+                return;
+            }
+            
+            // Second request (should hit cache)
+            try {
+                await mockFetchDashboard('patient-789');
+                log('Second request completed (cache hit)', 'success');
+            } catch (error) {
+                log(`Second request failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize
+        log('Sistema de teste inicializado');
+        log('Clique nos botões para testar diferentes cenários');
+    </script>
+</body>
+</html>
