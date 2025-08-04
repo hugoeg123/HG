@@ -3,7 +3,7 @@ import { usePatientStore } from '../../store/patientStore';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useMultipleAbortControllers } from '../../hooks/useAbortController';
 import { useToast } from '../ui/Toast';
-import { PlusCircle, UserCircle, FileText, AlertTriangle, Pill, HeartPulse, Microscope, Clock, Target, TestTube, ArrowRight, Search, Beaker, NotebookPen, History } from 'lucide-react';
+import { PlusCircle, UserCircle, FileText, AlertTriangle, Pill, HeartPulse, Microscope, Clock, Target, TestTube, ArrowRight, Search, Beaker, NotebookPen, History, Edit2, Save, X } from 'lucide-react';
 
 // Tipos de dados para o dashboard
 const statusColors = {
@@ -53,15 +53,15 @@ const TimelineItem = ({ item }) => {
   return (
     <div className="relative pl-8 py-2 group">
       <div className="absolute left-0 top-4 w-px h-full bg-gray-700"></div>
-      <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-[#111113] group-hover:bg-blue-500 transition-colors"></div>
-      <div className="bg-[#1C1C1F] p-4 rounded-lg border border-gray-800 transition-all hover:border-blue-500/50 hover:bg-gray-800/20 cursor-pointer">
+      <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-[#111113] group-hover:bg-teal-500 transition-colors"></div>
+      <div className="bg-[#1C1C1F] p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-gray-800/20 cursor-pointer">
         <div className="flex justify-between items-start gap-4">
           <div>
             <p className="text-sm text-gray-400">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
             <h3 className="font-semibold text-white mt-1">{safeText(item.descricao)}</h3>
             <p className="text-xs text-gray-500 mt-1">Registrado por: {safeText(item.medico)}</p>
           </div>
-          <div className="text-blue-400 flex-shrink-0 mt-1" title={safeText(item.tipo)}>
+          <div className="text-teal-400 flex-shrink-0 mt-1" title={safeText(item.tipo)}>
             {iconMap[safeText(item.tipo)] || <FileText size={18}/>}
           </div>
         </div>
@@ -72,7 +72,9 @@ const TimelineItem = ({ item }) => {
 
 /**
  * PatientDashboard Component - Dashboard sofisticado do paciente
- * Baseado no mock MockColunaMeioDashPaciente.md
+ * Displays real-time patient dashboard data from API
+ * Integrates with: patientStore for data management
+ * Hook: Used in PatientView for displaying patient information
  */
 const PatientDashboard = ({ patientId, onNewRecord }) => {
   // Validate props to prevent rendering objects as text
@@ -82,7 +84,8 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   const { 
     currentPatient, 
     dashboardData,
-    fetchPatientDashboard, 
+    fetchPatientDashboard,
+    updatePatient, 
     isLoading, 
     error 
   } = usePatientStore();
@@ -96,7 +99,75 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   const { createSignal, abortAll } = useMultipleAbortControllers();
   const { toast } = useToast();
   
+  // Estados para edição inline
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [isEditingBirthDate, setIsEditingBirthDate] = useState(false);
+  const [editedBirthDate, setEditedBirthDate] = useState('');
+  
   const isMountedRef = useRef(false);
+  
+  // Funções para edição inline
+  const handleEditName = () => {
+    setEditedName(safeCurrentPatient?.name || '');
+    setIsEditingName(true);
+  };
+  
+  const handleSaveName = async () => {
+    if (editedName.trim() && editedName !== safeCurrentPatient?.name) {
+      try {
+        await updatePatient(safePatientId, { name: editedName.trim() });
+        toast.success('Nome atualizado com sucesso');
+      } catch (error) {
+        console.error('Erro ao atualizar nome:', error);
+        toast.error('Erro ao atualizar nome');
+      }
+    }
+    setIsEditingName(false);
+  };
+  
+  const handleCancelNameEdit = () => {
+    setEditedName('');
+    setIsEditingName(false);
+  };
+  
+  const handleEditBirthDate = () => {
+    // Converter data para formato yyyy-mm-dd para o input
+    const birthDate = safeCurrentPatient?.birthDate;
+    if (birthDate) {
+      const date = new Date(birthDate);
+      const formattedDate = date.toISOString().split('T')[0];
+      setEditedBirthDate(formattedDate);
+    }
+    setIsEditingBirthDate(true);
+  };
+  
+  const handleSaveBirthDate = async () => {
+    if (editedBirthDate && editedBirthDate !== safeCurrentPatient?.birthDate) {
+      try {
+        await updatePatient(safePatientId, { birthDate: editedBirthDate });
+        toast.success('Data de nascimento atualizada com sucesso');
+      } catch (error) {
+        console.error('Erro ao atualizar data de nascimento:', error);
+        toast.error('Erro ao atualizar data de nascimento');
+      }
+    }
+    setIsEditingBirthDate(false);
+  };
+  
+  const handleCancelBirthDateEdit = () => {
+    setEditedBirthDate('');
+    setIsEditingBirthDate(false);
+  };
+  
+  // Handle key press for inline editing
+  const handleKeyPress = (e, saveFunction, cancelFunction) => {
+    if (e.key === 'Enter') {
+      saveFunction();
+    } else if (e.key === 'Escape') {
+      cancelFunction();
+    }
+  };
   
   // Load dashboard data when component mounts
   const loadDashboard = useCallback(async (showToast = false) => {
@@ -174,9 +245,13 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
       saturacao: { valor: '--', status: 'warning', timestamp: '--' },
       frequencia: { valor: '--', status: 'warning', timestamp: '--' }
     },
-    timeline: dashboardData?.historico || [],
-    investigacao: dashboardData?.investigacao || [],
-    planos: dashboardData?.planos || []
+    timeline: dashboardData?.historicoConsultas || [],
+    investigacao: dashboardData?.investigacoesEmAndamento || [],
+    planos: dashboardData?.planos || [],
+    problemasAtivos: dashboardData?.problemasAtivos || [],
+    alergias: dashboardData?.alergias || [],
+    medicamentosEmUso: dashboardData?.medicamentosEmUso || [],
+    resultadosRecentes: dashboardData?.resultadosRecentes || []
   };
 
   // Filter timeline based on search term and active tab
@@ -227,7 +302,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 bg-[#111113] text-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
         <span className="ml-2 text-gray-400">Carregando dashboard...</span>
       </div>
     );
@@ -242,7 +317,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
           <p className="text-gray-400 mt-1">{error}</p>
           <button 
             onClick={handleRetry}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="btn btn-primary mt-4"
           >
             Tentar novamente
           </button>
@@ -268,14 +343,102 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
     <div className="min-h-screen bg-[#111113] text-gray-300 font-sans p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="flex items-center pb-4 mb-8 border-b border-gray-800">
-          <UserCircle size={48} className="text-blue-400 mr-4"/>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-100">
-              {typeof safeCurrentPatient?.name === 'string' ? safeCurrentPatient.name : 'Paciente'}, {typeof patientAge === 'number' ? patientAge : 0} anos
-            </h1>
+          <UserCircle size={48} className="text-teal-400 mr-4"/>
+          <div className="flex-1">
+            {/* Nome do Paciente - Editável */}
+            <div className="flex items-center gap-2 mb-2">
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    onKeyDown={(e) => handleKeyPress(e, handleSaveName, handleCancelNameEdit)}
+                    className="text-2xl font-bold bg-gray-800 text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
+                    placeholder="Nome do paciente"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                    title="Salvar nome"
+                  >
+                    <Save size={16} />
+                  </button>
+                  <button
+                    onClick={handleCancelNameEdit}
+                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                    title="Cancelar edição"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-gray-100">
+                    {typeof safeCurrentPatient?.name === 'string' ? safeCurrentPatient.name : 'Sem Nome'}
+                  </h1>
+                  <button
+                    onClick={handleEditName}
+                    className="p-1 text-gray-400 hover:text-teal-400 transition-colors"
+                    title="Editar nome"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Idade/Data de Nascimento - Editável */}
+            <div className="flex items-center gap-4 mb-2">
+              {isEditingBirthDate ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={editedBirthDate}
+                    onChange={(e) => setEditedBirthDate(e.target.value)}
+                    onKeyDown={(e) => handleKeyPress(e, handleSaveBirthDate, handleCancelBirthDateEdit)}
+                    className="text-lg bg-gray-800 text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveBirthDate}
+                    className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                    title="Salvar data de nascimento"
+                  >
+                    <Save size={16} />
+                  </button>
+                  <button
+                    onClick={handleCancelBirthDateEdit}
+                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                    title="Cancelar edição"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-white">
+                    {typeof patientAge === 'number' ? `${patientAge} anos` : '0 anos'}
+                  </h2>
+                  <button
+                    onClick={handleEditBirthDate}
+                    className="p-1 text-gray-400 hover:text-teal-400 transition-colors"
+                    title="Editar data de nascimento"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Informações do Paciente */}
             <p className="text-gray-500">
               ID: {typeof safeCurrentPatient?.id === 'string' || typeof safeCurrentPatient?.id === 'number' ? safeCurrentPatient.id : 'N/A'} | 
               Prontuário: {typeof safeCurrentPatient?.recordNumber === 'string' || typeof safeCurrentPatient?.recordNumber === 'number' ? safeCurrentPatient.recordNumber : 'N/A'}
+              {safeCurrentPatient?.birthDate && (
+                <span> | Nascimento: {new Date(safeCurrentPatient.birthDate).toLocaleDateString('pt-BR')}</span>
+              )}
             </p>
           </div>
         </header>
@@ -283,14 +446,14 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#1C1C1F] p-2 rounded-lg border border-gray-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <div className="flex items-center gap-2 p-1 bg-gray-900/50 rounded-lg">
+            <div className="bg-[#1a1e23] p-2 rounded-lg border border-gray-700/30 flex flex-col sm:flex-row gap-4 justify-between items-center">
+              <div className="flex items-center gap-2 p-1 bg-[#22262b] rounded-lg">
                 <button
                   onClick={() => setActiveTab('historico')}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
                     activeTab === 'historico'
-                      ? 'bg-blue-600/20 text-blue-300'
-                      : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                      ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
+                      : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
                   }`}
                 >
                   <History size={16}/>
@@ -298,10 +461,10 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                 </button>
                 <button
                   onClick={() => setActiveTab('investigacao')}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
                     activeTab === 'investigacao'
-                      ? 'bg-blue-600/20 text-blue-300'
-                      : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                      ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
+                      : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
                   }`}
                 >
                   <Beaker size={16}/>
@@ -309,10 +472,10 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                 </button>
                 <button
                   onClick={() => setActiveTab('planos')}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
                     activeTab === 'planos'
-                      ? 'bg-blue-600/20 text-blue-300'
-                      : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                      ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
+                      : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
                   }`}
                 >
                   <NotebookPen size={16}/>
@@ -326,7 +489,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   placeholder="Buscar na linha do tempo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-800/60 border border-gray-700 rounded-md pl-10 pr-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  className="search-input"
                 />
               </div>
             </div>
@@ -345,108 +508,186 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
           <aside className="lg:col-span-1 space-y-8">
             <button 
               onClick={safeOnNewRecord}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md hover:shadow-blue-500/30 transform hover:-translate-y-px"
+              className="btn btn-primary w-full font-bold py-3 flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:shadow-teal-500/30 transform hover:-translate-y-px"
             >
               <PlusCircle size={18} /> Iniciar Novo Registro
             </button>
             
             <InfoCard title="Sinais Vitais Recentes">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <HeartPulse size={16} className="text-red-400"/>
-                    <span className="text-xs text-gray-400">PA</span>
-                  </div>
-                  <p className={`font-semibold ${statusColors[realData.sinaisVitais.pressao.status]}`}>
-                    {realData.sinaisVitais.pressao.valor}
-                  </p>
-                  <p className="text-xs text-gray-500">{realData.sinaisVitais.pressao.timestamp}</p>
+              {isLoading ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="text-center animate-pulse">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                        <div className="w-6 h-3 bg-gray-700 rounded"></div>
+                      </div>
+                      <div className="h-5 bg-gray-700 rounded w-12 mx-auto mb-1"></div>
+                      <div className="h-3 bg-gray-800 rounded w-16 mx-auto"></div>
+                    </div>
+                  ))}
                 </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Target size={16} className="text-blue-400"/>
-                    <span className="text-xs text-gray-400">Temp</span>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <HeartPulse size={16} className="text-red-400"/>
+                      <span className="text-xs text-gray-400">PA</span>
+                    </div>
+                    <p className={`font-semibold ${statusColors[realData.sinaisVitais.pressao.status]}`}>
+                      {realData.sinaisVitais.pressao.valor}
+                    </p>
+                    <p className="text-xs text-gray-500">{realData.sinaisVitais.pressao.timestamp}</p>
                   </div>
-                  <p className={`font-semibold ${statusColors[realData.sinaisVitais.temperatura.status]}`}>
-                    {realData.sinaisVitais.temperatura.valor}
-                  </p>
-                  <p className="text-xs text-gray-500">{realData.sinaisVitais.temperatura.timestamp}</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <TestTube size={16} className="text-green-400"/>
-                    <span className="text-xs text-gray-400">SpO2</span>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Target size={16} className="text-teal-400"/>
+                      <span className="text-xs text-gray-400">Temp</span>
+                    </div>
+                    <p className={`font-semibold ${statusColors[realData.sinaisVitais.temperatura.status]}`}>
+                      {realData.sinaisVitais.temperatura.valor}
+                    </p>
+                    <p className="text-xs text-gray-500">{realData.sinaisVitais.temperatura.timestamp}</p>
                   </div>
-                  <p className={`font-semibold ${statusColors[realData.sinaisVitais.saturacao.status]}`}>
-                    {realData.sinaisVitais.saturacao.valor}
-                  </p>
-                  <p className="text-xs text-gray-500">{realData.sinaisVitais.saturacao.timestamp}</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Clock size={16} className="text-purple-400"/>
-                    <span className="text-xs text-gray-400">FC</span>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <TestTube size={16} className="text-green-400"/>
+                      <span className="text-xs text-gray-400">SpO2</span>
+                    </div>
+                    <p className={`font-semibold ${statusColors[realData.sinaisVitais.saturacao.status]}`}>
+                      {realData.sinaisVitais.saturacao.valor}
+                    </p>
+                    <p className="text-xs text-gray-500">{realData.sinaisVitais.saturacao.timestamp}</p>
                   </div>
-                  <p className={`font-semibold ${statusColors[realData.sinaisVitais.frequencia.status]}`}>
-                    {realData.sinaisVitais.frequencia.valor}
-                  </p>
-                  <p className="text-xs text-gray-500">{realData.sinaisVitais.frequencia.timestamp}</p>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Clock size={16} className="text-teal-400"/>
+                      <span className="text-xs text-gray-400">FC</span>
+                    </div>
+                    <p className={`font-semibold ${statusColors[realData.sinaisVitais.frequencia.status]}`}>
+                      {realData.sinaisVitais.frequencia.valor}
+                    </p>
+                    <p className="text-xs text-gray-500">{realData.sinaisVitais.frequencia.timestamp}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </InfoCard>
             
             <InfoCard title="Plano Terapêutico Ativo">
-              <div className="mb-4">
-                <h4 className="font-semibold text-white">Controle de HAS</h4>
-                <div className="text-sm mt-2 flex items-center gap-2">
-                  <Target size={16} className="text-blue-400"/>
-                  <span className="text-gray-400">Meta:</span>
-                  <span>PA &lt; 130/80 mmHg</span>
+              {isLoading ? (
+                <div className="space-y-4">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-800 rounded w-1/2 mb-1"></div>
+                    <div className="h-3 bg-gray-800 rounded w-2/3"></div>
+                  </div>
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-700 rounded w-2/3 mb-2"></div>
+                    <div className="h-3 bg-gray-800 rounded w-1/2 mb-1"></div>
+                    <div className="h-3 bg-gray-800 rounded w-3/4"></div>
+                  </div>
                 </div>
-                <div className={`text-sm mt-1 flex items-center gap-2 ${statusColors.warning}`}>
-                  <ArrowRight size={16}/>
-                  <span className="text-gray-400">Status:</span>
-                  <span>PA atual: 140/90 mmHg</span>
+              ) : realData.planos.length > 0 ? (
+                <div className="space-y-4">
+                  {realData.planos.slice(0, 3).map((plano, index) => (
+                    <div key={index} className="mb-4">
+                      <h4 className="font-semibold text-white">{plano.titulo || plano.tipo || 'Plano Terapêutico'}</h4>
+                      <div className="text-sm mt-2 text-gray-300">
+                        {plano.descricao || plano.resumo || 'Sem descrição disponível'}
+                      </div>
+                      {plano.data && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(plano.data).toLocaleDateString('pt-BR')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white">Controle de Dislipidemia</h4>
-                <div className="text-sm mt-2 flex items-center gap-2">
-                  <Target size={16} className="text-blue-400"/>
-                  <span className="text-gray-400">Meta:</span>
-                  <span>LDL &lt; 100 mg/dL</span>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Target size={24} className="mx-auto mb-2 opacity-50"/>
+                  <p>Nenhum plano terapêutico ativo encontrado</p>
+                  <p className="text-sm mt-1">Os planos serão exibidos conforme os registros médicos</p>
                 </div>
-                <div className={`text-sm mt-1 flex items-center gap-2 ${statusColors.success}`}>
-                  <ArrowRight size={16}/>
-                  <span className="text-gray-400">Status:</span>
-                  <span>LDL atual: 95 mg/dL</span>
-                </div>
-              </div>
+              )}
             </InfoCard>
 
             <InfoCard title="Resumo Clínico">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><HeartPulse size={16} /> Problemas Ativos</p>
-                  <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
-                    <li>Hipertensão Arterial Sistêmica (HAS)</li>
-                    <li>Dislipidemia</li>
-                  </ul>
+              {isLoading ? (
+                <div className="space-y-4">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-700 rounded w-1/2 mb-2"></div>
+                    <div className="space-y-1">
+                      <div className="h-3 bg-gray-800 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-800 rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-800 rounded w-4/5"></div>
+                    </div>
+                  </div>
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-700 rounded w-1/3 mb-2"></div>
+                    <div className="space-y-1">
+                      <div className="h-3 bg-gray-800 rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-800 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-700 rounded w-2/3 mb-2"></div>
+                    <div className="space-y-1">
+                      <div className="h-3 bg-gray-800 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-800 rounded w-4/5"></div>
+                      <div className="h-3 bg-gray-800 rounded w-2/3"></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-gray-800">
-                  <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><AlertTriangle size={16} /> Alergias</p>
-                  <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
-                    <li>Penicilina</li>
-                  </ul>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><HeartPulse size={16} /> Problemas Ativos</p>
+                    {realData.problemasAtivos.length > 0 ? (
+                      <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
+                        {realData.problemasAtivos.slice(0, 5).map((problema, index) => (
+                          <li key={index}>
+                            {problema.descricao || problema.problema || problema.texto || problema}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">Nenhum problema ativo registrado</p>
+                    )}
+                  </div>
+                  <div className="pt-4 border-t border-gray-800">
+                    <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><AlertTriangle size={16} /> Alergias</p>
+                    {realData.alergias.length > 0 ? (
+                      <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
+                        {realData.alergias.slice(0, 5).map((alergia, index) => (
+                          <li key={index}>
+                            {alergia.descricao || alergia.alergia || alergia.substancia || alergia}
+                            {alergia.reacao && ` (${alergia.reacao})`}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">Nenhuma alergia registrada</p>
+                    )}
+                  </div>
+                  <div className="pt-4 border-t border-gray-800">
+                    <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><Pill size={16} /> Medicamentos</p>
+                    {realData.medicamentosEmUso.length > 0 ? (
+                      <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
+                        {realData.medicamentosEmUso.slice(0, 8).map((medicamento, index) => (
+                          <li key={index}>
+                            {medicamento.nome || medicamento.medicamento || medicamento}
+                            {medicamento.dose && ` ${medicamento.dose}`}
+                            {medicamento.frequencia && ` - ${medicamento.frequencia}`}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">Nenhum medicamento em uso registrado</p>
+                    )}
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-gray-800">
-                  <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><Pill size={16} /> Medicamentos</p>
-                  <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
-                    <li>Losartana 50mg</li>
-                    <li>Sinvastatina 20mg</li>
-                  </ul>
-                </div>
-              </div>
+              )}
             </InfoCard>
           </aside>
         </main>
@@ -541,10 +782,10 @@ const PlansList = ({ data }) => {
 const RecordCard = ({ record, type }) => {
   const getTypeColor = (type) => {
     switch (type) {
-      case 'historico': return 'bg-blue-50 border-blue-200';
-      case 'investigacao': return 'bg-green-50 border-green-200';
-      case 'planos': return 'bg-purple-50 border-purple-200';
-      default: return 'bg-gray-50 border-gray-200';
+      case 'historico': return 'bg-[#1C1C1F] border-teal-500/30';
+      case 'investigacao': return 'bg-[#1C1C1F] border-teal-500/30';
+      case 'planos': return 'bg-[#1C1C1F] border-teal-500/30';
+      default: return 'bg-[#1C1C1F] border-gray-800';
     }
   };
   

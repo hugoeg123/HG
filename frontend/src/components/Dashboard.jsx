@@ -96,41 +96,41 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-      <div className="welcome-section mb-8">
+      <div className="welcome-section mb-8 bg-gradient-to-r from-teal-600/20 to-blue-600/20 border border-teal-600/30 rounded-lg p-6">
         <h1 className="text-2xl font-bold text-white mb-2">Bem-vindo, {user?.name || 'Médico'}!</h1>
-        <p className="text-gray-400">Aqui está um resumo da sua atividade recente e pacientes.</p>
+        <p className="text-gray-300">Aqui está um resumo da sua atividade recente e pacientes.</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Card de estatísticas */}
-        <div className="stat-card bg-darkBg border border-gray-700 p-6 rounded-lg shadow-md">
+        <div className="stat-card bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-white mb-4">Pacientes Ativos</h3>
-          <div className="text-3xl font-bold text-purple-500 mb-2">{patients?.length || 0}</div>
+          <div className="text-3xl font-bold text-teal-400 mb-2">{patients?.length || 0}</div>
           <p className="text-gray-400 text-sm">Total de pacientes sob seus cuidados</p>
         </div>
         
         {/* Card de consultas */}
-        <div className="stat-card bg-darkBg border border-gray-700 p-6 rounded-lg shadow-md">
+        <div className="stat-card bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-white mb-4">Consultas Hoje</h3>
-          <div className="text-3xl font-bold text-teal-500 mb-2">0</div>
+          <div className="text-3xl font-bold text-teal-400 mb-2">0</div>
           <p className="text-gray-400 text-sm">Consultas agendadas para hoje</p>
         </div>
         
         {/* Card de tarefas */}
-        <div className="stat-card bg-darkBg border border-gray-700 p-6 rounded-lg shadow-md">
+        <div className="stat-card bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-white mb-4">Tarefas Pendentes</h3>
-          <div className="text-3xl font-bold text-amber-500 mb-2">0</div>
+          <div className="text-3xl font-bold text-amber-400 mb-2">0</div>
           <p className="text-gray-400 text-sm">Tarefas que precisam de sua atenção</p>
         </div>
       </div>
       
       {/* Lista de pacientes recentes */}
-      <div className="recent-patients bg-darkBg border border-gray-700 p-6 rounded-lg shadow-md">
+      <div className="recent-patients bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">Pacientes Recentes</h2>
           <button 
             onClick={handleNewPatient}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white text-sm font-medium flex items-center"
+            className="btn btn-primary flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +152,7 @@ const Dashboard = () => {
         
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
           </div>
         ) : error ? (
           <div className="text-red-400 text-center py-4">{error}</div>
@@ -176,13 +176,13 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {patients.map((patient, index) => {
+                {patients.slice(0, 5).map((patient, index) => {
                   // Garantir chave única mesmo para pacientes temporários
                   const patientKey = patient?.id || `temp-dashboard-patient-${index}-${Date.now()}`;
                   const patientName = patient?.name || 'Sem Nome';
                   
                   return (
-                    <tr key={patientKey} className="border-b border-gray-700 hover:bg-gray-800">
+                    <tr key={patientKey} className="border-b border-gray-700 hover:bg-gray-800 transition-colors duration-200">
                       <td className="py-4 text-white">{patientName}</td>
                       <td className="py-4 text-gray-300">
                         {patient.birthDate || patient.dateOfBirth ? (
@@ -205,7 +205,7 @@ const Dashboard = () => {
                         {patient.id && patient.id !== 'undefined' ? (
                           <Link 
                             to={`/patients/${patient.id}`}
-                            className="text-purple-500 hover:text-purple-400 font-medium"
+                            className="text-teal-400 hover:text-teal-300 font-medium transition-colors duration-200"
                           >
                             Ver Detalhes
                           </Link>

@@ -7,7 +7,7 @@ import React from 'react';
 const TestLayout = () => {
   return (
     <div className="h-screen bg-darkBg text-white p-4">
-      <h1 className="text-2xl font-bold mb-4 text-purple-500">Teste do Layout - Health Guardian</h1>
+      <h1 className="text-2xl font-bold mb-4 text-teal-500">Teste do Layout - Health Guardian</h1>
       
       {/* Teste do grid de 3 colunas */}
       <div className="grid grid-cols-3 gap-4 h-96 mb-6">
@@ -29,12 +29,12 @@ const TestLayout = () => {
           </div>
         </div>
         
-        <div className="bg-lightBg border-2 border-blue-500 p-4 rounded-lg">
+        <div className="bg-lightBg border-2 border-teal-500 p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-2">Coluna 3 - RightSidebar</h2>
           <p className="text-gray-300">Esta é a coluna direita onde fica o assistente IA.</p>
           <div className="mt-4 space-y-2">
-            <div className="bg-purple-900 p-2 rounded text-sm">Chat IA</div>
-            <div className="bg-blue-900 p-2 rounded text-sm">Calculadoras</div>
+            <div className="bg-teal-900 p-2 rounded text-sm">Chat IA</div>
+          <div className="bg-teal-800 p-2 rounded text-sm">Calculadoras</div>
             <div className="bg-yellow-900 p-2 rounded text-sm">Alertas</div>
           </div>
         </div>
@@ -46,7 +46,13 @@ const TestLayout = () => {
         <div className="flex space-x-4">
           <button className="btn btn-primary">Botão Primário</button>
           <button className="btn btn-secondary">Botão Secundário</button>
-          <input className="input" placeholder="Campo de entrada" />
+          <input 
+            id="test-input"
+            name="testInput"
+            className="input" 
+            placeholder="Campo de entrada"
+            aria-label="Campo de teste de entrada"
+          />
         </div>
       </div>
       

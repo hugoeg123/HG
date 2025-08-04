@@ -272,8 +272,8 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-[#1a1e23] border border-gray-700/50 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Cabeçalho do modal */}
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <div className="flex items-center">
@@ -286,13 +286,13 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
               <div className="flex space-x-2">
                 <button
                   onClick={() => setMode('view')}
-                  className={`px-3 py-1 rounded ${mode === 'view' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                  className={`px-3 py-1 rounded-lg transition-all duration-200 ${mode === 'view' ? 'bg-teal-600 text-white' : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600'}`}
                 >
                   Usar
                 </button>
                 <button
                   onClick={() => setMode('edit')}
-                  className={`px-3 py-1 rounded ${mode === 'edit' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                  className={`px-3 py-1 rounded-lg transition-all duration-200 ${mode === 'edit' ? 'bg-teal-600 text-white' : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600'}`}
                 >
                   Editar
                 </button>
@@ -300,7 +300,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
             )}
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white transition-colors duration-200 p-1 rounded-lg hover:bg-gray-700/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -323,7 +323,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
         {/* Corpo do modal */}
         <div className="p-4">
           {error && (
-            <div className="mb-4 p-3 bg-red-900 bg-opacity-30 border border-red-800 text-red-300 rounded">
+            <div className="mb-4 p-3 bg-red-900/20 border border-red-700/50 text-red-300 rounded-lg">
               {error}
             </div>
           )}
@@ -335,7 +335,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
               
               {formData.category && (
                 <div className="mb-4">
-                  <span className="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded">
+                  <span className="text-sm bg-gray-700/50 text-gray-300 px-2 py-1 rounded-lg">
                     {formData.category}
                   </span>
                 </div>
@@ -368,9 +368,9 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                 </button>
 
                 {result !== null && (
-                  <div className="mt-4 p-4 bg-gray-700 rounded-lg">
+                  <div className="mt-4 p-4 bg-gray-700/30 border border-gray-600/50 rounded-lg">
                     <h3 className="text-lg font-medium text-white mb-2">Resultado:</h3>
-                    <div className="text-2xl font-bold text-green-400">
+                    <div className="text-2xl font-bold text-teal-400">
                       {typeof result === 'number' ? result.toFixed(2) : result}
                     </div>
                   </div>
@@ -429,17 +429,17 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                 <label className="block text-gray-300 mb-2">
                   Tags
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-gray-600 rounded-md p-2 bg-gray-700">
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-gray-600/50 rounded-lg p-2 bg-gray-700/30">
                   {availableTags.length > 0 ? (
                     availableTags.map((tag) => (
                       <button
                         key={tag.id}
                         type="button"
                         onClick={() => handleTagToggle(tag.id)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
                           selectedTags.includes(tag.id)
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                            ? 'bg-teal-600 text-white'
+                            : 'bg-gray-600/50 text-gray-300 hover:bg-gray-500/70'
                         }`}
                       >
                         {tag.name}

@@ -292,6 +292,7 @@ export const calculatorService = {
 export const templateService = {
   getAll: () => throttledApi.get('/templates'),
   getById: (id) => throttledApi.get(`/templates/${id}`),
+  getByType: (type) => throttledApi.get(`/templates/type/${type}`),
   create: (data) => throttledApi.post('/templates', data),
   update: (id, data) => throttledApi.put(`/templates/${id}`, data),
   delete: (id) => throttledApi.delete(`/templates/${id}`),

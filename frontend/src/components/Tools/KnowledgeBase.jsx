@@ -150,7 +150,7 @@ const KnowledgeBase = () => {
         {categories.map(category => (
           <button
             key={category.id}
-            className={`px-3 py-1 text-sm rounded-full ${activeCategory === category.id ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            className={`btn text-sm rounded-full ${activeCategory === category.id ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setActiveCategory(category.id)}
           >
             {category.name}
@@ -167,13 +167,13 @@ const KnowledgeBase = () => {
               <Link
                 key={item.id}
                 to={item.url}
-                className="block p-3 rounded bg-purple-900 bg-opacity-20 border border-purple-800 hover:bg-opacity-30 transition-colors"
+                className="block p-3 rounded bg-teal-900 bg-opacity-20 border border-teal-800 hover:bg-opacity-30 transition-colors"
               >
                 <h5 className="text-white font-medium">{item.title}</h5>
                 <p className="text-gray-300 text-sm mt-1">{item.description}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {item.tags.map(tag => (
-                    <span key={tag} className="text-xs bg-purple-800 bg-opacity-50 text-purple-200 px-1.5 py-0.5 rounded">
+                    <span key={tag} className="text-xs bg-teal-800 bg-opacity-50 text-teal-200 px-1.5 py-0.5 rounded">
                       {tag}
                     </span>
                   ))}

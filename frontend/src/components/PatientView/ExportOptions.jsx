@@ -91,7 +91,7 @@ const ExportOptions = ({ patientId }) => {
           <button
             onClick={handleExport}
             disabled={loading}
-            className={`px-4 py-2 rounded ${loading ? 'bg-gray-600' : 'bg-blue-600 hover:bg-blue-700'} text-white transition-colors`}
+            className={`px-4 py-2 rounded ${loading ? 'bg-gray-600' : 'bg-teal-600 hover:bg-teal-700'} text-white transition-colors`}
           >
             {loading ? 'Exportando...' : 'Exportar'}
           </button>

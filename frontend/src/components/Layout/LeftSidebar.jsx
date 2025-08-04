@@ -152,22 +152,38 @@ const LeftSidebar = ({ collapsed }) => {
   };
 
   return (
-    <div className={`left-pane ${collapsed ? 'collapsed' : ''}`}>
-      <div className="p-4 pb-20">
-        <h2 className="text-xl font-semibold mb-4">Pacientes</h2>
+    <div className={`left-pane ${collapsed ? 'collapsed' : ''}`} style={{backgroundColor: '#1a1e23'}}>
+      <div className="p-4 pb-20 border-r border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            </svg>
+            Pacientes
+          </h2>
+          <button
+            onClick={handleNewPatient}
+            className="p-2 bg-teal-600/20 hover:bg-teal-600/30 border border-teal-600/30 rounded-lg transition-all duration-200 hover:border-teal-500"
+            title="Novo Paciente"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
         
         {/* Campo de pesquisa */}
         <div className="relative mb-4">
           <input
             type="text"
-            placeholder="Buscar"
-            className="search-input"
+            placeholder="Buscar pacientes..."
+            className="w-full pl-10 pr-4 py-2 bg-[#22262b] border border-gray-700 rounded-lg text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="search-icon h-5 w-5"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -184,7 +200,7 @@ const LeftSidebar = ({ collapsed }) => {
         {/* Lista de pacientes */}
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal-500"></div>
           </div>
         ) : error ? (
           <div className="text-red-400 text-center py-4">{error}</div>
@@ -206,35 +222,49 @@ const LeftSidebar = ({ collapsed }) => {
               return (
                 <li key={`patient-${patientId}`}>
                   <div
-                    className={`patient-item group ${expandedPatient === patientId ? 'active' : ''}`}
+                    className={`relative group bg-[#22262b] border border-gray-700 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10 mb-2 ${expandedPatient === patientId ? 'border-teal-500 bg-teal-600/10' : ''}`}
                     onClick={() => handlePatientClick(patient)}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`h-5 w-5 mr-2 transition-transform ${expandedPatient === patientId ? 'transform rotate-90' : ''}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                    <span className="flex-1">
-                      {patientName}
-                    </span>
-                    <button
-                      onClick={(e) => handleDeletePatient(patient, e)}
-                      className="btn btn-ghost btn-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Excluir paciente"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center flex-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`h-5 w-5 mr-3 text-teal-400 transition-transform ${expandedPatient === patientId ? 'transform rotate-90' : ''}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                        <div className="flex-1">
+                          <div className="text-white font-medium">{patientName}</div>
+                          {patient.age && (
+                            <div className="text-gray-400 text-sm">
+                              {patient.age} anos • {patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Feminino' : 'Não informado'}
+                            </div>
+                          )}
+                          {patient.records && (
+                            <div className="text-teal-400 text-xs">
+                              {patient.records.length} registro(s)
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeletePatient(patient, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 rounded-lg transition-all duration-200 hover:border-red-500"
+                        title="Excluir paciente"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Registros do paciente (expandidos) */}
@@ -311,15 +341,16 @@ const LeftSidebar = ({ collapsed }) => {
 
       </div>
       
-      {/* Botões de ação fixos na parte inferior */}
+      {/* Botões de ação fixos na parte inferior - Centralizados */}
       <div className="fixed-bottom-buttons">
         <button
           onClick={handleNewPatient}
-          className="btn btn-primary flex items-center justify-center"
+          className="sidebar-button sidebar-button-primary"
+          title="Criar novo paciente"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-1"
+            className="h-5 w-5 mr-2"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -335,11 +366,12 @@ const LeftSidebar = ({ collapsed }) => {
         </button>
         <button
           onClick={handleImportPatients}
-          className="btn btn-secondary flex items-center justify-center"
+          className="sidebar-button sidebar-button-secondary"
+          title="Importar pacientes"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-1"
+            className="h-5 w-5 mr-2"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -358,32 +390,32 @@ const LeftSidebar = ({ collapsed }) => {
       {/* Modal de Confirmação de Exclusão */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="bg-[#22262b] border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
             <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-red-600/20 border border-red-600/30 rounded-full flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Confirmar Exclusão</h3>
+              <h3 className="text-lg font-semibold text-white">Confirmar Exclusão</h3>
             </div>
             
-            <p className="text-gray-600 mb-6">
-              Tem certeza que deseja excluir o paciente <strong>"{patientToDelete?.name || 'Sem Nome'}"</strong>?
+            <p className="text-gray-300 mb-6">
+              Tem certeza que deseja excluir o paciente <strong className="text-white">"{patientToDelete?.name || 'Sem Nome'}"</strong>?
               <br /><br />
-              Esta ação não pode ser desfeita e todos os registros médicos associados serão perdidos.
+              <span className="text-red-400">Esta ação não pode ser desfeita e todos os registros médicos associados serão perdidos.</span>
             </p>
             
             <div className="flex justify-end space-x-3">
               <button
                 onClick={cancelDeletePatient}
-                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="btn btn-secondary"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmDeletePatient}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="btn btn-danger"
               >
                 Sim, Excluir
               </button>

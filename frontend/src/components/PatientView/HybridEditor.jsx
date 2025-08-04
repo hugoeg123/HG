@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Plus, Hash, Save, ChevronDown, ChevronRight, BookText, Stethoscope, FlaskConical, ClipboardList, Pill, X, UserCircle, Sparkles } from 'lucide-react';
+import { Save, X, UserCircle, Sparkles, BookText, Stethoscope, FlaskConical, ClipboardList, Pill } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
 import { tagService, templateService } from '../../services/api';
 import { parseSections } from '../../../../shared/parser.js';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useDebounce, useDebounceCallback } from '../../hooks/useDebounce';
 import SectionBlock from './SectionBlock';
+import TagToolbar from './TagToolbar';
 
 /**
  * HybridEditor Component - Editor híbrido para registros médicos
@@ -46,11 +47,11 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   // Validate record object
   const safeRecord = record && typeof record === 'object' && !Array.isArray(record) ? record : null;
   
-  const { createRecord, updateRecord, isLoading } = usePatientStore();
+  const { createRecord, updateRecord, isLoading, setChatContext } = usePatientStore();
   
   // Core editor state
   const [editorContent, setEditorContent] = useState('');
-  const [isSegmented, setIsSegmented] = useState(true);
+  const [isSegmented, setIsSegmented] = useState(false); // Default to continuous view
   const [availableTags, setAvailableTags] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
@@ -66,16 +67,15 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   const debouncedContent = useDebounce(editorContent, 300);
   const sectionRefs = useRef({});
   
-  // Initial text for new records
-  const initialText = '#QP: \n\n#HDA: \n\n#SV: \n>>PA: \n>>FC: ';
+
   
-  // Categories configuration
-  const categoriesConfig = {
-    'Anamnese': { icon: <BookText size={16} />, order: 1 },
-    'Exame Físico': { icon: <Stethoscope size={16} />, order: 2 },
-    'Investigação': { icon: <FlaskConical size={16} />, order: 3 },
-    'Diagnóstico': { icon: <ClipboardList size={16} />, order: 4 },
-    'Plano': { icon: <Pill size={16} />, order: 5 },
+  // Configuração das categorias para cores dos blocos
+  const categoryColors = {
+    'Anamnese': 'bg-teal-500',
+    'Exame Físico': 'bg-teal-400',
+    'Investigação': 'bg-cyan-500',
+    'Diagnóstico': 'bg-orange-500',
+    'Plano': 'bg-red-500',
   };
   
   // Create tag map for quick lookups
@@ -95,33 +95,8 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     return map;
   }, [availableTags]);
   
-  // Group tags by category
-  const groupedTags = useMemo(() => {
-    const grouped = Object.fromEntries(
-      Object.keys(categoriesConfig).map(cat => [cat, { main: [], subs: {} }])
-    );
-    
-    if (Array.isArray(availableTags)) {
-      availableTags.forEach(tag => {
-        if (!tag) return;
-        const category = tag.category || tag.categoria || 'Anamnese';
-        if (!grouped[category]) {
-          grouped[category] = { main: [], subs: {} };
-        }
-        
-        if (tag.parentId) {
-          if (!grouped[category].subs[tag.parentId]) {
-            grouped[category].subs[tag.parentId] = [];
-          }
-          grouped[category].subs[tag.parentId].push(tag);
-        } else {
-          grouped[category].main.push(tag);
-        }
-      });
-    }
-    
-    return grouped;
-  }, [availableTags, categoriesConfig]);
+  // Note: groupedTags logic moved to TagToolbar.jsx for better encapsulation
+  // Hook: TagToolbar now handles all tag categorization internally
   
   // Parse content into sections
   const sections = useMemo(() => {
@@ -147,11 +122,14 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       setEditorContent(safeRecord.content || '');
       // Ensure title is always a valid string
       setEditableTitle(typeof safeRecord.title === 'string' ? safeRecord.title : safeTitle);
+      // Set segmented view for existing records with content
+      setIsSegmented(Boolean(safeRecord.content && safeRecord.content.trim()));
     } else {
-      setEditorContent(initialText);
+      setEditorContent('');
       setEditableTitle(safeTitle);
+      setIsSegmented(false);
     }
-  }, [safeRecord, initialText, safeTitle]);
+  }, [safeRecord, safeTitle]);
   
   // Load available tags and templates
   useEffect(() => {
@@ -197,7 +175,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   }, []);
   
   // Handle text change with debounce
-  const handleTextChange = useCallback((sectionId, newContent) => {
+  const handleTextChange = useDebounceCallback((sectionId, newContent) => {
     if (!isSegmented) {
       setEditorContent(newContent);
       return;
@@ -246,7 +224,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       const newEditorContent = updatedSections.map(s => s.content).join('\n\n');
       setEditorContent(newEditorContent);
     }
-  }, [isSegmented, sections]);
+  }, [isSegmented, sections], 300);
   
   // Handle key down events
   const handleKeyDown = useCallback((e, sectionId) => {
@@ -300,25 +278,10 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     }
   }, [isSegmented, sections, editorContent, handleTextChange]);
   
-  // Handle create tag
-  const handleCreateTag = useCallback(() => {
-    if (!newTag.code || !newTag.name) return;
-    
-    const finalTagCode = (newTag.code.startsWith('#') || newTag.code.startsWith('>>')) 
-      ? newTag.code 
-      : `#${newTag.code}`;
-    
-    const newTagData = {
-      id: `t_${Date.now()}`,
-      code: finalTagCode.toUpperCase(),
-      name: newTag.name,
-      category: newTag.category
-    };
-    
+  // Handle create tag (callback do TagToolbar)
+  const handleCreateTag = useCallback((newTagData) => {
     setAvailableTags(prev => [...prev, newTagData]);
-    setNewTag({ code: '', name: '', category: 'Anamnese' });
-    setIsModalOpen(false);
-  }, [newTag]);
+  }, []);
   
   // Handle save
   const handleSave = useCallback(async () => {
@@ -347,9 +310,12 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   
   // Handle add to chat
   const handleAddToChat = useCallback((content) => {
-    console.log('--- ADICIONANDO AO CHAT ---', content);
-    // TODO: Integrate with AI chat in future story
-  }, []);
+    // Hook: Integrates with AIAssistant.jsx via patientStore.setChatContext
+    if (content && content.trim()) {
+      setChatContext(content.trim());
+      console.log('Conteúdo adicionado ao chat da IA:', content.substring(0, 100) + '...');
+    }
+  }, [setChatContext]);
   
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-[#1a1d21] text-gray-300 font-sans">
@@ -388,53 +354,19 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       </header>
       
       <main className="flex flex-col items-center w-full">
-        {/* Tag Toolbar */}
-        <div className="w-full bg-[#22262b] p-4 rounded-xl mb-6">
-          <button 
-            onClick={() => setIsModalOpen(true)} 
-            className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold px-3 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 ease-in-out hover:from-teal-600 hover:to-cyan-600 shadow-md hover:shadow-lg hover:shadow-cyan-500/30 transform hover:-translate-y-0.5 mb-4"
-          >
-            <Plus size={18} /> Criar Nova Tag
-          </button>
-          
-          <div className="space-y-2">
-            {Object.entries(categoriesConfig)
-              .sort(([, a], [, b]) => a.order - b.order)
-              .map(([category]) => (
-                <div key={category}>
-                  <button 
-                    onClick={() => setOpenCategories(prev => ({
-                      ...prev, 
-                      [category]: !prev[category]
-                    }))}
-                    className="w-full flex justify-between items-center p-2 text-gray-300 font-semibold rounded-md hover:bg-gray-700/60"
-                  >
-                    <span className="flex items-center gap-2">
-                      {categoriesConfig[category].icon} {category}
-                    </span>
-                    {openCategories[category] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                  </button>
-                  
-                  {openCategories[category] && (
-                    <div className="pl-4 pt-2 space-y-2">
-                      {groupedTags[category]?.main?.map(tag => (
-                        <div key={tag.id || tag.code || tag.codigo}>
-                          <button 
-                            onClick={() => insertTag(tag.code || tag.codigo)}
-                            className="w-full text-left p-1.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700/50 rounded flex items-center gap-2" 
-                            title={`Inserir: ${tag.name || tag.nome || 'Tag sem nome'}`}
-                          >
-                            <Hash size={14} className="text-teal-400"/> {tag.name || tag.nome || 'Tag sem nome'}
-                          </button>
-                        </div>
-                      )) || []}
-                    </div>
-                  )}
-                </div>
-              ))
-            }
-          </div>
-        </div>
+        {/* Tag Toolbar Component */}
+        <TagToolbar 
+          availableTags={availableTags}
+          onInsertTag={insertTag}
+          onCreateTag={handleCreateTag}
+          categoriesConfig={{
+            'Anamnese': { icon: <BookText size={16} />, order: 1 },
+            'Exame Físico': { icon: <Stethoscope size={16} />, order: 2 },
+            'Investigação': { icon: <FlaskConical size={16} />, order: 3 },
+            'Diagnóstico': { icon: <ClipboardList size={16} />, order: 4 },
+            'Plano': { icon: <Pill size={16} />, order: 5 },
+          }}
+        />
 
         {/* Editor Controls */}
         <div className="w-full space-y-6">
@@ -466,7 +398,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
               <button 
                 onClick={handleSave}
                 disabled={isLoading}
-                className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                className="btn btn-primary flex items-center gap-2"
               >
                 <Save size={16} /> {isLoading ? 'Salvando...' : 'Salvar'}
               </button>
@@ -484,6 +416,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
                   onContentChange={handleTextChange}
                   onKeyDown={handleKeyDown}
                   onAddToChat={handleAddToChat}
+                  categoryColors={categoryColors}
                   ref={(el) => {
                     if (el) sectionRefs.current[section.id] = el;
                   }}
@@ -510,54 +443,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
         </div>
       </main>
 
-      {/* Create Tag Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[#22262b] p-6 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-200">Criar Nova Tag</h3>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="text-gray-400 hover:text-white"
-              >
-                <X size={24}/>
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <input 
-                type="text" 
-                placeholder="Código (Ex: #TAG ou >>SUB)" 
-                value={newTag.code} 
-                onChange={(e) => setNewTag({ ...newTag, code: e.target.value })} 
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white" 
-              />
-              <input 
-                type="text" 
-                placeholder="Nome (Ex: Exame Físico)" 
-                value={newTag.name} 
-                onChange={(e) => setNewTag({ ...newTag, name: e.target.value })} 
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white" 
-              />
-              <select 
-                value={newTag.category} 
-                onChange={(e) => setNewTag({ ...newTag, category: e.target.value })} 
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-              >
-                {Object.keys(categoriesConfig).map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <button 
-                onClick={handleCreateTag} 
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg"
-              >
-                Criar Tag
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

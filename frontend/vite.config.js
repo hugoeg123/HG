@@ -30,10 +30,14 @@ export default defineConfig({
         if (res.getHeader('Content-Type') && res.getHeader('Content-Type').startsWith('text/')) {
           res.setHeader('Content-Type', res.getHeader('Content-Type').split(';')[0] + '; charset=utf-8');
         }
-        // Ajustar Content-Type para JSX
-        if (req.url.endsWith('.jsx')) {
+        
+        // Ajustar Content-Type para JSX e TSX
+        if (req.url && req.url.endsWith('.jsx')) {
           res.setHeader('Content-Type', 'text/jsx; charset=utf-8');
+        } else if (req.url && req.url.endsWith('.tsx')) {
+          res.setHeader('Content-Type', 'text/tsx; charset=utf-8');
         }
+        
         next();
       });
     },

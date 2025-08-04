@@ -110,23 +110,23 @@ const Register = () => {
             onChange={handleChange}
             required
             placeholder="Dr. João Silva"
-            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            className="input"
             autoComplete="name"
           />
         </div>
         
         <div className="relative">
-          <label htmlFor="professionalType" className="block text-sm font-medium mb-1">
+          <label htmlFor="professionalType" className="block text-sm font-medium text-gray-300 mb-1">
             Tipo de Profissional
           </label>
-          <FaUserMd className="absolute left-3 top-9" />
+          <FaUserMd className="absolute left-3 top-9 text-gray-400" />
           <select
             id="professionalType"
             name="professionalType"
             value={formData.professionalType}
             onChange={handleChange}
             required
-            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            className="input"
           >
             <option value="medico">Médico</option>
             <option value="enfermeiro">Enfermeiro</option>
@@ -150,7 +150,7 @@ const Register = () => {
             value={formData.professionalId}
             onChange={handleChange}
             placeholder="CRM 12345/SP"
-            className="w-full pl-10 pr-3 py-2 bg-darkBg border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white transition-all duration-200"
+            className="input"
           />
         </div>
         
@@ -166,7 +166,7 @@ const Register = () => {
             value={formData.specialty}
             onChange={handleChange}
             placeholder="Cardiologia, Clínica Geral, etc."
-            className="w-full pl-10 pr-3 py-2 bg-darkBg border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white transition-all duration-200"
+            className="input"
           />
         </div>
         
@@ -183,7 +183,7 @@ const Register = () => {
             onChange={handleChange}
             required
             placeholder="joao.silva@example.com"
-            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            className="input"
             autoComplete="email"
           />
         </div>
@@ -201,7 +201,7 @@ const Register = () => {
             onChange={handleChange}
             required
             minLength={6}
-            className="w-full pl-10 pr-3 py-2 bg-darkBg border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white transition-all duration-200"
+            className="input"
             autoComplete="new-password"
           />
         </div>
@@ -220,7 +220,7 @@ const Register = () => {
             required
             minLength={6}
             placeholder="••••••••"
-            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            className="input"
             autoComplete="new-password"
           />
           {passwordError && (
@@ -232,7 +232,7 @@ const Register = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 rounded-md text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50"
+            className="btn btn-primary w-full"
           >
             {isLoading ? 'Cadastrando...' : 'Cadastrar Profissional'}
           </button>
@@ -241,7 +241,7 @@ const Register = () => {
       
       <div className="mt-6 text-center text-sm text-gray-400">
         Já é cadastrado?{' '}
-        <Link to="/login" className="text-purple-500 hover:text-purple-400 transition-colors duration-200">
+        <Link to="/login" className="text-teal-500 hover:text-teal-400 transition-colors duration-200">
           Faça login
         </Link>
       </div>

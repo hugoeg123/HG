@@ -39,7 +39,7 @@ npm install
 npm run dev
 ```
 
-O servidor do frontend estará rodando em `http://localhost:3000` (ou uma porta subsequente se a 3000 estiver ocupada).
+O servidor do frontend estará rodando em `http://localhost:3000`.
 
 ## 🔗 Mapa de Integrações
 

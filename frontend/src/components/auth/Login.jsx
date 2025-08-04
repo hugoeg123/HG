@@ -92,10 +92,10 @@ const Login = () => {
         {/* Errors are now handled by Toast notifications */}
         
         <div className="relative">
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
             Email
           </label>
-          <FaEnvelope className="absolute left-3 top-9" />
+          <FaEnvelope className="absolute left-3 top-9 text-gray-400" />
           <input
             type="email"
             id="email"
@@ -103,16 +103,16 @@ const Login = () => {
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            className="input"
             autoComplete="email"
           />
         </div>
         
         <div className="relative">
-          <label htmlFor="password" className="block text-sm font-medium mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
             Senha
           </label>
-          <FaLock className="absolute left-3 top-9" />
+          <FaLock className="absolute left-3 top-9 text-gray-400" />
           <input
             type="password"
             id="password"
@@ -120,7 +120,7 @@ const Login = () => {
             value={formData.password}
             onChange={handleChange}
             required
-            className="w-full pl-10 pr-3 py-2 border border-color-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            className="input"
             autoComplete="current-password"
           />
         </div>
@@ -129,7 +129,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-primary hover:bg-primary-hover rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+            className="btn btn-primary w-full"
           >
             {isLoading ? 'Entrando...' : 'Acessar Sistema'}
           </button>
@@ -138,7 +138,7 @@ const Login = () => {
       
       <div className="mt-6 text-center text-sm text-gray-400">
         Não é cadastrado?{' '}
-        <Link to="/register" className="text-purple-500 hover:text-purple-400 transition-colors duration-200">
+        <Link to="/register" className="text-teal-500 hover:text-teal-400 transition-colors duration-200">
           Cadastre-se como profissional
         </Link>
       </div>

@@ -46,6 +46,7 @@ const PatientView = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [showDashboard, setShowDashboard] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
+  const [isNewPatient, setIsNewPatient] = useState(false);
 
   // Load patient data when component mounts
   // Hook: Removed store functions from dependencies to prevent infinite loop
@@ -64,6 +65,24 @@ const PatientView = () => {
       clearCurrentPatient();
     }
   }, [currentPatient, clearCurrentPatient]);
+
+  // Hook: Detect if patient is new (no records) and set appropriate view
+  useEffect(() => {
+    if (currentPatient && records !== undefined) {
+      const hasNoRecords = !records || records.length === 0;
+      setIsNewPatient(hasNoRecords);
+      
+      if (hasNoRecords) {
+        // For new patients, show editor directly
+        setShowDashboard(false);
+        setShowEditor(true);
+      } else {
+        // For existing patients, show dashboard
+        setShowDashboard(true);
+        setShowEditor(false);
+      }
+    }
+  }, [currentPatient, records]);
 
   // Handle new record creation
   const handleNewRecord = (recordType = 'anamnese') => {
@@ -169,7 +188,7 @@ const PatientView = () => {
         </p>
         <button 
           onClick={() => window.location.reload()} 
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors"
+          className="btn btn-danger"
         >
           Tentar Novamente
         </button>
@@ -185,7 +204,7 @@ const PatientView = () => {
         <p className="text-yellow-300 mb-4">O paciente solicitado não foi encontrado ou não está disponível.</p>
         <button 
           onClick={() => navigate('/patients')} 
-          className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded transition-colors"
+          className="btn btn-warning"
         >
           Voltar à Lista de Pacientes
         </button>
@@ -202,8 +221,8 @@ const PatientView = () => {
 
   return (
     <div className="patient-view-container h-full flex flex-col">
-      {/* Show Dashboard by default */}
-      {showDashboard && !showEditor && (
+      {/* Show Dashboard for existing patients */}
+      {showDashboard && !showEditor && !isNewPatient && (
         <PatientDashboard 
           key={`dashboard-${id}`}
           patientId={id} 
@@ -211,18 +230,20 @@ const PatientView = () => {
         />
       )}
       
-      {/* Show Editor when creating new record */}
-      {showEditor && !showDashboard && (
+      {/* Show Editor when creating new record or for new patients */}
+      {showEditor && (
         <div className="space-y-4">
           {/* Navigation Header */}
           <div className="flex items-center justify-between bg-dark-lighter p-4 rounded-lg border border-dark-light">
             <div className="flex items-center">
-              <button
-                onClick={handleBackToDashboard}
-                className="mr-4 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-              >
-                ← Voltar ao Dashboard
-              </button>
+              {!isNewPatient && (
+                <button
+                  onClick={handleBackToDashboard}
+                  className="mr-4 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                >
+                  ← Voltar ao Dashboard
+                </button>
+              )}
               <div className="flex items-center">
                 <div className="avatar placeholder mr-4">
                   <div className="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center">
@@ -231,7 +252,9 @@ const PatientView = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">{patientName}</h2>
-                  <p className="text-gray-300">Novo Registro Médico</p>
+                  <p className="text-gray-300">
+                    {isNewPatient ? 'Primeiro Registro Médico' : 'Novo Registro Médico'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -240,12 +263,19 @@ const PatientView = () => {
           <HybridEditor 
             patientId={id} 
             recordType={activeTab}
-            title={`Novo ${tabs.find(t => t.id === activeTab)?.label || 'Registro'}`}
+            title={`${isNewPatient ? 'Primeiro' : 'Novo'} ${tabs.find(t => t.id === activeTab)?.label || 'Registro'}`}
             onSave={() => {
               fetchPatientRecords(id);
-              handleBackToDashboard();
+              if (!isNewPatient) {
+                handleBackToDashboard();
+              } else {
+                // For new patients, refresh data and show dashboard after first record
+                setIsNewPatient(false);
+                setShowDashboard(true);
+                setShowEditor(false);
+              }
             }}
-            onCancel={handleBackToDashboard}
+            onCancel={isNewPatient ? () => navigate('/patients') : handleBackToDashboard}
           />
         </div>
       )}

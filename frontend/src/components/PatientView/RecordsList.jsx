@@ -98,7 +98,7 @@ const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
                     return (
                       <span
                         key={tagId}
-                        className="px-1.5 py-0.5 bg-blue-900 text-blue-200 text-xs rounded-full"
+                        className="px-1.5 py-0.5 bg-teal-900 text-teal-200 text-xs rounded-full"
                       >
                         {tagName}
                       </span>

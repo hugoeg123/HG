@@ -20,12 +20,27 @@ const AIAssistant = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const { currentPatient } = usePatientStore();
+  const { currentPatient, chatContext, clearChatContext } = usePatientStore();
 
   // Rolar para a mensagem mais recente quando as mensagens são atualizadas
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Hook: Listen for chatContext changes from HybridEditor Add to Chat functionality
+  useEffect(() => {
+    if (chatContext && chatContext.trim()) {
+      const contextMessage = {
+        id: Date.now(),
+        content: `📋 **Conteúdo da seção adicionado:**\n\n${chatContext}`,
+        sender: 'system',
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, contextMessage]);
+      clearChatContext(); // Clear after adding to prevent duplicates
+    }
+  }, [chatContext, clearChatContext]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -120,14 +135,26 @@ const AIAssistant = () => {
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+              className={`flex ${
+                message.sender === 'user' 
+                  ? 'justify-end' 
+                  : message.sender === 'system'
+                  ? 'justify-center'
+                  : 'justify-start'
+              } mb-4`}
             >
               <div
-                className={`message ${message.sender === 'user' ? 'message-user' : 'message-ai'} ${
+                className={`message ${
+                  message.sender === 'user' 
+                    ? 'message-user' 
+                    : message.sender === 'system'
+                    ? 'bg-teal-600/20 border border-teal-600/30 text-teal-300 max-w-full'
+                    : 'message-ai'
+                } ${
                   message.isError ? 'bg-red-900 bg-opacity-50' : ''
                 }`}
               >
-                <div className="message-content">{message.content}</div>
+                <div className="message-content whitespace-pre-wrap">{message.content}</div>
                 <div className="text-xs text-gray-400 mt-1 text-right">
                   {formatMessageTime(message.timestamp)}
                 </div>
@@ -154,17 +181,21 @@ const AIAssistant = () => {
       <form onSubmit={sendMessage} className="chat-input">
         <div className="flex space-x-2">
           <input
+            id="ai-message-input"
+            name="aiMessage"
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Digite sua mensagem..."
             className="input flex-1"
             disabled={isLoading}
+            aria-label="Campo de mensagem para IA"
           />
           <button
             type="submit"
             className="btn btn-primary"
             disabled={isLoading || !input.trim()}
+            aria-label="Enviar mensagem para IA"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

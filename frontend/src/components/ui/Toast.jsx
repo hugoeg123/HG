@@ -57,8 +57,8 @@ const TOAST_TYPES = {
   },
   info: {
     icon: Info,
-    className: 'border-blue-200 bg-blue-50 text-blue-800',
-    iconClassName: 'text-blue-600'
+    className: 'border-teal-200 bg-teal-50 text-teal-800',
+    iconClassName: 'text-teal-600'
   }
 };
 

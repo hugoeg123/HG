@@ -168,7 +168,8 @@ const Alerts = () => {
         <h3 className="text-lg font-medium text-white">Alertas e Lembretes</h3>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="text-blue-400 hover:text-blue-300"
+          className="text-teal-400 hover:text-teal-300"
+          aria-label={showCreateForm ? "Fechar formulário de criação" : "Abrir formulário de criação"}
         >
           {showCreateForm ? (
             <svg
@@ -217,33 +218,39 @@ const Alerts = () => {
           <div className="mb-3">
             <label className="block text-gray-300 mb-1">Título</label>
             <input
+              id="alert-title"
               type="text"
               name="title"
               value={newAlert.title}
               onChange={handleNewAlertChange}
               className="input w-full"
               placeholder="Título do alerta"
+              aria-label="Título do alerta"
             />
           </div>
 
           <div className="mb-3">
             <label className="block text-gray-300 mb-1">Descrição</label>
             <textarea
+              id="alert-description"
               name="description"
               value={newAlert.description}
               onChange={handleNewAlertChange}
               className="input w-full h-20"
               placeholder="Descrição do alerta"
+              aria-label="Descrição do alerta"
             ></textarea>
           </div>
 
           <div className="mb-3">
             <label className="block text-gray-300 mb-1">Tipo</label>
             <select
+              id="alert-type"
               name="type"
               value={newAlert.type}
               onChange={handleNewAlertChange}
               className="input w-full"
+              aria-label="Tipo do alerta"
             >
               <option value="info">Informação</option>
               <option value="warning">Aviso</option>
@@ -254,10 +261,12 @@ const Alerts = () => {
           <div className="mb-3">
             <label className="block text-gray-300 mb-1">Data de Vencimento</label>
             <input
+              id="alert-due-date"
               type="date"
               name="dueDate"
               value={newAlert.dueDate}
               onChange={handleNewAlertChange}
+              aria-label="Data de vencimento do alerta"
               className="input w-full"
             />
           </div>
@@ -285,7 +294,7 @@ const Alerts = () => {
       {/* Conteúdo principal */}
       {isLoading && !showCreateForm ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
         </div>
       ) : (
         <div>
@@ -304,7 +313,7 @@ const Alerts = () => {
                     className={`p-3 rounded ${isOverdue(alert.dueDate) ? 'bg-red-900 bg-opacity-30 border border-red-800' : 
                       alert.type === 'urgent' ? 'bg-red-900 bg-opacity-20 border border-red-800' :
                       alert.type === 'warning' ? 'bg-yellow-900 bg-opacity-20 border border-yellow-800' :
-                      'bg-blue-900 bg-opacity-20 border border-blue-800'}`}
+                      'bg-teal-900 bg-opacity-20 border border-teal-800'}`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -329,6 +338,7 @@ const Alerts = () => {
                           onClick={() => handleMarkAsDone(alert.id)}
                           className="text-green-400 hover:text-green-300"
                           title="Marcar como concluído"
+                          aria-label="Marcar alerta como concluído"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -349,6 +359,7 @@ const Alerts = () => {
                           onClick={() => handleDeleteAlert(alert.id)}
                           className="text-red-400 hover:text-red-300"
                           title="Excluir alerta"
+                          aria-label="Excluir alerta"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -399,6 +410,7 @@ const Alerts = () => {
                         onClick={() => handleDeleteAlert(alert.id)}
                         className="text-gray-500 hover:text-gray-400"
                         title="Excluir alerta"
+                        aria-label="Excluir alerta concluído"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"

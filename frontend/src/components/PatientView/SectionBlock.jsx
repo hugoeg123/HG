@@ -4,6 +4,17 @@ import { Sparkles, Hash, ChevronRight } from 'lucide-react';
 /**
  * Componente SectionBlock - Renderiza uma seção individual do editor híbrido
  * Otimizado com React.memo para performance
+ * 
+ * @component
+ * @param {Object} section - Seção do editor com id e content
+ * @param {Function} onContentChange - Callback para mudanças de conteúdo
+ * @param {Function} onAddToChat - Callback para adicionar ao chat da IA
+ * @param {Function} onKeyDown - Callback para eventos de teclado
+ * @param {Map} tagMap - Mapa de tags disponíveis
+ * @param {Object} categoryColors - Cores por categoria
+ * 
+ * Connector: Integrates with HybridEditor.jsx for section management
+ * Hook: Optimized with React.memo to prevent unnecessary re-renders
  */
 const SectionBlock = React.memo(({ 
   section, 
@@ -143,11 +154,11 @@ const SectionBlock = React.memo(({
   // Get category color
   const getCategoryColor = () => {
     const colors = {
-      'Anamnese': 'text-blue-400',
-      'Exame Físico': 'text-green-400',
-      'Investigação': 'text-yellow-400',
-      'Diagnóstico': 'text-red-400',
-      'Plano': 'text-purple-400',
+      'Anamnese': 'text-teal-400',
+      'Exame Físico': 'text-teal-300',
+      'Investigação': 'text-cyan-400',
+      'Diagnóstico': 'text-teal-500',
+      'Plano': 'text-teal-400',
       'Geral': 'text-gray-400'
     };
     return colors[tagInfo.category] || 'text-gray-400';

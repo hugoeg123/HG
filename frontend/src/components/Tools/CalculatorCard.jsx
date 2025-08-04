@@ -48,8 +48,8 @@ const CalculatorCard = ({ calculator, onUse }) => {
     const colors = {
       'Cardiologia': 'text-red-400',
       'Endocrinologia': 'text-yellow-400',
-      'Geral': 'text-blue-400',
-      'Pessoal': 'text-purple-400'
+      'Geral': 'text-teal-400',
+    'Pessoal': 'text-teal-300'
     };
     return colors[category] || colors['Geral'];
   };
@@ -111,7 +111,7 @@ const CalculatorCard = ({ calculator, onUse }) => {
             e.stopPropagation();
             onUse(calculator);
           }}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+          className="btn btn-primary w-full"
           size="sm"
         >
           <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

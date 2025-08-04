@@ -38,60 +38,87 @@ const RightSidebar = ({ collapsed }) => {
   };
 
   return (
-    <div className={`right-pane ${collapsed ? 'collapsed' : ''}`}>
-      <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-gray-700">
-          <div className="flex items-center mb-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-purple-500 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-            <h2 className="text-xl font-semibold">Assistente IA</h2>
-          </div>
+    <div className={`h-full bg-[#1a1e23] border-l border-gray-700 flex flex-col ${collapsed ? 'collapsed' : ''}`}>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-700">
+        <nav className="flex" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200 ${
+              activeTab === 'chat'
+                ? 'border-teal-500 text-teal-400 bg-teal-600/10'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600 hover:bg-gray-700/30'
+            }`}
+            aria-current={activeTab === 'chat' ? 'page' : undefined}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="hidden lg:inline">Chat</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('calculators')}
+            className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200 ${
+              activeTab === 'calculators'
+                ? 'border-teal-500 text-teal-400 bg-teal-600/10'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600 hover:bg-gray-700/30'
+            }`}
+            aria-current={activeTab === 'calculators' ? 'page' : undefined}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="hidden lg:inline">Calculadoras</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('alerts')}
+            className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200 ${
+              activeTab === 'alerts'
+                ? 'border-teal-500 text-teal-400 bg-teal-600/10'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600 hover:bg-gray-700/30'
+            }`}
+            aria-current={activeTab === 'alerts' ? 'page' : undefined}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="hidden lg:inline">Alertas</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('knowledge')}
+            className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200 ${
+              activeTab === 'knowledge'
+                ? 'border-teal-500 text-teal-400 bg-teal-600/10'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600 hover:bg-gray-700/30'
+            }`}
+            aria-current={activeTab === 'knowledge' ? 'page' : undefined}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="hidden lg:inline">Conhecimento</span>
+            </div>
+          </button>
+        </nav>
+      </div>
 
-          {/* Abas de navegação */}
-          <div className="tabs">
-            <button
-              className={`tab ${activeTab === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveTab('chat')}
-            >
-              Chat
-            </button>
-            <button
-              className={`tab ${activeTab === 'calculators' ? 'active' : ''}`}
-              onClick={() => setActiveTab('calculators')}
-            >
-              Calculadoras
-            </button>
-            <button
-              className={`tab ${activeTab === 'alerts' ? 'active' : ''}`}
-              onClick={() => setActiveTab('alerts')}
-            >
-              Alertas
-            </button>
-            <button
-              className={`tab ${activeTab === 'knowledge' ? 'active' : ''}`}
-              onClick={() => setActiveTab('knowledge')}
-            >
-              Conhecimento
-            </button>
+      {/* Tab Content */}
+      <div className="flex-1 overflow-hidden bg-[#22262b]">
+        {activeTab === 'chat' && (
+          <div className="h-full p-4">
+            <AIAssistant />
           </div>
-        </div>
-
-        {/* Conteúdo da aba selecionada */}
-        <div className="flex-1 overflow-y-auto">
-          {renderContent()}
-        </div>
+        )}
+        {activeTab === 'calculators' && (
+          <div className="h-full p-4">
+            <Calculators />
+          </div>
+        )}
+        {activeTab === 'alerts' && (
+          <div className="h-full p-4">
+            <Alerts />
+          </div>
+        )}
+        {activeTab === 'knowledge' && (
+          <div className="h-full p-4">
+            <KnowledgeBase />
+          </div>
+        )}
       </div>
     </div>
   );

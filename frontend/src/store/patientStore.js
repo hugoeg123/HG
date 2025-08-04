@@ -700,7 +700,8 @@ const usePatientStore = create((set, get) => ({
         // Don't set error state if request was aborted (expected behavior)
         if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
           console.debug('Dashboard request was canceled (expected behavior)');
-          return;
+          set({ isLoading: false }); // Reset loading state on cancellation
+          return null;
         }
         
         console.error(`Erro ao buscar dashboard do paciente ${patientId}:`, error);
@@ -710,11 +711,20 @@ const usePatientStore = create((set, get) => ({
           dashboardData: null
         });
         throw error;
+      } finally {
+        // Fallback safety to ensure loading is always reset
+        const currentState = get();
+        if (currentState.isLoading) {
+          set({ isLoading: false });
+        }
       }
     })();
     
     return setActiveRequest(requestKey, requestPromise);
   },
+  
+  // Chat context for AI integration
+  chatContext: '',
   
   // Utilitários
   setCurrentPatient: (patient) => {
@@ -732,6 +742,15 @@ const usePatientStore = create((set, get) => ({
   clearError: () => set({ error: null }),
   // Hook: Force reset loading state to prevent stuck UI
   forceResetLoading: () => set({ isLoading: false }),
+  
+  // AI Chat Integration
+  setChatContext: (content) => {
+    // Hook: Integrates with AIAssistant.jsx to add section content to chat
+    if (typeof content === 'string' && content.trim()) {
+      set({ chatContext: content.trim() });
+    }
+  },
+  clearChatContext: () => set({ chatContext: '' }),
 }));
 
 export { usePatientStore };

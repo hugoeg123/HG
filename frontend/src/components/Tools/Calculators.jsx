@@ -109,7 +109,7 @@ const Calculators = () => {
           <Input
             type="text"
             placeholder="Procurar calculadora..."
-            className="w-full pl-9 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+            className="input pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -135,7 +135,7 @@ const Calculators = () => {
             variant={selectedCategory === 'all' ? 'default' : 'secondary'}
             className={`cursor-pointer transition-colors ${
               selectedCategory === 'all' 
-                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                ? 'bg-teal-600 text-white hover:bg-teal-700'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
             onClick={() => setSelectedCategory('all')}
@@ -146,7 +146,7 @@ const Calculators = () => {
             variant={selectedCategory === 'personal' ? 'default' : 'secondary'}
             className={`cursor-pointer transition-colors ${
               selectedCategory === 'personal' 
-                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                ? 'bg-teal-600 text-white hover:bg-teal-700'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
             onClick={() => setSelectedCategory('personal')}
@@ -157,7 +157,7 @@ const Calculators = () => {
             variant={selectedCategory === 'public' ? 'default' : 'secondary'}
             className={`cursor-pointer transition-colors ${
               selectedCategory === 'public' 
-                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                ? 'bg-teal-600 text-white hover:bg-teal-700'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
             onClick={() => setSelectedCategory('public')}
@@ -170,8 +170,8 @@ const Calculators = () => {
               variant={selectedCategory === category ? 'default' : 'secondary'}
               className={`cursor-pointer transition-colors ${
                 selectedCategory === category 
-                  ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-teal-600 text-white hover:bg-teal-700'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
               onClick={() => setSelectedCategory(category)}
             >
@@ -183,7 +183,7 @@ const Calculators = () => {
         {/* Create new calculator button */}
         <Button
           onClick={handleNewCalculator}
-          className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white mb-4"
+          className="btn btn-primary w-full md:w-auto mb-4"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -206,7 +206,7 @@ const Calculators = () => {
       {/* Main content */}
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
         </div>
       ) : error ? (
         <div className="text-red-400 text-center py-4">{error}</div>
@@ -254,7 +254,7 @@ const Calculators = () => {
               </p>
               <Button
                 onClick={handleNewCalculator}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="btn btn-primary"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
