@@ -269,7 +269,7 @@ const usePatientStore = create((set, get) => ({
     const isTemporary = patientId.startsWith('temp-');
     
     // Atualização otimista - atualizar UI primeiro
-    const optimisticPatients = currentState.patients.map(p => 
+    const optimisticPatientsUpdate = currentState.patients.map(p => 
       p.id === patientId ? { ...p, ...patientData } : p
     );
     const optimisticCurrentPatient = currentState.currentPatient?.id === patientId 
@@ -277,7 +277,7 @@ const usePatientStore = create((set, get) => ({
       : currentState.currentPatient;
     
     set({ 
-      patients: optimisticPatients,
+      patients: optimisticPatientsUpdate,
       currentPatient: optimisticCurrentPatient,
       isLoading: true, 
       error: null 
@@ -356,13 +356,13 @@ const usePatientStore = create((set, get) => ({
     
     // Atualização otimista - remover da UI primeiro
     const currentState = get();
-    const optimisticPatients = currentState.patients.filter(p => p.id !== patientId);
+    const optimisticPatientsAfterDelete = currentState.patients.filter(p => p.id !== patientId);
     const optimisticCurrentPatient = currentState.currentPatient?.id === patientId 
       ? null 
       : currentState.currentPatient;
     
     set({ 
-      patients: optimisticPatients,
+      patients: optimisticPatientsAfterDelete,
       currentPatient: optimisticCurrentPatient,
       isLoading: true, 
       error: null 
