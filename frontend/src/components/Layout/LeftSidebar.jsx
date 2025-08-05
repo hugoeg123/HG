@@ -214,12 +214,12 @@ const LeftSidebar = ({ collapsed }) => {
               return (
                 <li key={`patient-${patientId}`}>
                   <div
-                    className={`relative group bg-theme-card border rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10 mb-2 ${
+                    className={`relative group border rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10 mb-2 ${
                       isActive 
-                        ? 'border-teal-500 bg-teal-600/20' 
+                        ? 'border-teal-500 bg-teal-600/20 !bg-teal-600/20' 
                         : expandedPatient === patientId 
-                        ? 'border-teal-500 bg-teal-600/10' 
-                        : 'border-gray-700'
+                        ? 'border-teal-500 bg-teal-600/10 !bg-teal-600/10' 
+                        : 'border-gray-700 bg-theme-card'
                     }`}
                     onClick={() => handlePatientClick(patient)}
                   >

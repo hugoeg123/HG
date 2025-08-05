@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
 import { Badge } from '../ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
+import { 
+  BookOpen, 
+  FileText, 
+  Pill, 
+  Stethoscope, 
+  Activity, 
+  Calculator,
+  Search,
+  Lightbulb
+} from 'lucide-react';
 
 /**
  * KnowledgeBase component - Exibe uma base de conhecimento médico
@@ -28,6 +38,8 @@ const KnowledgeBase = () => {
       category: 'guidelines',
       tags: ['hipertensão', 'cardiologia', 'pressão arterial'],
       url: '/knowledge/guidelines/hypertension',
+      icon: BookOpen,
+      color: 'text-blue-400'
     },
     {
       id: 2,
@@ -36,6 +48,8 @@ const KnowledgeBase = () => {
       category: 'tools',
       tags: ['risco cardiovascular', 'cardiologia', 'prevenção'],
       url: '/knowledge/tools/cardiovascular-risk',
+      icon: Calculator,
+      color: 'text-green-400'
     },
     {
       id: 3,
@@ -44,6 +58,8 @@ const KnowledgeBase = () => {
       category: 'protocols',
       tags: ['diabetes', 'endocrinologia', 'glicemia'],
       url: '/knowledge/protocols/diabetes-type-2',
+      icon: FileText,
+      color: 'text-purple-400'
     },
     {
       id: 4,
@@ -52,6 +68,8 @@ const KnowledgeBase = () => {
       category: 'medications',
       tags: ['medicamentos', 'interações', 'farmacologia'],
       url: '/knowledge/medications/interactions',
+      icon: Pill,
+      color: 'text-orange-400'
     },
     {
       id: 5,
@@ -60,6 +78,8 @@ const KnowledgeBase = () => {
       category: 'diagnostics',
       tags: ['laboratório', 'exames', 'diagnóstico'],
       url: '/knowledge/diagnostics/lab-tests',
+      icon: Stethoscope,
+      color: 'text-cyan-400'
     },
     {
       id: 6,
@@ -68,6 +88,8 @@ const KnowledgeBase = () => {
       category: 'treatments',
       tags: ['dor', 'analgesia', 'tratamento'],
       url: '/knowledge/treatments/chronic-pain',
+      icon: Activity,
+      color: 'text-red-400'
     },
   ];
 
@@ -118,49 +140,36 @@ const KnowledgeBase = () => {
   const suggestions = patientBasedSuggestions();
 
   return (
-    <div className="knowledge-base-container h-full flex flex-col">
+    <div className="space-y-4">
       {/* Description */}
-      <div className="mb-4">
+      <div>
         <p className="text-gray-300 text-sm">
           Acesse diretrizes, protocolos e ferramentas médicas
         </p>
       </div>
 
       {/* Campo de pesquisa */}
-      <div className="relative mb-4">
+      <div className="relative">
         <input
           type="text"
           placeholder="Pesquisar na base de conhecimento..."
-          className="input w-full pl-9"
+          className="w-full pl-9 pr-4 py-2 bg-theme-card border border-theme-border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 absolute left-2 top-2.5 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
+        <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
       </div>
 
       {/* Categorias */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2">
         {categories.map(category => (
           <Badge
             key={category.id}
-            variant={activeCategory === category.id ? 'default' : 'outline'}
-            className={`cursor-pointer transition-colors ${
+            variant={activeCategory === category.id ? 'default' : 'secondary'}
+            className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
               activeCategory === category.id 
-                ? 'bg-primary text-primary-foreground hover:bg-primary/80' 
-                : 'hover:bg-secondary/20'
+                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
+                : 'bg-theme-card border-theme-border hover:bg-theme-border hover:border-primary/50'
             }`}
             onClick={() => setActiveCategory(category.id)}
           >
@@ -171,28 +180,41 @@ const KnowledgeBase = () => {
 
       {/* Sugestões baseadas no paciente */}
       {currentPatient && suggestions.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-white font-medium mb-2">Sugestões para {currentPatient.name}</h4>
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Lightbulb className="h-4 w-4 text-yellow-400" />
+            <h4 className="text-white font-medium">Sugestões para {currentPatient.name}</h4>
+          </div>
           <div className="space-y-3">
-            {suggestions.map(item => (
-              <Link key={item.id} to={item.url} className="block">
-                <Card className="hover:bg-theme-card/50 transition-colors border-teal-800 bg-teal-900/20">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-base">{item.title}</CardTitle>
-                    <CardDescription className="text-gray-300">{item.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex flex-wrap gap-1">
-                      {item.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs bg-teal-800/50 text-teal-200 border-teal-700">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            {suggestions.map(item => {
+              const IconComponent = item.icon;
+              return (
+                <Link key={item.id} to={item.url} className="block group">
+                  <Card className="border-teal-500/30 bg-teal-900/10 hover:bg-teal-900/20 hover:border-teal-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 hover:scale-[1.02]">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start gap-3">
+                        <div className={`${item.color} group-hover:scale-110 transition-transform duration-200`}>
+                          <IconComponent className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-white text-base group-hover:text-teal-300 transition-colors">{item.title}</CardTitle>
+                          <CardDescription className="text-gray-300 text-sm mt-1">{item.description}</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.tags.map(tag => (
+                          <Badge key={tag} variant="secondary" className="text-xs bg-teal-800/30 text-teal-200 border-teal-600/50 hover:bg-teal-700/40 transition-colors">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
@@ -200,31 +222,43 @@ const KnowledgeBase = () => {
       {/* Lista de itens */}
       <div className="space-y-3">
         {filteredItems.length === 0 ? (
-          <Card className="bg-gray-700/30">
-            <CardContent className="text-center py-6">
+          <Card className="bg-theme-card border-theme-border">
+            <CardContent className="text-center py-8">
+              <Search className="h-8 w-8 text-gray-500 mx-auto mb-2" />
               <p className="text-gray-400">Nenhum resultado encontrado</p>
+              <p className="text-gray-500 text-sm mt-1">Tente ajustar os filtros ou termos de busca</p>
             </CardContent>
           </Card>
         ) : (
-          filteredItems.map(item => (
-            <Link key={item.id} to={item.url} className="block">
-              <Card className="hover:bg-theme-card/50 transition-colors">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white text-base">{item.title}</CardTitle>
-                  <CardDescription className="text-gray-300">{item.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex flex-wrap gap-1">
-                    {item.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-xs bg-gray-600/50 text-gray-300 border-gray-600">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
+          filteredItems.map(item => {
+            const IconComponent = item.icon;
+            return (
+              <Link key={item.id} to={item.url} className="block group">
+                <Card className="bg-theme-card border-theme-border hover:bg-theme-surface hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.01]">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-3">
+                      <div className={`${item.color} group-hover:scale-110 transition-transform duration-200`}>
+                        <IconComponent className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-white text-base group-hover:text-primary transition-colors">{item.title}</CardTitle>
+                        <CardDescription className="text-gray-300 text-sm mt-1 leading-relaxed">{item.description}</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="text-xs bg-gray-700/50 text-gray-300 border-gray-600/50 hover:bg-gray-600/50 hover:text-white transition-all duration-200">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })
         )}
       </div>
     </div>

@@ -8,6 +8,7 @@ import RightSidebar from './RightSidebar';
 const MainLayout = () => {
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  const [rightSidebarExpanded, setRightSidebarExpanded] = useState(false);
 
 
 
@@ -17,6 +18,10 @@ const MainLayout = () => {
 
   const toggleRightSidebar = () => {
     setRightSidebarCollapsed(!rightSidebarCollapsed);
+  };
+
+  const toggleRightSidebarExpansion = () => {
+    setRightSidebarExpanded(!rightSidebarExpanded);
   };
 
   return (
@@ -39,8 +44,12 @@ const MainLayout = () => {
         </main>
         
         {/* Right Sidebar */}
-        <aside className={`transition-all duration-300 ${rightSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
-          <RightSidebar collapsed={rightSidebarCollapsed} />
+        <aside className={`transition-all duration-300 ${rightSidebarCollapsed ? 'w-0 overflow-hidden' : rightSidebarExpanded ? 'w-96 lg:w-1/2' : 'w-72 md:w-80 lg:w-96'}`}>
+          <RightSidebar 
+            collapsed={rightSidebarCollapsed} 
+            expanded={rightSidebarExpanded}
+            onToggleExpansion={toggleRightSidebarExpansion}
+          />
         </aside>
       </div>
     </div>
