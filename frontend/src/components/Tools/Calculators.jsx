@@ -101,9 +101,9 @@ const Calculators = () => {
   };
 
   return (
-    <div className="calculator-container">
-      {/* Header with search and filters */}
-      <div className="mb-6">
+    <div className="calculator-container h-full flex flex-col">
+        {/* Header with search and filters */}
+        <div className="mb-6">
         {/* Search field */}
         <div className="relative mb-4">
           <Input
@@ -287,14 +287,14 @@ const Calculators = () => {
         </div>
       )}
 
-      {/* Modal da calculadora */}
-      {showModal && selectedCalculator && (
-        <CalculatorModal
-          calculator={selectedCalculator}
-          onClose={closeCalculator}
-          isNew={!selectedCalculator.id}
-        />
-      )}
+        {/* Modal da calculadora */}
+        {showModal && selectedCalculator && (
+          <CalculatorModal
+            calculator={selectedCalculator}
+            onClose={closeCalculator}
+            isNew={!selectedCalculator.id}
+          />
+        )}
     </div>
   );
 };

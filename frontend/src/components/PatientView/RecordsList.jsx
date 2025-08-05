@@ -79,7 +79,7 @@ const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
             <div
               key={recordId}
               onClick={() => handleRecordClick(recordId)}
-              className="bg-gray-700 p-2 rounded cursor-pointer hover:bg-gray-600 transition-colors"
+              className="bg-theme-card p-2 rounded cursor-pointer hover:bg-theme-card/80 transition-colors"
             >
               <div className="flex justify-between items-center">
                 <div className="text-sm font-medium text-gray-200 truncate">

@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children }) => {
   if (isChecking) {
     // Exibir um indicador de carregamento enquanto verifica a autenticação
     return (
-      <div className="flex items-center justify-center h-screen bg-darkBg">
+      <div className="flex items-center justify-center h-screen bg-theme-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
       </div>
     );

@@ -103,21 +103,21 @@ const Dashboard = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Card de estatísticas */}
-        <div className="stat-card bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
+        <div className="stat-card bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-white mb-4">Pacientes Ativos</h3>
           <div className="text-3xl font-bold text-teal-400 mb-2">{patients?.length || 0}</div>
           <p className="text-gray-400 text-sm">Total de pacientes sob seus cuidados</p>
         </div>
         
         {/* Card de consultas */}
-        <div className="stat-card bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
+        <div className="stat-card bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-white mb-4">Consultas Hoje</h3>
           <div className="text-3xl font-bold text-teal-400 mb-2">0</div>
           <p className="text-gray-400 text-sm">Consultas agendadas para hoje</p>
         </div>
         
         {/* Card de tarefas */}
-        <div className="stat-card bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
+        <div className="stat-card bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-white mb-4">Tarefas Pendentes</h3>
           <div className="text-3xl font-bold text-amber-400 mb-2">0</div>
           <p className="text-gray-400 text-sm">Tarefas que precisam de sua atenção</p>
@@ -125,99 +125,105 @@ const Dashboard = () => {
       </div>
       
       {/* Lista de pacientes recentes */}
-      <div className="recent-patients bg-[#1a1e23] border border-gray-700 p-6 rounded-lg shadow-md">
+      <div className="recent-patients bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">Pacientes Recentes</h2>
           <button 
             onClick={handleNewPatient}
-            className="btn btn-primary flex items-center"
+            className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Novo Paciente
+            + Novo Paciente
           </button>
         </div>
         
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
+          <div className="text-center py-8">
+            <div className="loading loading-spinner loading-lg text-teal-400"></div>
+            <p className="text-gray-400 mt-2">Carregando pacientes...</p>
           </div>
         ) : error ? (
-          <div className="text-red-400 text-center py-4">{error}</div>
-        ) : patients?.length === 0 ? (
-          <div className="text-gray-400 text-center py-8 flex flex-col items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-            </svg>
-            <p className="text-lg">Nenhum paciente cadastrado</p>
-            <p className="text-sm text-gray-500 mt-2">Clique em "Novo Paciente" para começar</p>
+          <div className="text-center py-8">
+            <p className="text-red-400 mb-4">Erro ao carregar pacientes: {error}</p>
+            <button 
+              onClick={() => fetchPatients()}
+              className="btn btn-outline border-teal-600 text-teal-400 hover:bg-teal-600 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        ) : patients && patients.length > 0 ? (
+          <div className="grid gap-4">
+            {patients.slice(0, 5).map((patient) => (
+              <Link 
+                key={patient.id} 
+                to={`/patients/${patient.id}`}
+                className="patient-card bg-theme-card/50 hover:bg-gray-700/50 border border-gray-700 hover:border-teal-600/50 p-4 rounded-lg transition-all duration-200 block"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="avatar placeholder mr-4">
+                      <div className="bg-teal-600 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                        <span className="text-sm font-semibold">
+                          {patient.name ? patient.name.charAt(0).toUpperCase() : '?'}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">{patient.name || 'Sem Nome'}</h3>
+                      <div className="text-sm text-gray-400 flex items-center">
+                        <span className="mr-3">ID: {patient.id.slice(0, 8)}...</span>
+                        {patient.dateOfBirth && (
+                          <span className="mr-3">
+                            {(() => {
+                              const today = new Date();
+                              const birth = new Date(patient.dateOfBirth);
+                              let age = today.getFullYear() - birth.getFullYear();
+                              const monthDiff = today.getMonth() - birth.getMonth();
+                              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                                age--;
+                              }
+                              return `${age} anos`;
+                            })()} 
+                          </span>
+                        )}
+                        {patient.gender && (
+                          <span>{patient.gender}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-teal-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            
+            {patients.length > 5 && (
+              <div className="text-center mt-4">
+                <p className="text-gray-400 text-sm">
+                  Mostrando 5 de {patients.length} pacientes
+                </p>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="pb-3 text-gray-400 font-medium">Nome</th>
-                  <th className="pb-3 text-gray-400 font-medium">Idade</th>
-                  <th className="pb-3 text-gray-400 font-medium">Última Atualização</th>
-                  <th className="pb-3 text-gray-400 font-medium">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patients.slice(0, 5).map((patient, index) => {
-                  // Garantir chave única mesmo para pacientes temporários
-                  const patientKey = patient?.id || `temp-dashboard-patient-${index}-${Date.now()}`;
-                  const patientName = patient?.name || 'Sem Nome';
-                  
-                  return (
-                    <tr key={patientKey} className="border-b border-gray-700 hover:bg-gray-800 transition-colors duration-200">
-                      <td className="py-4 text-white">{patientName}</td>
-                      <td className="py-4 text-gray-300">
-                        {patient.birthDate || patient.dateOfBirth ? (
-                          (() => {
-                            const today = new Date();
-                            const birth = new Date(patient.birthDate || patient.dateOfBirth);
-                            let age = today.getFullYear() - birth.getFullYear();
-                            const monthDiff = today.getMonth() - birth.getMonth();
-                            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                              age--;
-                            }
-                            return `${age} anos`;
-                          })()
-                        ) : 'N/A'}
-                      </td>
-                      <td className="py-4 text-gray-300">
-                        {patient.updatedAt ? new Date(patient.updatedAt).toLocaleDateString('pt-BR') : 'N/A'}
-                      </td>
-                      <td className="py-4">
-                        {patient.id && patient.id !== 'undefined' ? (
-                          <Link 
-                            to={`/patients/${patient.id}`}
-                            className="text-teal-400 hover:text-teal-300 font-medium transition-colors duration-200"
-                          >
-                            Ver Detalhes
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500 text-sm">Salvando...</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p className="text-lg mb-2">Nenhum paciente encontrado</p>
+              <p className="text-sm">Comece criando seu primeiro paciente</p>
+            </div>
+            <button 
+              onClick={handleNewPatient}
+              className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              + Criar Primeiro Paciente
+            </button>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
 import { Users } from 'lucide-react'; // Importar o ícone Users do lucide-react
 import { Plus } from 'lucide-react';
@@ -26,6 +26,7 @@ const LeftSidebar = ({ collapsed }) => {
   
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: activePatientId } = useParams(); // Get active patient ID from URL
   
   // Usar o store para gerenciar pacientes
   const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient } = usePatientStore();
@@ -155,7 +156,7 @@ const LeftSidebar = ({ collapsed }) => {
   };
 
   return (
-    <div className={`left-pane ${collapsed ? 'collapsed' : ''}`} style={{backgroundColor: '#1a1e23'}}>
+    <div className={`left-pane ${collapsed ? 'collapsed' : ''} bg-theme-background`}>
       <div className="p-4 pb-20 border-r border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -176,7 +177,7 @@ const LeftSidebar = ({ collapsed }) => {
           <input
             type="text"
             placeholder="Buscar pacientes..."
-            className="w-full pl-10 pr-4 py-2 bg-[#22262b] border border-gray-700 rounded-lg text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
+            className="w-full pl-10 pr-4 py-2 bg-theme-card border border-gray-700 rounded-lg text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -207,10 +208,19 @@ const LeftSidebar = ({ collapsed }) => {
               const patientName = patient?.name || 'Sem Nome';
               const patientId = patient?.id || `temp-patient-${index}-${Date.now()}`;
               
+              // Check if this patient is currently active
+              const isActive = String(patient.id) === String(activePatientId);
+              
               return (
                 <li key={`patient-${patientId}`}>
                   <div
-                    className={`relative group bg-[#22262b] border border-gray-700 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10 mb-2 ${expandedPatient === patientId ? 'border-teal-500 bg-teal-600/10' : ''}`}
+                    className={`relative group bg-theme-card border rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10 mb-2 ${
+                      isActive 
+                        ? 'border-teal-500 bg-teal-600/20' 
+                        : expandedPatient === patientId 
+                        ? 'border-teal-500 bg-teal-600/10' 
+                        : 'border-gray-700'
+                    }`}
                     onClick={() => handlePatientClick(patient)}
                   >
                     <div className="flex items-center justify-between">
@@ -378,7 +388,7 @@ const LeftSidebar = ({ collapsed }) => {
       {/* Modal de Confirmação de Exclusão */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#22262b] border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="bg-theme-card border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 bg-red-600/20 border border-red-600/30 rounded-full flex items-center justify-center mr-3">
                 <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

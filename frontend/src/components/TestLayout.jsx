@@ -6,12 +6,12 @@ import React from 'react';
  */
 const TestLayout = () => {
   return (
-    <div className="h-screen bg-darkBg text-white p-4">
+    <div className="h-screen bg-theme-background text-white p-4">
       <h1 className="text-2xl font-bold mb-4 text-teal-500">Teste do Layout - Health Guardian</h1>
       
       {/* Teste do grid de 3 colunas */}
       <div className="grid grid-cols-3 gap-4 h-96 mb-6">
-        <div className="bg-lightBg border-2 border-red-500 p-4 rounded-lg">
+        <div className="bg-theme-card border-2 border-red-500 p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-2">Coluna 1 - LeftSidebar</h2>
           <p className="text-gray-300">Esta é a coluna esquerda onde ficam os pacientes.</p>
           <div className="mt-4 space-y-2">
@@ -21,15 +21,15 @@ const TestLayout = () => {
           </div>
         </div>
         
-        <div className="bg-lightBg border-2 border-green-500 p-4 rounded-lg">
+        <div className="bg-theme-card border-2 border-green-500 p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-2">Coluna 2 - Centro</h2>
           <p className="text-gray-300">Esta é a coluna central onde fica o editor de prontuários.</p>
-          <div className="mt-4 bg-gray-800 p-4 rounded h-32">
+          <div className="mt-4 bg-theme-card p-4 rounded h-32">
             <p className="text-sm">Editor de texto aqui...</p>
           </div>
         </div>
         
-        <div className="bg-lightBg border-2 border-teal-500 p-4 rounded-lg">
+        <div className="bg-theme-card border-2 border-teal-500 p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-2">Coluna 3 - RightSidebar</h2>
           <p className="text-gray-300">Esta é a coluna direita onde fica o assistente IA.</p>
           <div className="mt-4 space-y-2">
@@ -41,7 +41,7 @@ const TestLayout = () => {
       </div>
       
       {/* Teste de classes Tailwind customizadas */}
-      <div className="bg-darkBg border border-border p-4 rounded-lg">
+      <div className="bg-theme-background border border-border p-4 rounded-lg">
         <h3 className="text-lg font-semibold mb-2">Teste de Classes Customizadas</h3>
         <div className="flex space-x-4">
           <button className="btn btn-primary">Botão Primário</button>

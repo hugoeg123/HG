@@ -318,7 +318,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   }, [setChatContext]);
   
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-[#1a1d21] text-gray-300 font-sans">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-theme-background text-gray-300 font-sans">
       {/* Header */}
       <header className="flex items-center pb-4 mb-6 border-b border-gray-700">
         <UserCircle size={48} className="text-teal-400 mr-4"/>
@@ -435,7 +435,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
               <textarea
                 value={editorContent}
                 onChange={(e) => setEditorContent(e.target.value)}
-                className="w-full h-96 p-4 bg-[#22262b] border border-gray-700 rounded-xl text-gray-300 placeholder-gray-500 resize-y focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                className="w-full h-96 p-4 bg-theme-card border border-gray-700 rounded-xl text-gray-300 placeholder-gray-500 resize-y focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
                 placeholder="Digite o registro completo aqui..."
               />
             </div>

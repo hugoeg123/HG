@@ -273,7 +273,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#1a1e23] border border-gray-700/50 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-theme-background border border-gray-700/50 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Cabeçalho do modal */}
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <div className="flex items-center">

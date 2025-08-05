@@ -14,7 +14,7 @@ const statusColors = {
 
 // Componente para cards de informação
 const InfoCard = ({ title, children }) => (
-  <div className="bg-[#1C1C1F] p-5 rounded-lg border border-gray-800">
+  <div className="bg-theme-card p-5 rounded-lg border border-gray-800">
     <h3 className="font-semibold text-lg text-white mb-4">{title}</h3>
     {children}
   </div>
@@ -53,8 +53,8 @@ const TimelineItem = ({ item }) => {
   return (
     <div className="relative pl-8 py-2 group">
       <div className="absolute left-0 top-4 w-px h-full bg-gray-700"></div>
-      <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-[#111113] group-hover:bg-teal-500 transition-colors"></div>
-      <div className="bg-[#1C1C1F] p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-gray-800/20 cursor-pointer">
+      <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-theme-background group-hover:bg-teal-500 transition-colors"></div>
+      <div className="bg-theme-card p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer">
         <div className="flex justify-between items-start gap-4">
           <div>
             <p className="text-sm text-gray-400">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
@@ -305,7 +305,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-[#111113] text-white">
+      <div className="flex items-center justify-center h-64 bg-theme-background text-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
         <span className="ml-2 text-gray-400">Carregando dashboard...</span>
       </div>
@@ -314,7 +314,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4 bg-[#111113] text-white">
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 bg-theme-background text-white">
         <AlertTriangle className="h-12 w-12 text-red-500" />
         <div className="text-center">
           <h3 className="text-lg font-semibold text-white">Erro ao carregar dashboard</h3>
@@ -333,9 +333,9 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   // No patient data
   if (!safeCurrentPatient) {
     return (
-      <div className="min-h-screen bg-[#111113] text-gray-300 font-sans p-4 sm:p-8">
+      <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-4 sm:p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-[#1C1C1F] p-6 rounded-lg border border-gray-800">
+          <div className="bg-theme-surface p-6 rounded-lg border border-gray-800">
             <p className="text-gray-500">Nenhum paciente selecionado</p>
           </div>
         </div>
@@ -344,7 +344,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   }
   
   return (
-    <div className="min-h-screen bg-[#111113] text-gray-300 font-sans p-4 sm:p-8">
+    <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="flex items-center pb-4 mb-8 border-b border-gray-800">
           <UserCircle size={48} className="text-teal-400 mr-4"/>
@@ -358,7 +358,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                     value={editedName}
                     onChange={(e) => setEditedName(e.target.value)}
                     onKeyDown={(e) => handleKeyPress(e, handleSaveName, handleCancelNameEdit)}
-                    className="text-2xl font-bold bg-gray-800 text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
+                    className="text-2xl font-bold bg-theme-card text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
                     placeholder="Nome do paciente"
                     autoFocus
                   />
@@ -402,7 +402,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                     value={editedBirthDate}
                     onChange={(e) => setEditedBirthDate(e.target.value)}
                     onKeyDown={(e) => handleKeyPress(e, handleSaveBirthDate, handleCancelBirthDateEdit)}
-                    className="text-lg bg-gray-800 text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
+                    className="text-lg bg-theme-card text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
                     autoFocus
                   />
                   <button
@@ -450,51 +450,56 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#1a1e23] p-2 rounded-lg border border-gray-700/30 flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <div className="flex items-center gap-2 p-1 bg-[#22262b] rounded-lg">
-                <button
-                  onClick={() => setActiveTab('historico')}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
-                    activeTab === 'historico'
-                      ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
-                      : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
-                  }`}
-                >
-                  <History size={16}/>
-                  Linha do Tempo
-                </button>
-                <button
-                  onClick={() => setActiveTab('investigacao')}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
-                    activeTab === 'investigacao'
-                      ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
-                      : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
-                  }`}
-                >
-                  <Beaker size={16}/>
-                  Investigação
-                </button>
-                <button
-                  onClick={() => setActiveTab('planos')}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 border ${
-                    activeTab === 'planos'
-                      ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
-                      : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
-                  }`}
-                >
-                  <NotebookPen size={16}/>
-                  Planos e Condutas
-                </button>
+    
+               <div className="p-4 rounded-lg border border-gray-700/30 flex flex-col gap-4 bg-theme-background">
+              <div className="flex items-center justify-center">
+                <div className="flex items-center gap-2 p-1 bg-theme-card rounded-lg">
+                  <button
+                    onClick={() => setActiveTab('historico')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[140px] h-[44px] justify-center ${
+                      activeTab === 'historico'
+                        ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
+                        : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
+                    }`}
+                  >
+                    <History size={16}/>
+                    Linha do Tempo
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('investigacao')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[140px] h-[44px] justify-center ${
+                      activeTab === 'investigacao'
+                        ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
+                        : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
+                    }`}
+                  >
+                    <Beaker size={16}/>
+                    Investigação
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('planos')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[140px] h-[44px] justify-center ${
+                      activeTab === 'planos'
+                        ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
+                        : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
+                    }`}
+                  >
+                    <NotebookPen size={16}/>
+                    Planos e Condutas
+                  </button>
+                </div>
               </div>
-              <div className="relative w-full sm:w-auto">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/>
-                <input 
-                  type="text"
-                  placeholder="Buscar na linha do tempo..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
+              <div className="flex justify-center">
+                <div className="relative w-full max-w-md">
+                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/>
+                  <input 
+                    type="text"
+                    placeholder="Buscar na linha do tempo..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input text-center"
+                  />
+                </div>
               </div>
             </div>
 
@@ -527,7 +532,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                         <div className="w-6 h-3 bg-gray-700 rounded"></div>
                       </div>
                       <div className="h-5 bg-gray-700 rounded w-12 mx-auto mb-1"></div>
-                      <div className="h-3 bg-gray-800 rounded w-16 mx-auto"></div>
+                      <div className="h-3 bg-theme-card rounded w-16 mx-auto"></div>
                     </div>
                   ))}
                 </div>
@@ -582,13 +587,13 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                 <div className="space-y-4">
                   <div className="animate-pulse">
                     <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-800 rounded w-1/2 mb-1"></div>
-                    <div className="h-3 bg-gray-800 rounded w-2/3"></div>
+                    <div className="h-3 bg-theme-card rounded w-1/2 mb-1"></div>
+                        <div className="h-3 bg-theme-card rounded w-2/3"></div>
                   </div>
                   <div className="animate-pulse">
                     <div className="h-4 bg-gray-700 rounded w-2/3 mb-2"></div>
-                    <div className="h-3 bg-gray-800 rounded w-1/2 mb-1"></div>
-                    <div className="h-3 bg-gray-800 rounded w-3/4"></div>
+                    <div className="h-3 bg-theme-card rounded w-1/2 mb-1"></div>
+                        <div className="h-3 bg-theme-card rounded w-3/4"></div>
                   </div>
                 </div>
               ) : realData.planos.length > 0 ? (
@@ -622,24 +627,24 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   <div className="animate-pulse">
                     <div className="h-4 bg-gray-700 rounded w-1/2 mb-2"></div>
                     <div className="space-y-1">
-                      <div className="h-3 bg-gray-800 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-800 rounded w-2/3"></div>
-                      <div className="h-3 bg-gray-800 rounded w-4/5"></div>
+                      <div className="h-3 bg-theme-card rounded w-3/4"></div>
+                      <div className="h-3 bg-theme-card rounded w-2/3"></div>
+                      <div className="h-3 bg-theme-card rounded w-4/5"></div>
                     </div>
                   </div>
                   <div className="animate-pulse">
                     <div className="h-4 bg-gray-700 rounded w-1/3 mb-2"></div>
                     <div className="space-y-1">
-                      <div className="h-3 bg-gray-800 rounded w-2/3"></div>
-                      <div className="h-3 bg-gray-800 rounded w-1/2"></div>
+                      <div className="h-3 bg-theme-card rounded w-2/3"></div>
+                      <div className="h-3 bg-theme-card rounded w-1/2"></div>
                     </div>
                   </div>
                   <div className="animate-pulse">
                     <div className="h-4 bg-gray-700 rounded w-2/3 mb-2"></div>
                     <div className="space-y-1">
-                      <div className="h-3 bg-gray-800 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-800 rounded w-4/5"></div>
-                      <div className="h-3 bg-gray-800 rounded w-2/3"></div>
+                      <div className="h-3 bg-theme-card rounded w-3/4"></div>
+                      <div className="h-3 bg-theme-card rounded w-4/5"></div>
+                      <div className="h-3 bg-theme-card rounded w-2/3"></div>
                     </div>
                   </div>
                 </div>
@@ -786,10 +791,10 @@ const PlansList = ({ data }) => {
 const RecordCard = ({ record, type }) => {
   const getTypeColor = (type) => {
     switch (type) {
-      case 'historico': return 'bg-[#1C1C1F] border-teal-500/30';
-      case 'investigacao': return 'bg-[#1C1C1F] border-teal-500/30';
-      case 'planos': return 'bg-[#1C1C1F] border-teal-500/30';
-      default: return 'bg-[#1C1C1F] border-gray-800';
+      case 'historico': return 'bg-theme-card border-teal-500/30';
+        case 'investigacao': return 'bg-theme-card border-teal-500/30';
+        case 'planos': return 'bg-theme-card border-teal-500/30';
+        default: return 'bg-theme-card border-gray-800';
     }
   };
   

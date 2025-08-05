@@ -55,7 +55,7 @@ const CalculatorCard = ({ calculator, onUse }) => {
   };
 
   return (
-    <Card className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors cursor-pointer group">
+    <Card className="bg-theme-card border-gray-700 hover:border-gray-600 transition-colors cursor-pointer group">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">

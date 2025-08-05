@@ -118,9 +118,13 @@ const KnowledgeBase = () => {
   const suggestions = patientBasedSuggestions();
 
   return (
-    <div className="knowledge-base-container">
-      {/* Cabeçalho */}
-      <h3 className="text-lg font-medium text-white mb-4">Base de Conhecimento</h3>
+    <div className="knowledge-base-container h-full flex flex-col">
+      {/* Description */}
+      <div className="mb-4">
+        <p className="text-gray-300 text-sm">
+          Acesse diretrizes, protocolos e ferramentas médicas
+        </p>
+      </div>
 
       {/* Campo de pesquisa */}
       <div className="relative mb-4">
@@ -172,7 +176,7 @@ const KnowledgeBase = () => {
           <div className="space-y-3">
             {suggestions.map(item => (
               <Link key={item.id} to={item.url} className="block">
-                <Card className="hover:bg-lightBg/50 transition-colors border-teal-800 bg-teal-900/20">
+                <Card className="hover:bg-theme-card/50 transition-colors border-teal-800 bg-teal-900/20">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-white text-base">{item.title}</CardTitle>
                     <CardDescription className="text-gray-300">{item.description}</CardDescription>
@@ -204,7 +208,7 @@ const KnowledgeBase = () => {
         ) : (
           filteredItems.map(item => (
             <Link key={item.id} to={item.url} className="block">
-              <Card className="hover:bg-lightBg/50 transition-colors">
+              <Card className="hover:bg-theme-card/50 transition-colors">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-white text-base">{item.title}</CardTitle>
                   <CardDescription className="text-gray-300">{item.description}</CardDescription>

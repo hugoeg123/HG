@@ -162,10 +162,10 @@ const Alerts = () => {
   };
 
   return (
-    <div className="alerts-container">
-      {/* Cabeçalho */}
+    <div className="alerts-container h-full flex flex-col">
+      {/* Header with create button */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium text-white">Alertas e Lembretes</h3>
+        <div></div> {/* Empty div for spacing */}
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="text-teal-400 hover:text-teal-300"
@@ -202,10 +202,9 @@ const Alerts = () => {
               />
             </svg>
           )}
-        </button>
+          </button>
       </div>
-
-      {/* Mensagem de erro */}
+        {/* Mensagem de erro */}
       {error && (
         <div className="mb-4 p-3 bg-red-900 bg-opacity-30 border border-red-800 text-red-300 rounded">
           {error}

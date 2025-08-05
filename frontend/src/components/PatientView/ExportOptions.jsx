@@ -70,7 +70,7 @@ const ExportOptions = ({ patientId }) => {
   };
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg mb-4">
+    <div className="bg-theme-card p-4 rounded-lg mb-4">
       <h3 className="text-lg font-semibold text-white mb-3">Exportar Dados</h3>
       
       <div className="flex flex-col space-y-4">

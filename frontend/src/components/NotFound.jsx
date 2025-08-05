@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
  */
 const NotFound = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-darkBg p-6 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-theme-background p-6 text-center">
       <div className="max-w-md">
         <h1 className="text-6xl font-bold text-teal-500 mb-4">404</h1>
         <h2 className="text-2xl font-semibold text-white mb-6">Página não encontrada</h2>

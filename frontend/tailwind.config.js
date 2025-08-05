@@ -8,8 +8,15 @@ export default {
   theme: {
   	extend: {
   		colors: {
-  			darkBg: '#111827',
-  			lightBg: '#1f2937',
+  			// --- Unified Semantic Color System (Single Source of Truth) ---
+  			'theme-background': '#1a1e23', // Main background for app body and sidebars
+  			'theme-surface': '#1C1C1F',    // Panels and distinct content areas
+  			'theme-card': '#22262b',       // Interactive items: cards, inputs, modals
+  			'theme-border': '#374151',     // Standard borders
+  			
+  			// Legacy colors (deprecated - use theme-* instead)
+  			darkBg: '#1a1e23',  // Now matches theme-background
+  			lightBg: '#22262b', // Now matches theme-card
   			border: 'hsl(var(--border))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',

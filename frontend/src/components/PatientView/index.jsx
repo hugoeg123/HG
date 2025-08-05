@@ -235,7 +235,7 @@ const PatientView = () => {
       {showEditor && (
         <div className="space-y-4">
           {/* Navigation Header */}
-          <div className="flex items-center justify-between bg-lightBg p-4 rounded-lg border border-border">
+          <div className="flex items-center justify-between bg-theme-card p-4 rounded-lg border border-theme-border">
             {/* Bloco de informações do paciente (avatar e nome) - Esquerda */}
             <div className="flex items-center">
               <div className="avatar placeholder mr-4">
@@ -255,7 +255,7 @@ const PatientView = () => {
             {!isNewPatient && (
               <button
                 onClick={handleBackToDashboard}
-                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                className="px-3 py-1 bg-theme-card text-white rounded hover:bg-theme-card/80 transition-colors"
               >
                 ← Voltar ao Dashboard
               </button>

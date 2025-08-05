@@ -26,7 +26,6 @@ const SectionBlock = React.memo(({
 }) => {
   const textareaRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [wasFocused, setWasFocused] = useState(false);
 
   // Auto-redimensionar textarea
   const adjustTextareaHeight = useCallback(() => {
@@ -41,15 +40,13 @@ const SectionBlock = React.memo(({
     adjustTextareaHeight();
   }, [section.content, adjustTextareaHeight]);
 
-  // CORREÇÃO FASE 4: Gerenciar foco após re-renderização
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea && wasFocused) {
-      // Restaura o foco se o textarea estava focado antes da re-renderização
-      textarea.focus();
-      setWasFocused(false);
+    // Foca no textarea se ele deve estar ativo
+    const isActive = document.activeElement === textareaRef.current;
+    if (isActive) {
+      textareaRef.current.focus();
     }
-  }, [section.content, wasFocused]);
+  }, [section.content]); // Reavalia o foco quando o conteúdo muda
 
   // Extract tag and content from section
   const { tagInfo, contentValue } = React.useMemo(() => {
@@ -145,15 +142,6 @@ const SectionBlock = React.memo(({
   const handleAddToChat = () => {
     onAddToChat(section.content);
   };
-
-  // CORREÇÃO FASE 4: Handlers de foco
-  const handleFocus = () => {
-    setWasFocused(true);
-  };
-
-  const handleBlur = () => {
-    setWasFocused(false);
-  };
   
   // Get tag display styles
   const getTagStyles = () => {
@@ -189,7 +177,7 @@ const SectionBlock = React.memo(({
   
   return (
     <div 
-      className="relative group bg-[#22262b] border border-gray-700 rounded-xl p-4 transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10"
+      className="relative group bg-theme-card border border-gray-700 rounded-xl p-4 transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -213,7 +201,7 @@ const SectionBlock = React.memo(({
         {/* Add to Chat Button */}
         <button
           onClick={handleAddToChat}
-          className={`p-1.5 bg-gray-700/50 rounded-full text-teal-400 transition-all duration-200 hover:bg-teal-600/20 hover:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-[#22262b] ${
+          className={`p-1.5 bg-gray-700/50 rounded-full text-teal-400 transition-all duration-200 hover:bg-teal-600/20 hover:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-theme-card ${
             isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
           }`}
           title={`Adicionar "${tagInfo.name}" ao Chat`}
@@ -229,8 +217,6 @@ const SectionBlock = React.memo(({
         value={section.content}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         className="w-full bg-transparent border-none text-gray-300 placeholder-gray-500 resize-none focus:outline-none focus:ring-0 leading-relaxed"
         placeholder={`Digite o conteúdo para ${tagInfo.name || 'esta seção'}...`}
         aria-label={ariaLabel}

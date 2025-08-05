@@ -2,6 +2,16 @@ import { create } from 'zustand';
 import api from '../services/api';
 import { recordService } from '../services/api';
 
+// Função auxiliar para normalizar dados do paciente
+const normalizePatient = (patient) => {
+  if (!patient) return null;
+  return {
+    ...patient,
+    birthDate: patient.dateOfBirth || patient.birthDate,
+    dateOfBirth: patient.dateOfBirth || patient.birthDate,
+  };
+};
+
 /**
  * Request cache to prevent duplicate API calls
  * Hook: Prevents ERR_INSUFFICIENT_RESOURCES by caching recent requests
@@ -217,13 +227,12 @@ const usePatientStore = create((set, get) => ({
         const realPatient = response.data;
         
         // Substituir paciente temporário pelo real
-        const normalizedRealPatient = normalizePatient(realPatient);
         set(state => ({
           patients: state.patients.map(p => 
-            p.id === tempId ? normalizedRealPatient : p
+            p.id === tempId ? realPatient : p
           ),
           currentPatient: state.currentPatient?.id === tempId 
-            ? normalizedRealPatient 
+            ? realPatient 
             : state.currentPatient,
           isLoading: false,
           error: null
@@ -271,10 +280,10 @@ const usePatientStore = create((set, get) => ({
     
     // Atualização otimista - atualizar UI primeiro
     const optimisticPatientsUpdate = currentState.patients.map(p => 
-      p.id === patientId ? normalizePatient({ ...p, ...patientData }) : p
+      p.id === patientId ? { ...p, ...patientData } : p
     );
     const optimisticCurrentPatient = currentState.currentPatient?.id === patientId 
-      ? normalizePatient({ ...currentState.currentPatient, ...patientData })
+      ? { ...currentState.currentPatient, ...patientData }
       : currentState.currentPatient;
     
     set({ 
@@ -291,14 +300,13 @@ const usePatientStore = create((set, get) => ({
         // Se for temporário, criar novo paciente no backend
         const fullPatientData = {
           ...currentState.currentPatient,
-          ...patientData,
-          dateOfBirth: patientData.birthDate || patientData.dateOfBirth || currentState.currentPatient?.birthDate || currentState.currentPatient?.dateOfBirth
+          ...patientData
         };
         delete fullPatientData.id;
         delete fullPatientData.isTemporary;
         
         response = await api.post('/patients', fullPatientData);
-        const realPatient = normalizePatient(response.data);
+        const realPatient = response.data;
         
         // Substituir paciente temporário pelo real
         set(state => ({
@@ -312,20 +320,17 @@ const usePatientStore = create((set, get) => ({
         }));
       } else {
         // Atualizar paciente existente
-        const payload = { 
-          ...patientData, 
-          dateOfBirth: patientData.birthDate || patientData.dateOfBirth 
-        };
+        const payload = { ...patientData, dateOfBirth: patientData.birthDate || patientData.dateOfBirth };
         response = await api.put(`/patients/${patientId}`, payload);
-        const normalizedPatient = normalizePatient(response.data);
+        const finalPatient = normalizePatient(response.data); // Normaliza a resposta
         
         // Confirmar atualização com dados do servidor
         set(state => ({
           patients: state.patients.map(p => 
-            p.id === patientId ? normalizedPatient : p
+            p.id === patientId ? finalPatient : p
           ),
           currentPatient: state.currentPatient?.id === patientId 
-            ? normalizedPatient 
+            ? finalPatient 
             : state.currentPatient,
           isLoading: false
         }));
@@ -334,7 +339,7 @@ const usePatientStore = create((set, get) => ({
       // Cache no localStorage
       localStorage.setItem('patients', JSON.stringify(get().patients));
       
-      return normalizePatient(response.data);
+      return response.data;
     } catch (error) {
       console.error(`Erro ao atualizar paciente ${patientId}:`, error);
       
@@ -419,7 +424,20 @@ const usePatientStore = create((set, get) => ({
       const rawPatients = response.data.patients || response.data || [];
       
       // Validar e normalizar dados dos pacientes
-      const patients = Array.isArray(rawPatients) ? rawPatients.map(normalizePatient) : [];
+      const patients = Array.isArray(rawPatients) ? rawPatients.map(patient => ({
+        id: patient?.id || null,
+        name: patient?.name || 'Sem Nome',
+        birthDate: patient?.birthDate || null,
+        gender: patient?.gender || null,
+        phone: patient?.phone || null,
+        email: patient?.email || null,
+        address: patient?.address || null,
+        recordNumber: patient?.recordNumber || null,
+        insurancePlan: patient?.insurancePlan || null,
+        observations: patient?.observations || null,
+        records: Array.isArray(patient?.records) ? patient.records : [],
+        ...patient
+      })) : [];
       
       set({ patients, isLoading: false });
       return patients;
@@ -517,23 +535,14 @@ const usePatientStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/records', recordData);
-      
       // FORÇA A ATUALIZAÇÃO DA LISTA DE REGISTROS
       await get().fetchPatientRecords(recordData.patientId);
-      
-      set({ 
-        currentRecord: response.data,
-        isLoading: false 
-      });
-      
+      set({ isLoading: false });
       return response.data;
     } catch (error) {
-      console.error('Erro ao criar registro médico:', error);
-      set({ 
-        error: error.response?.data?.message || 'Erro ao criar registro médico', 
-        isLoading: false 
-      });
-      return null;
+      console.error('Erro ao criar registro:', error);
+      set({ error: 'Falha ao salvar o registro.', isLoading: false });
+      throw error;
     }
   },
   

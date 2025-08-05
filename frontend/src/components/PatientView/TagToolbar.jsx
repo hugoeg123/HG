@@ -132,7 +132,7 @@ const TagToolbar = ({
   return (
     <>
       {/* Tag Toolbar */}
-      <div className="w-full bg-[#22262b] p-4 rounded-xl mb-6">
+      <div className="w-full bg-theme-card p-4 rounded-xl mb-6">
         {/* Create New Tag Button */}
         <button 
           onClick={() => setIsModalOpen(true)} 
@@ -212,7 +212,7 @@ const TagToolbar = ({
       {/* Create Tag Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[#22262b] p-6 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
+          <div className="bg-theme-card p-6 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-200">Criar Nova Tag</h3>
               <button 

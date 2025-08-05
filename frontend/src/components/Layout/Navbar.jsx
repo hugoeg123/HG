@@ -15,7 +15,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
   };
 
   return (
-    <nav className="bg-[#1a1e23] border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+    <nav className="bg-theme-background border-b border-gray-700 px-4 py-3 flex items-center justify-between">
       <div className="flex items-center">
         {/* Botão para alternar a barra lateral esquerda */}
         <button 
@@ -86,7 +86,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
           </button>
           
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-[#22262b] border border-gray-700 rounded-lg shadow-lg py-1 z-50">
+            <div className="absolute right-0 mt-2 w-48 bg-theme-card border border-gray-700 rounded-lg shadow-lg py-1 z-50">
               <Link 
                 to="/profile" 
                 className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/30 hover:text-white transition-all duration-200 flex items-center space-x-2"

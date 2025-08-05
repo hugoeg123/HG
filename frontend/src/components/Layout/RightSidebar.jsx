@@ -3,6 +3,7 @@ import AIAssistant from '../AI/AIAssistant';
 import Calculators from '../Tools/Calculators';
 import Alerts from '../Tools/Alerts';
 import KnowledgeBase from '../Tools/KnowledgeBase';
+import TabContentPanel from './TabContentPanel';
 
 /**
  * RightSidebar component - Displays AI assistant, calculators, alerts and knowledge base
@@ -21,24 +22,19 @@ import KnowledgeBase from '../Tools/KnowledgeBase';
 const RightSidebar = ({ collapsed }) => {
   const [activeTab, setActiveTab] = useState('chat');
 
-  // Renderizar o conteúdo com base na aba ativa
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'chat':
-        return <AIAssistant />;
-      case 'calculators':
-        return <Calculators />;
-      case 'alerts':
-        return <Alerts />;
-      case 'knowledge':
-        return <KnowledgeBase />;
-      default:
-        return <AIAssistant />;
-    }
+  // Tab configuration with titles and components
+  const tabConfig = {
+    chat: { title: 'Chat IA', component: AIAssistant },
+    calculators: { title: 'Calculadoras Médicas', component: Calculators },
+    alerts: { title: 'Alertas e Lembretes', component: Alerts },
+    knowledge: { title: 'Base de Conhecimento', component: KnowledgeBase }
   };
 
+  const currentTab = tabConfig[activeTab] || tabConfig.chat;
+  const CurrentComponent = currentTab.component;
+
   return (
-    <div className={`h-full bg-[#1a1e23] border-l border-gray-700 flex flex-col ${collapsed ? 'collapsed' : ''}`}>
+    <div className={`h-full bg-theme-background border-l border-gray-700 flex flex-col ${collapsed ? 'collapsed' : ''}`}>
       {/* Tab Navigation */}
       <div className="border-b border-gray-700">
         <nav className="flex" aria-label="Tabs">
@@ -98,27 +94,10 @@ const RightSidebar = ({ collapsed }) => {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-hidden bg-[#22262b]">
-        {activeTab === 'chat' && (
-          <div className="h-full p-4">
-            <AIAssistant />
-          </div>
-        )}
-        {activeTab === 'calculators' && (
-          <div className="h-full p-4">
-            <Calculators />
-          </div>
-        )}
-        {activeTab === 'alerts' && (
-          <div className="h-full p-4">
-            <Alerts />
-          </div>
-        )}
-        {activeTab === 'knowledge' && (
-          <div className="h-full p-4">
-            <KnowledgeBase />
-          </div>
-        )}
+      <div className="flex-1 overflow-hidden">
+        <TabContentPanel title={currentTab.title}>
+          <CurrentComponent />
+        </TabContentPanel>
       </div>
     </div>
   );

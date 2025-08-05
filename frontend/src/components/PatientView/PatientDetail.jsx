@@ -130,7 +130,7 @@ const PatientDetail = ({ patient, onUpdate }) => {
   // Modo de visualização
   if (!isEditing) {
     return (
-      <div className="patient-detail bg-gray-800 rounded-lg p-4">
+      <div className="patient-detail bg-theme-card rounded-lg p-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold text-white">Detalhes do Paciente</h3>
           <button
@@ -201,7 +201,7 @@ const PatientDetail = ({ patient, onUpdate }) => {
   
   // Modo de edição
   return (
-    <div className="patient-detail bg-gray-800 rounded-lg p-4">
+    <div className="patient-detail bg-theme-card rounded-lg p-4">
       <h3 className="text-xl font-semibold text-white mb-4">Editar Paciente</h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
