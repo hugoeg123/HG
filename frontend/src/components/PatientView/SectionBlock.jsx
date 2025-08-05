@@ -26,6 +26,7 @@ const SectionBlock = React.memo(({
 }) => {
   const textareaRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [wasFocused, setWasFocused] = useState(false);
 
   // Auto-redimensionar textarea
   const adjustTextareaHeight = useCallback(() => {
@@ -39,6 +40,16 @@ const SectionBlock = React.memo(({
   useEffect(() => {
     adjustTextareaHeight();
   }, [section.content, adjustTextareaHeight]);
+
+  // CORREÇÃO FASE 4: Gerenciar foco após re-renderização
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea && wasFocused) {
+      // Restaura o foco se o textarea estava focado antes da re-renderização
+      textarea.focus();
+      setWasFocused(false);
+    }
+  }, [section.content, wasFocused]);
 
   // Extract tag and content from section
   const { tagInfo, contentValue } = React.useMemo(() => {
@@ -134,6 +145,15 @@ const SectionBlock = React.memo(({
   const handleAddToChat = () => {
     onAddToChat(section.content);
   };
+
+  // CORREÇÃO FASE 4: Handlers de foco
+  const handleFocus = () => {
+    setWasFocused(true);
+  };
+
+  const handleBlur = () => {
+    setWasFocused(false);
+  };
   
   // Get tag display styles
   const getTagStyles = () => {
@@ -209,6 +229,8 @@ const SectionBlock = React.memo(({
         value={section.content}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className="w-full bg-transparent border-none text-gray-300 placeholder-gray-500 resize-none focus:outline-none focus:ring-0 leading-relaxed"
         placeholder={`Digite o conteúdo para ${tagInfo.name || 'esta seção'}...`}
         aria-label={ariaLabel}
