@@ -518,26 +518,12 @@ const usePatientStore = create((set, get) => ({
     try {
       const response = await api.post('/records', recordData);
       
-      // Adicionar o novo registro à lista de registros do paciente
-      set(state => {
-        if (state.currentPatient?.id === recordData.patientId) {
-          const updatedRecords = state.currentPatient.records 
-            ? [...state.currentPatient.records, response.data]
-            : [response.data];
-            
-          return {
-            currentPatient: {
-              ...state.currentPatient,
-              records: updatedRecords
-            },
-            currentRecord: response.data,
-            isLoading: false
-          };
-        }
-        return { 
-          currentRecord: response.data,
-          isLoading: false 
-        };
+      // FORÇA A ATUALIZAÇÃO DA LISTA DE REGISTROS
+      await get().fetchPatientRecords(recordData.patientId);
+      
+      set({ 
+        currentRecord: response.data,
+        isLoading: false 
       });
       
       return response.data;
