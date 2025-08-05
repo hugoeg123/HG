@@ -234,30 +234,31 @@ const PatientView = () => {
       {showEditor && (
         <div className="space-y-4">
           {/* Navigation Header */}
-          <div className="flex items-center justify-between bg-dark-lighter p-4 rounded-lg border border-dark-light">
+          <div className="flex items-center justify-between bg-lightBg p-4 rounded-lg border border-border">
+            {/* Bloco de informações do paciente (avatar e nome) - Esquerda */}
             <div className="flex items-center">
-              {!isNewPatient && (
-                <button
-                  onClick={handleBackToDashboard}
-                  className="mr-4 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                >
-                  ← Voltar ao Dashboard
-                </button>
-              )}
-              <div className="flex items-center">
-                <div className="avatar placeholder mr-4">
-                  <div className="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center">
-                    <span className="text-xl">{patientName.charAt(0).toUpperCase()}</span>
-                  </div>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{patientName}</h2>
-                  <p className="text-gray-300">
-                    {isNewPatient ? 'Primeiro Registro Médico' : 'Novo Registro Médico'}
-                  </p>
+              <div className="avatar placeholder mr-4">
+                <div className="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center">
+                  <span className="text-xl">{patientName.charAt(0).toUpperCase()}</span>
                 </div>
               </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">{patientName}</h2>
+                <p className="text-gray-300">
+                  {isNewPatient ? 'Primeiro Registro Médico' : 'Novo Registro Médico'}
+                </p>
+              </div>
             </div>
+
+            {/* Botão "Voltar ao Dashboard" - Direita */}
+            {!isNewPatient && (
+              <button
+                onClick={handleBackToDashboard}
+                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+              >
+                ← Voltar ao Dashboard
+              </button>
+            )}
           </div>
           
           <HybridEditor 

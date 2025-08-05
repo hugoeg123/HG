@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
+import { Badge } from '../ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 
 /**
  * KnowledgeBase component - Exibe uma base de conhecimento médico
@@ -148,13 +150,18 @@ const KnowledgeBase = () => {
       {/* Categorias */}
       <div className="flex flex-wrap gap-2 mb-4">
         {categories.map(category => (
-          <button
+          <Badge
             key={category.id}
-            className={`btn text-sm rounded-full ${activeCategory === category.id ? 'btn-primary' : 'btn-secondary'}`}
+            variant={activeCategory === category.id ? 'default' : 'outline'}
+            className={`cursor-pointer transition-colors ${
+              activeCategory === category.id 
+                ? 'bg-primary text-primary-foreground hover:bg-primary/80' 
+                : 'hover:bg-secondary/20'
+            }`}
             onClick={() => setActiveCategory(category.id)}
           >
             {category.name}
-          </button>
+          </Badge>
         ))}
       </div>
 
@@ -164,20 +171,22 @@ const KnowledgeBase = () => {
           <h4 className="text-white font-medium mb-2">Sugestões para {currentPatient.name}</h4>
           <div className="space-y-3">
             {suggestions.map(item => (
-              <Link
-                key={item.id}
-                to={item.url}
-                className="block p-3 rounded bg-teal-900 bg-opacity-20 border border-teal-800 hover:bg-opacity-30 transition-colors"
-              >
-                <h5 className="text-white font-medium">{item.title}</h5>
-                <p className="text-gray-300 text-sm mt-1">{item.description}</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {item.tags.map(tag => (
-                    <span key={tag} className="text-xs bg-teal-800 bg-opacity-50 text-teal-200 px-1.5 py-0.5 rounded">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+              <Link key={item.id} to={item.url} className="block">
+                <Card className="hover:bg-lightBg/50 transition-colors border-teal-800 bg-teal-900/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-white text-base">{item.title}</CardTitle>
+                    <CardDescription className="text-gray-300">{item.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex flex-wrap gap-1">
+                      {item.tags.map(tag => (
+                        <Badge key={tag} variant="outline" className="text-xs bg-teal-800/50 text-teal-200 border-teal-700">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </Link>
             ))}
           </div>
@@ -187,25 +196,29 @@ const KnowledgeBase = () => {
       {/* Lista de itens */}
       <div className="space-y-3">
         {filteredItems.length === 0 ? (
-          <div className="text-gray-400 text-center py-4 bg-gray-700 bg-opacity-30 rounded">
-            Nenhum resultado encontrado
-          </div>
+          <Card className="bg-gray-700/30">
+            <CardContent className="text-center py-6">
+              <p className="text-gray-400">Nenhum resultado encontrado</p>
+            </CardContent>
+          </Card>
         ) : (
           filteredItems.map(item => (
-            <Link
-              key={item.id}
-              to={item.url}
-              className="block p-3 rounded bg-gray-700 hover:bg-gray-600 transition-colors"
-            >
-              <h5 className="text-white font-medium">{item.title}</h5>
-              <p className="text-gray-300 text-sm mt-1">{item.description}</p>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {item.tags.map(tag => (
-                  <span key={tag} className="text-xs bg-gray-600 text-gray-300 px-1.5 py-0.5 rounded">
-                    {tag}
-                  </span>
-                ))}
-              </div>
+            <Link key={item.id} to={item.url} className="block">
+              <Card className="hover:bg-lightBg/50 transition-colors">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-white text-base">{item.title}</CardTitle>
+                  <CardDescription className="text-gray-300">{item.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex flex-wrap gap-1">
+                    {item.tags.map(tag => (
+                      <Badge key={tag} variant="outline" className="text-xs bg-gray-600/50 text-gray-300 border-gray-600">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
           ))
         )}

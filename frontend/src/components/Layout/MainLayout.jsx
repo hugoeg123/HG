@@ -32,7 +32,7 @@ const MainLayout = () => {
         </aside>
         
         {/* Main Content */}
-        <main className="flex-1 p-4 bg-[#111827] rounded-lg shadow-lg mx-2 my-2 overflow-y-auto">
+        <main className="flex-1 p-4 overflow-y-auto" style={{backgroundColor: '#1a1e23'}}>
           <div className="max-w-6xl mx-auto">
             <Outlet />
           </div>
