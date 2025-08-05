@@ -145,8 +145,12 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   const handleSaveBirthDate = async () => {
     if (editedBirthDate && editedBirthDate !== safeCurrentPatient?.birthDate) {
       try {
-        await updatePatient(safePatientId, { birthDate: editedBirthDate });
+        // Backend expects dateOfBirth, not birthDate
+        await updatePatient(safePatientId, { dateOfBirth: editedBirthDate });
         toast.success('Data de nascimento atualizada com sucesso');
+        
+        // Force refresh dashboard to get updated data
+        await fetchPatientDashboard(safePatientId, { forceRefresh: true });
       } catch (error) {
         console.error('Erro ao atualizar data de nascimento:', error);
         toast.error('Erro ao atualizar data de nascimento');

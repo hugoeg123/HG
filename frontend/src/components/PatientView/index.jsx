@@ -132,7 +132,8 @@ const PatientView = () => {
   const handleSaveBirthDate = async () => {
     if (editedBirthDate && editedBirthDate !== currentPatient?.birthDate) {
       try {
-        await updatePatient(id, { birthDate: editedBirthDate });
+        // Backend expects dateOfBirth, not birthDate
+        await updatePatient(id, { dateOfBirth: editedBirthDate });
         // updatePatient já atualiza o estado, não precisa de fetchPatientById
       } catch (error) {
         console.error('Erro ao atualizar data de nascimento:', error);

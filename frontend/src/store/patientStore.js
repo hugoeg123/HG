@@ -98,7 +98,8 @@ const usePatientStore = create((set, get) => ({
       const patients = Array.isArray(rawPatients) ? rawPatients.map(patient => ({
         id: patient?.id || null,
         name: patient?.name || 'Sem Nome',
-        birthDate: patient?.birthDate || null,
+        // Normalize birthDate/dateOfBirth - backend uses dateOfBirth, frontend uses birthDate
+        birthDate: patient?.birthDate || patient?.dateOfBirth || null,
         gender: patient?.gender || null,
         phone: patient?.phone || null,
         email: patient?.email || null,
@@ -156,7 +157,8 @@ const usePatientStore = create((set, get) => ({
       const currentPatient = rawPatient ? {
         id: rawPatient?.id || null,
         name: rawPatient?.name || 'Sem Nome',
-        birthDate: rawPatient?.birthDate || null,
+        // Normalize birthDate/dateOfBirth - backend uses dateOfBirth, frontend uses birthDate
+        birthDate: rawPatient?.birthDate || rawPatient?.dateOfBirth || null,
         gender: rawPatient?.gender || null,
         phone: rawPatient?.phone || null,
         email: rawPatient?.email || null,
