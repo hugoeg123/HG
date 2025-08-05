@@ -217,12 +217,13 @@ const usePatientStore = create((set, get) => ({
         const realPatient = response.data;
         
         // Substituir paciente temporário pelo real
+        const normalizedRealPatient = normalizePatient(realPatient);
         set(state => ({
           patients: state.patients.map(p => 
-            p.id === tempId ? realPatient : p
+            p.id === tempId ? normalizedRealPatient : p
           ),
           currentPatient: state.currentPatient?.id === tempId 
-            ? realPatient 
+            ? normalizedRealPatient 
             : state.currentPatient,
           isLoading: false,
           error: null
@@ -270,10 +271,10 @@ const usePatientStore = create((set, get) => ({
     
     // Atualização otimista - atualizar UI primeiro
     const optimisticPatientsUpdate = currentState.patients.map(p => 
-      p.id === patientId ? { ...p, ...patientData } : p
+      p.id === patientId ? normalizePatient({ ...p, ...patientData }) : p
     );
     const optimisticCurrentPatient = currentState.currentPatient?.id === patientId 
-      ? { ...currentState.currentPatient, ...patientData }
+      ? normalizePatient({ ...currentState.currentPatient, ...patientData })
       : currentState.currentPatient;
     
     set({ 
@@ -290,13 +291,14 @@ const usePatientStore = create((set, get) => ({
         // Se for temporário, criar novo paciente no backend
         const fullPatientData = {
           ...currentState.currentPatient,
-          ...patientData
+          ...patientData,
+          dateOfBirth: patientData.birthDate || patientData.dateOfBirth || currentState.currentPatient?.birthDate || currentState.currentPatient?.dateOfBirth
         };
         delete fullPatientData.id;
         delete fullPatientData.isTemporary;
         
         response = await api.post('/patients', fullPatientData);
-        const realPatient = response.data;
+        const realPatient = normalizePatient(response.data);
         
         // Substituir paciente temporário pelo real
         set(state => ({
@@ -310,15 +312,20 @@ const usePatientStore = create((set, get) => ({
         }));
       } else {
         // Atualizar paciente existente
-        response = await api.put(`/patients/${patientId}`, patientData);
+        const payload = { 
+          ...patientData, 
+          dateOfBirth: patientData.birthDate || patientData.dateOfBirth 
+        };
+        response = await api.put(`/patients/${patientId}`, payload);
+        const normalizedPatient = normalizePatient(response.data);
         
         // Confirmar atualização com dados do servidor
         set(state => ({
           patients: state.patients.map(p => 
-            p.id === patientId ? response.data : p
+            p.id === patientId ? normalizedPatient : p
           ),
           currentPatient: state.currentPatient?.id === patientId 
-            ? response.data 
+            ? normalizedPatient 
             : state.currentPatient,
           isLoading: false
         }));
@@ -327,7 +334,7 @@ const usePatientStore = create((set, get) => ({
       // Cache no localStorage
       localStorage.setItem('patients', JSON.stringify(get().patients));
       
-      return response.data;
+      return normalizePatient(response.data);
     } catch (error) {
       console.error(`Erro ao atualizar paciente ${patientId}:`, error);
       
@@ -412,20 +419,7 @@ const usePatientStore = create((set, get) => ({
       const rawPatients = response.data.patients || response.data || [];
       
       // Validar e normalizar dados dos pacientes
-      const patients = Array.isArray(rawPatients) ? rawPatients.map(patient => ({
-        id: patient?.id || null,
-        name: patient?.name || 'Sem Nome',
-        birthDate: patient?.birthDate || null,
-        gender: patient?.gender || null,
-        phone: patient?.phone || null,
-        email: patient?.email || null,
-        address: patient?.address || null,
-        recordNumber: patient?.recordNumber || null,
-        insurancePlan: patient?.insurancePlan || null,
-        observations: patient?.observations || null,
-        records: Array.isArray(patient?.records) ? patient.records : [],
-        ...patient
-      })) : [];
+      const patients = Array.isArray(rawPatients) ? rawPatients.map(normalizePatient) : [];
       
       set({ patients, isLoading: false });
       return patients;
