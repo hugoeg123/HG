@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
 import { Badge } from '../ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
+import SidebarItem from '../ui/SidebarItem';
 import { 
   BookOpen, 
   FileText, 
@@ -160,21 +161,16 @@ const KnowledgeBase = () => {
         <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
       </div>
 
-      {/* Categorias */}
-      <div className="flex flex-wrap gap-2">
+      {/* Categorias - Usando SidebarItem para consistência */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
         {categories.map(category => (
-          <Badge
+          <SidebarItem
             key={category.id}
-            variant={activeCategory === category.id ? 'default' : 'secondary'}
-            className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-              activeCategory === category.id 
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
-                : 'bg-theme-card border-theme-border hover:bg-theme-border hover:border-primary/50'
-            }`}
+            isActive={activeCategory === category.id}
+            title={category.name}
             onClick={() => setActiveCategory(category.id)}
-          >
-            {category.name}
-          </Badge>
+            className="text-center py-2 px-3"
+          />
         ))}
       </div>
 
@@ -189,29 +185,23 @@ const KnowledgeBase = () => {
             {suggestions.map(item => {
               const IconComponent = item.icon;
               return (
-                <Link key={item.id} to={item.url} className="block group">
-                  <Card className="border-teal-500/30 bg-teal-900/10 hover:bg-teal-900/20 hover:border-teal-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 hover:scale-[1.02]">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start gap-3">
-                        <div className={`${item.color} group-hover:scale-110 transition-transform duration-200`}>
-                          <IconComponent className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-white text-base group-hover:text-teal-300 transition-colors">{item.title}</CardTitle>
-                          <CardDescription className="text-gray-300 text-sm mt-1">{item.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex flex-wrap gap-1.5">
-                        {item.tags.map(tag => (
-                          <Badge key={tag} variant="secondary" className="text-xs bg-teal-800/30 text-teal-200 border-teal-600/50 hover:bg-teal-700/40 transition-colors">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                <Link key={item.id} to={item.url} className="block">
+                  <SidebarItem
+                    isActive={false}
+                    title={item.title}
+                    subtitle={item.description}
+                    icon={<IconComponent className={`h-5 w-5 ${item.color}`} />}
+                    onClick={() => {}}
+                    className="border-teal-500/30 bg-teal-900/10 hover:bg-teal-900/20 hover:border-teal-400/50"
+                  >
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {item.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="text-xs bg-teal-800/30 text-teal-200 border-teal-600/50 hover:bg-teal-700/40 transition-colors">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </SidebarItem>
                 </Link>
               );
             })}
@@ -233,29 +223,22 @@ const KnowledgeBase = () => {
           filteredItems.map(item => {
             const IconComponent = item.icon;
             return (
-              <Link key={item.id} to={item.url} className="block group">
-                <Card className="bg-theme-card border-theme-border hover:bg-theme-surface hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.01]">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start gap-3">
-                      <div className={`${item.color} group-hover:scale-110 transition-transform duration-200`}>
-                        <IconComponent className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-white text-base group-hover:text-primary transition-colors">{item.title}</CardTitle>
-                        <CardDescription className="text-gray-300 text-sm mt-1 leading-relaxed">{item.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex flex-wrap gap-1.5">
-                      {item.tags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="text-xs bg-gray-700/50 text-gray-300 border-gray-600/50 hover:bg-gray-600/50 hover:text-white transition-all duration-200">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+              <Link key={item.id} to={item.url} className="block">
+                <SidebarItem
+                  isActive={false}
+                  title={item.title}
+                  subtitle={item.description}
+                  icon={<IconComponent className={`h-5 w-5 ${item.color}`} />}
+                  onClick={() => {}}
+                >
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {item.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="text-xs bg-gray-700/50 text-gray-300 border-gray-600/50 hover:bg-gray-600/50 hover:text-white transition-all duration-200">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </SidebarItem>
               </Link>
             );
           })

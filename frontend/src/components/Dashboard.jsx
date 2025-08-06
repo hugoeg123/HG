@@ -130,7 +130,7 @@ const Dashboard = () => {
           <h2 className="text-xl font-semibold text-white">Pacientes Recentes</h2>
           <button 
             onClick={handleNewPatient}
-            className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 px-4 py-2 rounded-lg transition-colors border border-teal-500/30 hover:border-teal-400/50"
           >
             + Novo Paciente
           </button>
@@ -146,7 +146,7 @@ const Dashboard = () => {
             <p className="text-red-400 mb-4">Erro ao carregar pacientes: {error}</p>
             <button 
               onClick={() => fetchPatients()}
-              className="btn btn-outline border-teal-600 text-teal-400 hover:bg-teal-600 hover:text-white px-4 py-2 rounded-lg transition-colors"
+              className="bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white px-4 py-2 rounded-lg transition-colors border border-transparent hover:border-teal-500/30"
             >
               Tentar Novamente
             </button>
@@ -157,7 +157,7 @@ const Dashboard = () => {
               <Link 
                 key={patient.id} 
                 to={`/patients/${patient.id}`}
-                className="patient-card bg-theme-card/50 hover:bg-gray-700/50 border border-gray-700 hover:border-teal-600/50 p-4 rounded-lg transition-all duration-200 block"
+                className="patient-card bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-gray-700 hover:border-teal-500/30 p-4 rounded-lg transition-all duration-200 block"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -220,7 +220,7 @@ const Dashboard = () => {
             </div>
             <button 
               onClick={handleNewPatient}
-              className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg transition-colors"
+              className="bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 px-6 py-2 rounded-lg transition-colors border border-teal-500/30 hover:border-teal-400/50"
             >
               + Criar Primeiro Paciente
             </button>

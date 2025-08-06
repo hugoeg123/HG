@@ -30,7 +30,7 @@ const TabContentPanel = ({
 }) => {
   return (
     <div className={cn(
-      "h-full flex flex-col bg-theme-card",
+      "h-full flex flex-col bg-theme-background",
       className
     )}>
       {/* Header with title */}

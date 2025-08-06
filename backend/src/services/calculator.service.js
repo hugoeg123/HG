@@ -124,7 +124,7 @@ class CalculatorService {
         include: [{
           model: Tag,
           as: 'tags',
-          attributes: ['id', 'nome', 'color'],
+          attributes: ['id', 'nome'],
           through: { attributes: [] }
         }],
         order: [['created_at', 'DESC']],
@@ -150,7 +150,7 @@ class CalculatorService {
         include: [{
           model: Tag,
           as: 'tags',
-          attributes: ['id', 'nome', 'color'],
+          attributes: ['id', 'nome'],
           through: { attributes: [] }
         }]
       });

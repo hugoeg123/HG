@@ -20,7 +20,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
         {/* Botão para alternar a barra lateral esquerda */}
         <button 
           onClick={onToggleLeftSidebar}
-          className="mr-4 p-2 rounded-lg hover:bg-gray-700/30 transition-all duration-200 border border-transparent hover:border-gray-600 focus:outline-none"
+          className="mr-4 p-2 rounded-lg hover:bg-theme-surface transition-all duration-200 border border-transparent hover:border-gray-600 focus:outline-none"
           aria-label="Toggle left sidebar"
           title="Alternar barra lateral esquerda"
         >
@@ -42,7 +42,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
         {/* Botão para alternar o tema (dark/light mode) */}
         <button 
           onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-700/30 transition-all duration-200 border border-transparent hover:border-gray-600 focus:outline-none"
+          className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-lg transition-all duration-200 focus:outline-none"
           aria-label="Toggle theme"
           title={isDarkMode ? "Alternar para modo claro" : "Alternar para modo escuro"}
         >
@@ -60,7 +60,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
         {/* Botão para alternar a barra lateral direita */}
         <button 
           onClick={onToggleRightSidebar}
-          className="p-2 rounded-lg hover:bg-gray-700/30 transition-all duration-200 border border-transparent hover:border-gray-600 focus:outline-none"
+          className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-lg transition-all duration-200 focus:outline-none"
           aria-label="Toggle right sidebar"
           title="Alternar barra lateral direita"
         >
@@ -73,7 +73,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
         <div className="relative">
           <button 
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-700/30 transition-all duration-200 border border-transparent hover:border-gray-600 focus:outline-none"
+            className="flex items-center space-x-2 p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-lg transition-all duration-200 focus:outline-none"
             title="Menu do usuário"
           >
             <div className="w-8 h-8 rounded-full bg-teal-600/20 border border-teal-600/30 flex items-center justify-center text-teal-400 font-medium">
@@ -89,7 +89,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
             <div className="absolute right-0 mt-2 w-48 bg-theme-card border border-gray-700 rounded-lg shadow-lg py-1 z-50">
               <Link 
                 to="/profile" 
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/30 hover:text-white transition-all duration-200 flex items-center space-x-2"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-theme-surface hover:text-white transition-all duration-200 flex items-center space-x-2"
                 onClick={() => setDropdownOpen(false)}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
               </Link>
               <Link 
                 to="/settings" 
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/30 hover:text-white transition-all duration-200 flex items-center space-x-2"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-theme-surface hover:text-white transition-all duration-200 flex items-center space-x-2"
                 onClick={() => setDropdownOpen(false)}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
               </Link>
               <button 
                 onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-red-600/20 hover:text-red-400 transition-all duration-200 flex items-center space-x-2"
+                className="block w-full text-left px-4 py-2 text-sm bg-theme-card text-gray-300 hover:bg-red-600/20 hover:text-red-300 border border-transparent hover:border-red-500/30 rounded transition-all duration-200 flex items-center space-x-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -151,7 +151,7 @@ const TagToolbar = ({
                 {/* Category Header */}
                 <button 
                   onClick={() => toggleCategory(category)}
-                  className="w-full flex justify-between items-center p-2 text-gray-300 font-semibold rounded-md hover:bg-gray-700/60 transition-colors"
+                  className="w-full flex justify-between items-center p-2 text-gray-300 font-semibold rounded-md hover:bg-theme-surface transition-colors"
                   aria-expanded={openCategories[category]}
                   aria-controls={`category-${category.replace(/\s+/g, '-').toLowerCase()}`}
                 >
@@ -174,7 +174,7 @@ const TagToolbar = ({
                       <div key={tag.id || tag.code || tag.codigo}>
                         <button 
                           onClick={() => handleInsertTag(tag.code || tag.codigo)}
-                          className="w-full text-left p-1.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700/50 rounded flex items-center gap-2 transition-colors" 
+                          className="w-full text-left p-1.5 text-sm text-gray-300 hover:text-white hover:bg-theme-surface rounded flex items-center gap-2 transition-colors" 
                           title={`Inserir: ${tag.name || tag.nome || 'Tag sem nome'}`}
                           aria-label={`Inserir tag ${tag.name || tag.nome || 'sem nome'} no editor`}
                         >
@@ -189,7 +189,7 @@ const TagToolbar = ({
                               <button
                                 key={subtag.id || subtag.code || subtag.codigo}
                                 onClick={() => handleInsertTag(subtag.code || subtag.codigo)}
-                                className="w-full text-left p-1 text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-700/30 rounded flex items-center gap-2 transition-colors"
+                                className="w-full text-left p-1 text-xs text-gray-400 hover:text-gray-200 hover:bg-theme-surface rounded flex items-center gap-2 transition-colors"
                                 title={`Inserir: ${subtag.name || subtag.nome || 'Subtag sem nome'}`}
                                 aria-label={`Inserir subtag ${subtag.name || subtag.nome || 'sem nome'} no editor`}
                               >

@@ -54,14 +54,14 @@ const TimelineItem = ({ item }) => {
     <div className="relative pl-8 py-2 group">
       <div className="absolute left-0 top-4 w-px h-full bg-gray-700"></div>
       <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-theme-background group-hover:bg-teal-500 transition-colors"></div>
-      <div className="bg-theme-card p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer">
-        <div className="flex justify-between items-start gap-4">
+      <div className="bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
           <div>
-            <p className="text-sm text-gray-400">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
-            <h3 className="font-semibold text-white mt-1">{safeText(item.descricao)}</h3>
+            <p className="text-xs sm:text-sm text-gray-400">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
+            <h3 className="font-semibold text-sm sm:text-base text-white mt-1">{safeText(item.descricao)}</h3>
             <p className="text-xs text-gray-500 mt-1">Registrado por: {safeText(item.medico)}</p>
           </div>
-          <div className="text-teal-400 flex-shrink-0 mt-1" title={safeText(item.tipo)}>
+          <div className="text-teal-400 flex-shrink-0 mt-1 self-start sm:self-auto" title={safeText(item.tipo)}>
             {iconMap[safeText(item.tipo)] || <FileText size={18}/>}
           </div>
         </div>
@@ -333,7 +333,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   // No patient data
   if (!safeCurrentPatient) {
     return (
-      <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-4 sm:p-8">
+      <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-2 sm:p-4 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-theme-surface p-6 rounded-lg border border-gray-800">
             <p className="text-gray-500">Nenhum paciente selecionado</p>
@@ -344,11 +344,11 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   }
   
   return (
-    <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-4 sm:p-8">
+    <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-2 sm:p-4 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="flex items-center pb-4 mb-8 border-b border-gray-800">
-          <UserCircle size={48} className="text-teal-400 mr-4"/>
-          <div className="flex-1">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center pb-3 sm:pb-4 mb-4 sm:mb-6 lg:mb-8 border-b border-gray-800 gap-3 sm:gap-0">
+          <UserCircle size={40} className="text-teal-400 sm:mr-4 sm:w-12 sm:h-12"/>
+          <div className="flex-1 w-full sm:w-auto">
             {/* Nome do Paciente - Editável */}
             <div className="flex items-center gap-2 mb-2">
               {isEditingName ? (
@@ -358,36 +358,36 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                     value={editedName}
                     onChange={(e) => setEditedName(e.target.value)}
                     onKeyDown={(e) => handleKeyPress(e, handleSaveName, handleCancelNameEdit)}
-                    className="text-2xl font-bold bg-theme-card text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500"
+                    className="text-lg sm:text-xl lg:text-2xl font-bold bg-theme-card text-gray-100 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:border-teal-500 w-full sm:w-auto"
                     placeholder="Nome do paciente"
                     autoFocus
                   />
                   <button
                     onClick={handleSaveName}
-                    className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                    className="p-1 sm:p-2 text-green-400 hover:text-green-300 transition-colors"
                     title="Salvar nome"
                   >
-                    <Save size={16} />
+                    <Save size={14} className="sm:w-4 sm:h-4" />
                   </button>
                   <button
                     onClick={handleCancelNameEdit}
-                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                    className="p-1 sm:p-2 text-red-400 hover:text-red-300 transition-colors"
                     title="Cancelar edição"
                   >
-                    <X size={16} />
+                    <X size={14} className="sm:w-4 sm:h-4" />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-100">
                     {typeof safeCurrentPatient?.name === 'string' ? safeCurrentPatient.name : 'Sem Nome'}
                   </h1>
                   <button
                     onClick={handleEditName}
-                    className="p-1 text-gray-400 hover:text-teal-400 transition-colors"
+                    className="p-1 sm:p-2 text-gray-400 hover:text-teal-400 transition-colors self-start sm:self-auto"
                     title="Editar nome"
                   >
-                    <Edit2 size={16} />
+                    <Edit2 size={14} className="sm:w-4 sm:h-4" />
                   </button>
                 </div>
               )}
@@ -437,69 +437,84 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
             </div>
             
             {/* Informações do Paciente */}
-            <p className="text-gray-500">
-              ID: {typeof safeCurrentPatient?.id === 'string' || typeof safeCurrentPatient?.id === 'number' ? safeCurrentPatient.id : 'N/A'} | 
-              Prontuário: {typeof safeCurrentPatient?.recordNumber === 'string' || typeof safeCurrentPatient?.recordNumber === 'number' ? safeCurrentPatient.recordNumber : 'N/A'}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-500">
+              <span>ID: {typeof safeCurrentPatient?.id === 'string' || typeof safeCurrentPatient?.id === 'number' ? safeCurrentPatient.id : 'N/A'}</span>
+              <span className="hidden sm:inline">|</span>
+              <span>Prontuário: {typeof safeCurrentPatient?.recordNumber === 'string' || typeof safeCurrentPatient?.recordNumber === 'number' ? safeCurrentPatient.recordNumber : 'N/A'}</span>
               {safeCurrentPatient?.birthDate && (
-                <span> | Nascimento: {new Date(safeCurrentPatient.birthDate).toLocaleDateString('pt-BR')}</span>
+                <>
+                  <span className="hidden sm:inline">|</span>
+                  <span>Nascimento: {new Date(safeCurrentPatient.birthDate).toLocaleDateString('pt-BR')}</span>
+                </>
               )}
-            </p>
+            </div>
           </div>
         </header>
         
-        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Layout Flexbox Fluido - Adapta-se às barras laterais */}
+        <main className="flex flex-col lg:flex-row gap-4 sm:gap-6 xl:gap-8">
           
-          <div className="lg:col-span-2 space-y-6">
+          {/* Painel Principal - Flexbox com flex-grow para ocupar espaço disponível */}
+          <div className="flex-grow space-y-4 sm:space-y-6 order-1 lg:order-1 min-w-0">
     
-               <div className="p-4 rounded-lg border border-gray-700/30 flex flex-col gap-4 bg-theme-background">
+               <div className="p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background">
+              {/* Navegação de Abas Responsiva */}
               <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2 p-1 bg-theme-card rounded-lg">
+                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-1 bg-theme-card rounded-lg w-full sm:w-auto">
                   <button
                     onClick={() => setActiveTab('historico')}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[140px] h-[44px] justify-center ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[140px] h-[32px] sm:h-[36px] md:h-[44px] justify-center ${
                       activeTab === 'historico'
-                        ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
-                        : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
+                        ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                        : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
-                    <History size={16}/>
-                    Linha do Tempo
+                    <History size={14} className="sm:w-4 sm:h-4"/>
+                    <span className="hidden md:inline">Linha do Tempo</span>
+                    <span className="md:hidden">Timeline</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('investigacao')}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[140px] h-[44px] justify-center ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[140px] h-[32px] sm:h-[36px] md:h-[44px] justify-center ${
                       activeTab === 'investigacao'
-                        ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
-                        : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
+                        ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                        : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
-                    <Beaker size={16}/>
-                    Investigação
+                    <Beaker size={14} className="sm:w-4 sm:h-4"/>
+                    <span className="hidden md:inline">Investigação</span>
+                    <span className="md:hidden">Exames</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('planos')}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[140px] h-[44px] justify-center ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[140px] h-[32px] sm:h-[36px] md:h-[44px] justify-center ${
                       activeTab === 'planos'
-                        ? 'bg-teal-600/20 text-teal-400 border-teal-600/30 hover:border-teal-500'
-                        : 'text-gray-400 hover:bg-gray-700/20 hover:text-gray-200 border-transparent'
+                        ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                        : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
-                    <NotebookPen size={16}/>
-                    Planos e Condutas
+                    <NotebookPen size={14} className="sm:w-4 sm:h-4"/>
+                    <span className="hidden md:inline">Planos e Condutas</span>
+                    <span className="md:hidden">Planos</span>
                   </button>
                 </div>
               </div>
-              <div className="flex justify-center">
-                <div className="relative w-full max-w-md">
-                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/>
+              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 px-2 sm:px-0">
+                <div className="relative flex-1 w-full sm:w-auto max-w-md">
+                  <Search size={16} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 sm:w-[18px] sm:h-[18px]"/>
                   <input 
                     type="text"
                     placeholder="Buscar na linha do tempo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input text-center"
+                    className="w-full bg-theme-card border border-gray-600 rounded-lg px-3 sm:px-4 py-2 pl-9 sm:pl-10 text-sm sm:text-base text-gray-100 placeholder-gray-400 focus:outline-none focus:border-teal-500"
                   />
                 </div>
+                <button className="px-3 sm:px-4 py-2 bg-theme-card text-gray-300 rounded-lg hover:bg-theme-surface hover:text-white transition-colors flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start border border-transparent hover:border-teal-500/30">
+                  <Search size={14} className="sm:w-4 sm:h-4" />
+                  <span className="hidden md:inline">Filtros Avançados</span>
+                  <span className="md:hidden">Filtrar</span>
+                </button>
               </div>
             </div>
 
@@ -514,15 +529,19 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
             </div>
           </div>
 
-          <aside className="lg:col-span-1 space-y-8">
+          {/* Sidebar Direita - Largura fixa em telas grandes, flex-shrink-0 */}
+          <aside className="lg:w-80 xl:w-96 flex-shrink-0 space-y-4 sm:space-y-6 xl:space-y-8 order-2 lg:order-2">
             <button 
               onClick={safeOnNewRecord}
-              className="btn btn-primary w-full font-bold py-3 flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:shadow-teal-500/30 transform hover:-translate-y-px"
+              className="w-full font-bold py-2 sm:py-3 flex items-center justify-center gap-2 text-sm sm:text-base bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 border border-teal-500/30 hover:border-teal-400/50 rounded-lg transition-all duration-200"
             >
-              <PlusCircle size={18} /> Iniciar Novo Registro
+              <PlusCircle size={16} className="sm:w-[18px] sm:h-[18px]" /> 
+              <span className="hidden md:inline">Iniciar Novo Registro</span>
+              <span className="md:hidden">Novo Registro</span>
             </button>
             
-            <InfoCard title="Sinais Vitais Recentes">
+            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-gray-800">
+              <h3 className="font-semibold text-base sm:text-lg text-white mb-3 sm:mb-4">Sinais Vitais Recentes</h3>
               {isLoading ? (
                 <div className="grid grid-cols-2 gap-4">
                   {[1, 2, 3, 4].map((i) => (
@@ -580,9 +599,10 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </div>
                 </div>
               )}
-            </InfoCard>
+            </div>
             
-            <InfoCard title="Plano Terapêutico Ativo">
+            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-gray-800">
+              <h3 className="font-semibold text-base sm:text-lg text-white mb-3 sm:mb-4">Plano Terapêutico Ativo</h3>
               {isLoading ? (
                 <div className="space-y-4">
                   <div className="animate-pulse">
@@ -619,9 +639,10 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   <p className="text-sm mt-1">Os planos serão exibidos conforme os registros médicos</p>
                 </div>
               )}
-            </InfoCard>
+            </div>
 
-            <InfoCard title="Resumo Clínico">
+            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-gray-800">
+              <h3 className="font-semibold text-base sm:text-lg text-white mb-3 sm:mb-4">Resumo Clínico</h3>
               {isLoading ? (
                 <div className="space-y-4">
                   <div className="animate-pulse">
@@ -697,7 +718,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </div>
                 </div>
               )}
-            </InfoCard>
+            </div>
           </aside>
         </main>
       </div>

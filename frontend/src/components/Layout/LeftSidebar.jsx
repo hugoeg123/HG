@@ -4,6 +4,7 @@ import { usePatientStore } from '../../store/patientStore';
 import { Users } from 'lucide-react'; // Importar o ícone Users do lucide-react
 import { Plus } from 'lucide-react';
 import { Search } from 'lucide-react'; // Importar o ícone Search do lucide-react
+import SidebarItem from '../ui/SidebarItem';
 
 /**
  * LeftSidebar component - Displays the patient list and search functionality
@@ -165,7 +166,7 @@ const LeftSidebar = ({ collapsed }) => {
           </h2>
           <button
             onClick={handleNewPatient}
-            className="p-2 bg-teal-600/20 hover:bg-teal-600/30 border border-teal-600/30 rounded-lg transition-all duration-200 hover:border-teal-500"
+            className="p-2 bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 border border-teal-500/30 hover:border-teal-400/50 rounded-lg transition-all duration-200"
             title="Novo Paciente"
           >
             <Plus className="h-4 w-4 text-teal-400" />
@@ -212,50 +213,42 @@ const LeftSidebar = ({ collapsed }) => {
               const isActive = String(patient.id) === String(activePatientId);
               
               return (
-                <li key={`patient-${patientId}`}>
-                  <div
-                    className={`relative group border rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-gray-600 hover:shadow-lg hover:shadow-teal-500/10 mb-2 ${
-                      isActive 
-                        ? 'border-teal-500 bg-teal-600/20 !bg-teal-600/20' 
-                        : expandedPatient === patientId 
-                        ? 'border-teal-500 bg-teal-600/10 !bg-teal-600/10' 
-                        : 'border-gray-700 bg-theme-card'
-                    }`}
+                <li key={`patient-${patientId}`} className="mb-2">
+                  <SidebarItem
+                    isActive={isActive || expandedPatient === patientId}
+                    title={patientName}
+                    subtitle={patient.age ? `${patient.age} anos • ${patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Feminino' : 'Não informado'}` : undefined}
+                    icon={
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`h-5 w-5 transition-transform ${expandedPatient === patientId ? 'transform rotate-90' : ''}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    }
                     onClick={() => handlePatientClick(patient)}
+                    className="relative group"
                   >
+                    {/* Additional content */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center flex-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={`h-5 w-5 mr-3 text-teal-400 transition-transform ${expandedPatient === patientId ? 'transform rotate-90' : ''}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                        <div className="flex-1">
-                          <div className="text-white font-medium">{patientName}</div>
-                          {patient.age && (
-                            <div className="text-gray-400 text-sm">
-                              {patient.age} anos • {patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Feminino' : 'Não informado'}
-                            </div>
-                          )}
-                          {patient.records && (
-                            <div className="text-teal-400 text-xs">
-                              {patient.records.length} registro(s)
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex-1">
+                        {patient.records && (
+                          <div className="text-teal-400 text-xs mt-1">
+                            {patient.records.length} registro(s)
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={(e) => handleDeletePatient(patient, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 rounded-lg transition-all duration-200 hover:border-red-500"
+                        className="opacity-0 group-hover:opacity-100 p-1.5 bg-theme-card text-gray-300 hover:bg-red-600/20 hover:text-red-300 border border-transparent hover:border-red-500/30 rounded-lg transition-all duration-200"
                         title="Excluir paciente"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -263,7 +256,7 @@ const LeftSidebar = ({ collapsed }) => {
                         </svg>
                       </button>
                     </div>
-                  </div>
+                  </SidebarItem>
 
                   {/* Registros do paciente (expandidos) */}
                   {expandedPatient === patientId && patient.records && patient.records.length > 0 ? (
@@ -277,7 +270,7 @@ const LeftSidebar = ({ collapsed }) => {
                         return (
                           <li key={`record-${recordId}`}>
                             <div
-                              className="p-2 hover:bg-gray-700 rounded-md cursor-pointer flex items-center"
+                              className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-md cursor-pointer flex items-center transition-all duration-200"
                               onClick={() => handleRecordClick(patientId, recordId)}
                             >
                               <svg

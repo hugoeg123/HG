@@ -9,15 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-teal-600/20 hover:bg-teal-600/30 border-teal-600/30 hover:border-teal-500 text-teal-400 focus-visible:ring-teal-500/50",
+        default: "bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent hover:border-teal-500/30 focus-visible:ring-teal-500/50",
         destructive:
-          "bg-red-600/20 hover:bg-red-600/30 border-red-600/30 hover:border-red-500 text-red-400 focus-visible:ring-red-500/50",
+          "bg-theme-card text-gray-300 hover:bg-red-600/20 hover:text-red-300 border-transparent hover:border-red-500/30 focus-visible:ring-red-500/50",
         outline:
-          "border-gray-700/30 bg-gray-700/10 hover:bg-gray-700/20 hover:border-gray-600 text-gray-300 focus-visible:ring-gray-600/50",
+          "bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent hover:border-gray-600/30 focus-visible:ring-gray-600/50",
         secondary:
-          "bg-blue-600/20 hover:bg-blue-600/30 border-blue-600/30 hover:border-blue-500 text-blue-400 focus-visible:ring-blue-500/50",
-        ghost: "border-transparent hover:bg-gray-700/20 hover:text-gray-300 text-gray-400",
-        link: "text-teal-400 underline-offset-4 hover:underline border-transparent",
+          "bg-theme-card text-gray-300 hover:bg-blue-600/20 hover:text-blue-300 border-transparent hover:border-blue-500/30 focus-visible:ring-blue-500/50",
+        ghost: "bg-transparent text-gray-400 hover:bg-theme-surface hover:text-gray-300 border-transparent",
+        link: "bg-transparent text-teal-400 hover:text-teal-300 underline-offset-4 hover:underline border-transparent",
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -39,8 +39,8 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-white">Ferramentas</h2>
         <button
-          onClick={onToggleExpansion}
-          className="p-2 hover:bg-gray-700/30 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-600"
+          onClick={() => setExpanded(!expanded)}
+          className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-lg transition-all duration-200"
           title={expanded ? 'Reduzir barra lateral' : 'Expandir barra lateral'}
         >
           {expanded ? <ChevronRight size={16} className="text-gray-400" /> : <ChevronLeft size={16} className="text-gray-400" />}
@@ -52,10 +52,10 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`px-2 py-2 text-xs lg:text-sm font-semibold rounded-md transition-all duration-200 flex items-center justify-center gap-1 lg:gap-2 min-w-0
+            className={`px-2 py-2 text-xs lg:text-sm font-semibold rounded-md transition-all duration-200 flex items-center justify-center gap-1 lg:gap-2 min-w-0 border
               ${activeTab === key
-                ? 'bg-teal-600/20 text-teal-300 border border-teal-500/30'
-                : 'text-gray-400 hover:bg-gray-700/60 hover:text-gray-200'
+                ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent hover:border-teal-500/30'
               }`
             }
             aria-current={activeTab === key ? 'page' : undefined}

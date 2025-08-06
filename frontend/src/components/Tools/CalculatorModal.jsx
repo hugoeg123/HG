@@ -300,7 +300,7 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
             )}
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors duration-200 p-1 rounded-lg hover:bg-gray-700/50"
+              className="text-gray-400 hover:text-white transition-colors duration-200 p-1 rounded-lg hover:bg-theme-surface"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
