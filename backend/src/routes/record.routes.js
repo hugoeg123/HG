@@ -30,10 +30,25 @@ router.get('/:id', authMiddleware, recordController.getRecordById);
 router.post('/', 
   authMiddleware, 
   [
-    body('patientId').notEmpty().withMessage('ID do paciente é obrigatório'),
-    body('title').notEmpty().withMessage('Título é obrigatório'),
-    body('type').notEmpty().withMessage('Tipo de registro é obrigatório'),
-    body('content').notEmpty().withMessage('Conteúdo é obrigatório')
+    body('patientId')
+      .notEmpty().withMessage('ID do paciente é obrigatório')
+      .isUUID().withMessage('ID do paciente deve ser um UUID válido'),
+    body('title')
+      .notEmpty().withMessage('Título é obrigatório')
+      .isLength({ min: 1, max: 255 }).withMessage('Título deve ter entre 1 e 255 caracteres'),
+    body('type')
+      .notEmpty().withMessage('Tipo de registro é obrigatório')
+      .isIn(['consulta', 'exame', 'procedimento', 'medicacao', 'observacao', 'outro', 'anamnese', 'evolucao'])
+      .withMessage('Tipo de registro deve ser válido'),
+    body('content')
+      .notEmpty().withMessage('Conteúdo é obrigatório')
+      .isLength({ min: 1 }).withMessage('Conteúdo não pode estar vazio'),
+    body('date')
+      .optional()
+      .isISO8601().withMessage('Data deve estar no formato ISO 8601'),
+    body('tags')
+      .optional()
+      .isArray().withMessage('Tags devem ser um array')
   ],
   recordController.createRecord
 );
@@ -42,9 +57,25 @@ router.post('/',
 router.put('/:id', 
   authMiddleware, 
   [
-    body('title').optional().notEmpty().withMessage('Título não pode ser vazio'),
-    body('type').optional().notEmpty().withMessage('Tipo de registro não pode ser vazio'),
-    body('content').optional().notEmpty().withMessage('Conteúdo não pode ser vazio')
+    body('title')
+      .optional()
+      .notEmpty().withMessage('Título não pode ser vazio')
+      .isLength({ min: 1, max: 255 }).withMessage('Título deve ter entre 1 e 255 caracteres'),
+    body('type')
+      .optional()
+      .notEmpty().withMessage('Tipo de registro não pode ser vazio')
+      .isIn(['consulta', 'exame', 'procedimento', 'medicacao', 'observacao', 'outro'])
+      .withMessage('Tipo de registro deve ser válido'),
+    body('content')
+      .optional()
+      .notEmpty().withMessage('Conteúdo não pode ser vazio')
+      .isLength({ min: 1 }).withMessage('Conteúdo não pode estar vazio'),
+    body('date')
+      .optional()
+      .isISO8601().withMessage('Data deve estar no formato ISO 8601'),
+    body('tags')
+      .optional()
+      .isArray().withMessage('Tags devem ser um array')
   ],
   recordController.updateRecord
 );

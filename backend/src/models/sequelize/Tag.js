@@ -79,6 +79,8 @@ Tag.init({
   modelName: 'Tag',
   tableName: 'tags',
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   indexes: [
     // Índice para busca por nome
     {

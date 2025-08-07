@@ -45,7 +45,7 @@ backend/
     DB_NAME=health_guardian
     DB_PORT=5432
 
-    API_PORT=5000
+    API_PORT=5001
     ```
 
 3.  **Execute as migrações do banco de dados:**
