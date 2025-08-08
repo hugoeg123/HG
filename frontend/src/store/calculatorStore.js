@@ -145,7 +145,17 @@ const useCalculatorStore = create(
 
         const seedCalcs = [
           { id: 'bmi', name: 'IMC', category: 'Geral', description: 'Índice de Massa Corporal' },
-          { id: 'bsa', name: 'BSA', category: 'Geral', description: 'Superfície Corporal' }
+          { id: 'bsa', name: 'BSA', category: 'Geral', description: 'Superfície Corporal' },
+          { 
+            id: 'conv-gotejamento', 
+            name: 'Conversão de Gotejamento', 
+            category: 'Conversões', 
+            description: 'gotas/min ↔ mL/h (tap tempo)',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['gotejamento', 'infusão', 'conversão'],
+            summary: 'Conversão entre gotas por minuto e mL por hora com contador manual'
+          }
         ];
 
         seedCalcs.forEach(calc => register(calc));
@@ -155,7 +165,14 @@ const useCalculatorStore = create(
        * Get all calculators
        * Hook: Compatibility method for legacy code
        */
-      getAll: () => get().calculators,
+      getAll: async () => {
+        const { calculators, seedCalculators } = get();
+        // Se não há calculadoras, inicializa com as padrão
+        if (calculators.length === 0) {
+          seedCalculators();
+        }
+        return get().calculators;
+      },
 
       /**
        * Get calculator by ID
@@ -490,7 +507,14 @@ const useCalculatorStore = create(
     {
       name: 'calculator-storage',
       // Only persist calculators, not results or loading states
-      partialize: (state) => ({ calculators: state.calculators })
+      partialize: (state) => ({ calculators: state.calculators }),
+      onRehydrateStorage: () => (state) => {
+        // Após carregar do localStorage, se não há calculadoras, inicializa
+        if (state && (!state.calculators || state.calculators.length === 0)) {
+          console.log('Inicializando calculadoras padrão após rehydrate');
+          state.seedCalculators();
+        }
+      }
     }
   )
 );

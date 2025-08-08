@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
+import { useCalculatorStore } from './store/calculatorStore';
 
 // Error Handling & Notifications
 import ErrorBoundary from './components/ErrorBoundary';
@@ -47,12 +48,19 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   const { checkAuth } = useAuthStore();
   const { isDarkMode } = useThemeStore();
+  const { seedCalculators, getAll } = useCalculatorStore();
   
   // Verificar autenticação ao iniciar
   // Hook: Removed checkAuth from dependencies to prevent infinite loop
   // since Zustand functions are recreated on each render
   useEffect(() => {
     checkAuth();
+    
+    // Inicializar calculadoras se necessário
+    const calculators = getAll();
+    if (calculators.length === 0) {
+      seedCalculators();
+    }
   }, []);
   
   // Aplicar classe de tema ao elemento html

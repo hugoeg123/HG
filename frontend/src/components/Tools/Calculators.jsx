@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { calculatorService } from '../../services/api';
 import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
+import ConversaoGotejamento from './ConversaoGotejamento';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -36,6 +37,7 @@ const Calculators = ({ patientId = null }) => {
   const [error, setError] = useState(null);
   const [selectedCalculator, setSelectedCalculator] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showHardcodedCalculator, setShowHardcodedCalculator] = useState(null);
   
   // Store hooks
   const { calculators, getAll, seedCalculators } = useCalculatorStore();
@@ -43,20 +45,21 @@ const Calculators = ({ patientId = null }) => {
 
   // Load calculators and tags on mount
   useEffect(() => {
-    const initializeData = async () => {
+    const initializeData = () => {
       try {
         setIsLoading(true);
         setError(null);
         
         // Refresh tags first
-        await refreshTags();
+        refreshTags();
         
-        // Load calculators from store and API
-        await getAll();
+        // Load calculators from store
+        let loadedCalculators = getAll();
         
         // Seed with default calculators if none exist
-        if (calculators.length === 0) {
-          seedCalculators(); // agora é método do store
+        if (loadedCalculators.length === 0) {
+          seedCalculators();
+          loadedCalculators = getAll();
         }
         
       } catch (err) {
@@ -73,8 +76,9 @@ const Calculators = ({ patientId = null }) => {
   // Listen for calculator events
   useEffect(() => {
     const handleCalculatorUpdate = () => {
-      // Refresh calculators when updated
-      getAll();
+      // Force re-render by updating loading state
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), 100);
     };
     
     eventUtils.on(EVENT_TYPES.CALCULATOR_CREATED, handleCalculatorUpdate);
@@ -86,7 +90,7 @@ const Calculators = ({ patientId = null }) => {
       eventUtils.off(EVENT_TYPES.CALCULATOR_UPDATED, handleCalculatorUpdate);
       eventUtils.off(EVENT_TYPES.CALCULATOR_DELETED, handleCalculatorUpdate);
     };
-  }, [getAll]);
+  }, []);
 
   // Get unique categories for filter options
   const categories = Array.isArray(calculators) ? 
@@ -112,10 +116,16 @@ const Calculators = ({ patientId = null }) => {
     return matchesSearch && matchesCategory;
   }) : [];
 
-  // Hook: filteredCalculators now contains all filtered results, no need for separate grouping
+  // Filtered calculators ready for display
 
   // Abrir modal da calculadora
   const openCalculator = (calculator) => {
+    // Check if it's a hardcoded calculator
+    if (calculator.isHardcoded && calculator.id === 'conv-gotejamento') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    
     setSelectedCalculator(calculator);
     setShowModal(true);
   };
@@ -124,6 +134,11 @@ const Calculators = ({ patientId = null }) => {
   const closeCalculator = () => {
     setShowModal(false);
     setSelectedCalculator(null);
+  };
+
+  // Fechar calculadora hardcoded
+  const closeHardcodedCalculator = () => {
+    setShowHardcodedCalculator(null);
   };
 
   // Create new calculator
@@ -333,6 +348,15 @@ const Calculators = ({ patientId = null }) => {
           )}
         </div>
       )}
+
+        {/* Hardcoded Calculator - Conversão de Gotejamento */}
+        {showHardcodedCalculator === 'conv-gotejamento' && (
+          <ConversaoGotejamento
+            isOpen={true}
+            onClose={closeHardcodedCalculator}
+            patientId={patientId}
+          />
+        )}
 
         {/* Calculator Modal */}
         {showModal && selectedCalculator && (
