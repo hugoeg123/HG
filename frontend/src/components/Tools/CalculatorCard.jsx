@@ -6,19 +6,28 @@ import { Badge } from '../ui/badge';
  * CalculatorCard component - Displays individual calculator information in card format
  * 
  * @component
- * @param {Object} calculator - Calculator object with name, description, category
+ * @param {Object} calculator - Calculator object with name, description, category, inputs, outputs
  * @param {Function} onUse - Callback function when "Usar" button is clicked
  * @example
  * return (
  *   <CalculatorCard 
- *     calculator={{name: "IMC", description: "Calcula índice de massa corporal", category: "Geral"}}
+ *     calculator={{
+ *       name: "IMC", 
+ *       description: "Calcula índice de massa corporal", 
+ *       category: "Geral",
+ *       inputs: [{key: 'weight', label: 'Peso'}],
+ *       outputs: [{key: 'result', label: 'Resultado'}]
+ *     }}
  *     onUse={() => openCalculator(calculator)}
  *   />
  * )
  * 
- * Integra com: Calculators.jsx para exibição em grid e CalculatorModal.jsx via callback onUse
+ * Integrates with:
+ * - Calculators.jsx for grid display
+ * - CalculatorModal.jsx via onUse callback
+ * - store/calculatorStore.js for calculator data structure
  * 
- * IA prompt: Adicionar preview de campos da calculadora e tempo estimado de preenchimento
+ * IA prompt: Add calculator preview, execution time estimation, and usage analytics
  */
 const CalculatorCard = ({ calculator, onUse }) => {
   const getIconForCategory = (category) => {
@@ -94,8 +103,18 @@ const CalculatorCard = ({ calculator, onUse }) => {
           </div>
         )}
         
-        {/* Field count indicator */}
-        {calculator.fields && calculator.fields.length > 0 && (
+        {/* Input count indicator */}
+        {calculator.inputs && calculator.inputs.length > 0 && (
+          <div className="mt-3 text-xs text-gray-500 flex items-center">
+            <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {calculator.inputs.length} entrada{calculator.inputs.length !== 1 ? 's' : ''}
+          </div>
+        )}
+        
+        {/* Legacy field count support */}
+        {calculator.fields && calculator.fields.length > 0 && !calculator.inputs && (
           <div className="mt-3 text-xs text-gray-500 flex items-center">
             <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -126,4 +145,5 @@ const CalculatorCard = ({ calculator, onUse }) => {
 
 export default CalculatorCard;
 
-// Conector: Usado em Calculators.jsx para renderização em grid, integra com CalculatorModal.jsx via callback onUse
+// Connector: Used in Calculators.jsx for grid rendering, integrates with CalculatorModal.jsx via onUse callback
+// Hook: Supports both legacy (fields) and new (inputs/outputs) calculator data structures

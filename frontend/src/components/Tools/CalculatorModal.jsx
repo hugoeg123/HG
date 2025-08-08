@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { calculatorService, tagService } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { calculatorService } from '../../services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -10,15 +10,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import useTagCatalogStore, { useTagOptions } from '../../store/tagCatalogStore';
+import useCalculatorStore from '../../store/calculatorStore';
+import usePatientTagsStore from '../../store/patientTagsStore';
+import { eventUtils } from '../../lib/events';
 
 /**
  * CalculatorModal component - Modal para criar, editar e usar calculadoras médicas
+ * 
+ * Integrates with:
+ * - store/tagCatalogStore.js for tag management with real-time updates
+ * - store/calculatorStore.js for calculator execution and validation
+ * - store/patientTagsStore.js for patient data integration
+ * - lib/events.js for reactive updates
  * 
  * @component
  * @param {Object} props
  * @param {Object} props.calculator - Objeto da calculadora a ser exibida/editada
  * @param {Function} props.onClose - Função para fechar o modal
  * @param {boolean} props.isNew - Indica se é uma nova calculadora
+ * @param {string} props.patientId - ID do paciente para cálculos
  * 
  * @example
  * return (
@@ -26,65 +37,73 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
  *     calculator={calculatorObj} 
  *     onClose={handleClose} 
  *     isNew={false}
+ *     patientId="patient-123"
  *   />
  * )
+ * 
+ * Hook: Provides enhanced calculator creation with tag integration and validation
+ * IA prompt: Add formula builder UI, unit validation, and calculation history
  */
-const CalculatorModal = ({ calculator, onClose, isNew }) => {
+const CalculatorModal = ({ calculator, onClose, isNew, patientId }) => {
   const [mode, setMode] = useState(isNew ? 'edit' : 'view'); // 'view', 'edit', 'calculate'
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
     description: '',
     category: '',
-    formula: '',
-    fields: [],
+    expression: '', // Changed from 'formula' to match store
+    inputs: [], // Changed from 'fields' to match store
+    outputs: [{ key: 'result', label: 'Resultado', rounding: 2, unit: '' }],
     isPersonal: true,
-    tagIds: [],
   });
-  const [fieldValues, setFieldValues] = useState({});
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [newField, setNewField] = useState({ name: '', label: '', unit: '', type: 'number' });
-  const [availableTags, setAvailableTags] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [newInput, setNewInput] = useState({ tag: '', required: true, label: '', defaultValue: '' });
+  
+  // Store hooks
+  const { defs: tags = [], refresh: refreshTags } = useTagCatalogStore();
+  const tagOptions = useTagOptions();
+  const { register, update, validateCalculator, evaluateForPatient } = useCalculatorStore();
+  const { getFor: getPatientTags } = usePatientTagsStore();
+  
+  // Selected tags for inputs
+  const [selectedInputTags, setSelectedInputTags] = useState([]);
 
-  // Carregar tags disponíveis
+  // Load tags on mount and refresh if empty
   useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        const response = await tagService.getAll();
-        setAvailableTags(response.data || []);
-      } catch (err) {
-        console.error('Erro ao carregar tags:', err);
-        // Não mostrar erro para tags, pois não é crítico
-      }
-    };
-    fetchTags();
-  }, []);
+    if ((tags?.length ?? 0) === 0) {
+      refreshTags();
+    }
+  }, [tags?.length, refreshTags]);
 
-  // Inicializar dados do formulário
+  // Initialize form data
   useEffect(() => {
     if (calculator) {
-      const tagIds = calculator.tagIds || calculator.tags?.map(tag => tag.id) || [];
       setFormData({
+        id: calculator.id || '',
         name: calculator.name || '',
         description: calculator.description || '',
         category: calculator.category || '',
-        formula: calculator.formula || '',
-        fields: Array.isArray(calculator.fields) ? [...calculator.fields] : [],
+        expression: calculator.expression || calculator.formula || '', // Support legacy 'formula'
+        inputs: Array.isArray(calculator.inputs) ? [...calculator.inputs] : 
+                Array.isArray(calculator.fields) ? calculator.fields.map(f => ({ // Legacy support
+                  tag: f.name,
+                  required: f.required !== false,
+                  label: f.label || f.name,
+                  defaultValue: f.defaultValue
+                })) : [],
+        outputs: Array.isArray(calculator.outputs) ? [...calculator.outputs] : 
+                [{ key: 'result', label: 'Resultado', rounding: 2, unit: '' }],
         isPersonal: calculator.isPersonal !== undefined ? calculator.isPersonal : true,
-        tagIds: tagIds,
       });
-      setSelectedTags(tagIds);
-
-      // Inicializar valores dos campos para cálculo
-      if (calculator.fields && calculator.fields.length > 0) {
-        const initialValues = {};
-        calculator.fields.forEach(field => {
-          initialValues[field.name] = '';
-        });
-        setFieldValues(initialValues);
-      }
+      
+      // Set selected input tags
+      const inputTags = calculator.inputs?.map(input => input.tag) || 
+                       calculator.fields?.map(field => field.name) || [];
+      setSelectedInputTags(inputTags);
     }
   }, [calculator]);
 
@@ -97,122 +116,171 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
     });
   };
 
-  // Manipular mudanças nos campos de cálculo
+  // Handle field value changes for calculations
   const handleFieldValueChange = (e, fieldName) => {
-    setFieldValues({
-      ...fieldValues,
-      [fieldName]: e.target.value,
+    const value = e.target.value;
+    // This function can be used for manual input overrides if needed
+    console.log(`Field ${fieldName} changed to:`, value);
+  };
+
+  // Handle input tag selection
+  const handleInputTagToggle = (tagKey) => {
+    const isSelected = selectedInputTags.includes(tagKey);
+    let newSelectedTags;
+    let newInputs;
+    
+    if (isSelected) {
+      // Remove tag
+      newSelectedTags = selectedInputTags.filter(key => key !== tagKey);
+      newInputs = formData.inputs.filter(input => input.tag !== tagKey);
+    } else {
+      // Add tag
+      newSelectedTags = [...selectedInputTags, tagKey];
+      const tagDef = tags.find(t => t.key === tagKey);
+      newInputs = [...formData.inputs, {
+        tag: tagKey,
+        required: true,
+        label: tagDef?.label || tagKey,
+        defaultValue: ''
+      }];
+    }
+    
+    setSelectedInputTags(newSelectedTags);
+    setFormData({ ...formData, inputs: newInputs });
+    
+    // Clear validation errors when inputs change
+    setValidationErrors([]);
+  };
+
+  // Update input properties
+  const handleInputUpdate = (index, field, value) => {
+    const updatedInputs = [...formData.inputs];
+    updatedInputs[index] = { ...updatedInputs[index], [field]: value };
+    setFormData({ ...formData, inputs: updatedInputs });
+    setValidationErrors([]);
+  };
+
+  // Remove input
+  const handleRemoveInput = (index) => {
+    const updatedInputs = [...formData.inputs];
+    const removedTag = updatedInputs[index].tag;
+    updatedInputs.splice(index, 1);
+    
+    setFormData({ ...formData, inputs: updatedInputs });
+    setSelectedInputTags(selectedInputTags.filter(tag => tag !== removedTag));
+    setValidationErrors([]);
+  };
+
+  // Update output properties
+  const handleOutputUpdate = (index, field, value) => {
+    const updatedOutputs = [...formData.outputs];
+    updatedOutputs[index] = { ...updatedOutputs[index], [field]: value };
+    setFormData({ ...formData, outputs: updatedOutputs });
+  };
+
+  // Validate expression in real-time
+  const validateExpression = () => {
+    const errors = validateCalculator ? validateCalculator(formData) : [];
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  // Generate formula preview with example values
+  const generatePreview = () => {
+    if (!formData.expression) return '';
+    
+    let preview = formData.expression;
+    formData.inputs.forEach(input => {
+      const tagDef = tags.find(t => t.key === input.tag);
+      const exampleValue = tagDef?.examples?.[0] || '10';
+      preview = preview.replace(new RegExp(`\\b${input.tag}\\b`, 'g'), exampleValue);
     });
+    
+    return preview;
   };
 
-  const handleTagToggle = (tagId) => {
-    const newSelectedTags = selectedTags.includes(tagId)
-      ? selectedTags.filter(id => id !== tagId)
-      : [...selectedTags, tagId];
-    setSelectedTags(newSelectedTags);
-    setFormData({ ...formData, tagIds: newSelectedTags });
-  };
-
-  // Adicionar novo campo à calculadora
-  const handleAddField = () => {
-    if (newField.name.trim() === '') {
-      setError('O nome do campo é obrigatório');
+  // Generate preview of calculation steps
+  const [preview, setPreview] = useState('');
+  
+  const generateCalculationPreview = () => {
+    if (!formData.expression || formData.inputs.length === 0) {
+      setPreview('');
       return;
     }
 
-    if (newField.label.trim() === '') {
-      setError('O rótulo do campo é obrigatório');
-      return;
+    try {
+      let previewText = `Fórmula: ${formData.expression}\n\n`;
+      previewText += 'Exemplo com valores:\n';
+      
+      formData.inputs.forEach(input => {
+        const tagDef = tags.find(t => t.key === input.tag);
+        const exampleValue = tagDef?.examples?.[0] || '0';
+        previewText += `${input.label} (${input.tag}): ${exampleValue} ${input.unit || ''}\n`;
+      });
+      
+      setPreview(previewText);
+    } catch (error) {
+      setPreview('Erro ao gerar preview');
     }
-
-    setFormData({
-      ...formData,
-      fields: [...formData.fields, { ...newField }],
-    });
-
-    // Resetar o formulário de novo campo
-    setNewField({ name: '', label: '', unit: '', type: 'number' });
-    setError(null);
   };
 
-  // Remover campo da calculadora
-  const handleRemoveField = (index) => {
-    const updatedFields = [...formData.fields];
-    updatedFields.splice(index, 1);
-    setFormData({
-      ...formData,
-      fields: updatedFields,
-    });
-  };
-
-  // Manipular mudanças no formulário de novo campo
-  const handleNewFieldChange = (e) => {
-    const { name, value } = e.target;
-    setNewField({
-      ...newField,
-      [name]: value,
-    });
-  };
-
-  // Salvar calculadora
+  // Save calculator
   const handleSave = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      if (!formData.name.trim()) {
-        setError('O nome da calculadora é obrigatório');
+      // Validate calculator
+      const errors = validateCalculator ? validateCalculator(formData) : [];
+      if (errors.length > 0) {
+        setValidationErrors(errors);
+        setError(`Erros de validação: ${errors.join(', ')}`);
         setIsLoading(false);
         return;
       }
 
-      if (!formData.formula.trim() && formData.fields.length > 0) {
-        setError('A fórmula de cálculo é obrigatória');
-        setIsLoading(false);
-        return;
-      }
-
-      // Validar tags selecionadas
-      const invalidTags = selectedTags.filter(tagId => 
-        !availableTags.some(tag => tag.id === tagId)
-      );
-      if (invalidTags.length > 0) {
-        setError('Uma ou mais tags selecionadas não são mais válidas.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Garantir que os campos tenham o formato correto para o backend
+      // Prepare calculator data
       const calculatorData = {
         ...formData,
-        fields: formData.fields.map(field => ({
-          name: field.name,
-          label: field.label || field.name, // usar label ou name como fallback
-          type: field.type,
-          unit: field.unit,
-          required: field.required || false
-        })),
-        tagIds: selectedTags
+        id: formData.id || `calc_${Date.now()}`,
+        createdBy: 'current-user', // TODO: Get from auth store
+        createdAt: new Date().toISOString(),
+        isActive: true,
+        tagIds: selectedInputTags
       };
       
-      let response;
+      // Register in store
       if (isNew) {
-        response = await calculatorService.create(calculatorData);
+        register(calculatorData);
       } else {
-        response = await calculatorService.update(calculator.id, calculatorData);
+        update(calculatorData.id, calculatorData);
       }
 
-      // Fechar modal após salvar com sucesso
+      // Also save to backend for persistence
+      try {
+        if (isNew) {
+          await calculatorService.create(calculatorData);
+        } else {
+          await calculatorService.update(calculatorData.id, calculatorData);
+        }
+      } catch (backendError) {
+        console.warn('Backend save failed, but calculator saved locally:', backendError);
+      }
+
+      // Emit event for UI updates
+      eventUtils.emitCalculatorUpdated(calculatorData.id, calculatorData);
+
+      // Close modal after successful save
       onClose();
     } catch (err) {
       console.error('Erro ao salvar calculadora:', err);
-      setError(err.response?.data?.message || 'Erro ao salvar calculadora');
+      setError(err.message || 'Erro ao salvar calculadora');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Excluir calculadora
+  // Delete calculator
   const handleDelete = async () => {
     if (!window.confirm('Tem certeza que deseja excluir esta calculadora?')) {
       return;
@@ -220,54 +288,93 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
 
     try {
       setIsLoading(true);
-      await calculatorService.delete(calculator.id);
+      
+      // Remove from store
+      const { remove } = useCalculatorStore.getState();
+      remove(calculator.id);
+      
+      // Also delete from backend
+      try {
+        await calculatorService.delete(calculator.id);
+      } catch (backendError) {
+        console.warn('Backend delete failed, but calculator removed locally:', backendError);
+      }
+      
       onClose();
     } catch (err) {
       console.error('Erro ao excluir calculadora:', err);
-      setError(err.response?.data?.message || 'Erro ao excluir calculadora');
+      setError(err.message || 'Erro ao excluir calculadora');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Calcular resultado
-  const handleCalculate = () => {
+  // Calculate result using store
+  const handleCalculate = async () => {
+    if (!patientId) {
+      setError('ID do paciente é necessário para cálculo');
+      return;
+    }
+
     try {
+      setIsLoading(true);
       setError(null);
       
-      // Verificar se todos os campos necessários estão preenchidos
-      const missingFields = formData.fields.filter(field => !fieldValues[field.name]);
-      if (missingFields.length > 0) {
-        setError(`Preencha todos os campos obrigatórios: ${missingFields.map(f => f.name).join(', ')}`);
-        return;
+      // Create temporary calculator for evaluation
+      const tempCalculator = {
+        ...formData,
+        id: formData.id || 'temp_calc'
+      };
+      
+      // Evaluate using store
+      const calculationResult = await evaluateForPatient(tempCalculator.id, patientId);
+      
+      if (calculationResult.ok) {
+        setResult(calculationResult);
+      } else {
+        setError(calculationResult.error || 'Erro no cálculo');
+        setResult(null);
       }
-
-      // Criar função de cálculo a partir da fórmula
-      const formula = formData.formula;
-      const fieldNames = formData.fields.map(field => field.name);
-      
-      // Criar função segura para avaliação da fórmula
-      const calculateFunction = new Function(
-        ...fieldNames,
-        `'use strict'; return ${formula};`
-      );
-
-      // Obter valores dos campos
-      const values = fieldNames.map(name => parseFloat(fieldValues[name]));
-      
-      // Calcular resultado
-      const calculatedResult = calculateFunction(...values);
-      
-      // Verificar se o resultado é válido
-      if (isNaN(calculatedResult) || !isFinite(calculatedResult)) {
-        throw new Error('O cálculo resultou em um valor inválido');
-      }
-      
-      setResult(calculatedResult);
     } catch (err) {
       console.error('Erro ao calcular:', err);
-      setError('Erro ao calcular: ' + (err.message || 'Fórmula inválida'));
+      setError('Erro ao calcular: ' + (err.message || 'Erro desconhecido'));
       setResult(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Save calculation result as tag
+  const handleSaveResultAsTag = async (outputKey, value) => {
+    if (!result || !result.ok || !patientId) return;
+    
+    try {
+      const { upsert } = usePatientTagsStore.getState();
+      const output = formData.outputs.find(o => o.key === outputKey) || formData.outputs[0];
+      const resultValue = value || result.values[output.key];
+      
+      // Create tag key from calculator name
+      const tagKey = `calc_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${outputKey || 'result'}`;
+      
+      await upsert(patientId, tagKey, {
+        value: resultValue,
+        unit: output.unit || '',
+        source: 'calc',
+        sourceId: formData.id,
+        metadata: {
+          calculatorId: formData.id,
+          calculatorName: formData.name,
+          outputKey: outputKey || 'result',
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      // Show success message
+      setError(null);
+      console.log(`Resultado salvo como tag: ${tagKey}`);
+    } catch (err) {
+      console.error('Erro ao salvar resultado como tag:', err);
+      setError('Erro ao salvar resultado como tag');
     }
   };
 
@@ -328,6 +435,18 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
             </div>
           )}
 
+          {/* Display validation errors */}
+          {validationErrors.length > 0 && (
+            <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-700/50 text-yellow-300 rounded-lg">
+              <div className="font-medium">Erros de validação:</div>
+              <ul className="list-disc list-inside mt-1">
+                {validationErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Modo de visualização/cálculo */}
           {mode === 'view' && (
             <div>
@@ -341,38 +460,97 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                 </div>
               )}
 
+              {/* Input fields from patient tags */}
               <div className="space-y-4 mb-6">
-                {formData.fields.map((field, index) => (
-                  <div key={index} className="flex flex-col">
-                    <label className="text-gray-300 mb-1">
-                      {field.label || field.name}{field.unit ? ` (${field.unit})` : ''}
-                    </label>
-                    <input
-                      type={field.type === 'number' ? 'number' : 'text'}
-                      value={fieldValues[field.name] || ''}
-                      onChange={(e) => handleFieldValueChange(e, field.name)}
-                      className="input"
-                      step={field.type === 'number' ? 'any' : undefined}
-                    />
-                  </div>
-                ))}
+                {formData.inputs.map((input, index) => {
+                  const tagDef = tags.find(t => t.key === input.tag);
+                  const patientTags = patientId ? getPatientTags(patientId) : [];
+                  const patientValue = patientTags.find(pt => pt.key === input.tag);
+                  
+                  return (
+                    <div key={index} className="flex flex-col">
+                      <label className="text-gray-300 mb-1">
+                        {input.label || tagDef?.label || input.tag}
+                        {(input.unit || tagDef?.unit) && (
+                          <span className="text-gray-400 ml-1">({input.unit || tagDef?.unit})</span>
+                        )}
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          value={patientValue?.value || ''}
+                          readOnly
+                          className="input flex-1 bg-gray-700/50 text-gray-300"
+                          placeholder={`Valor de ${input.tag} do paciente`}
+                        />
+                        {tagDef?.examples && (
+                          <span className="text-xs text-gray-500">
+                            Ex: {tagDef.examples.slice(0, 2).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="flex flex-col space-y-4">
                 <button
                   onClick={handleCalculate}
                   className="btn btn-primary"
-                  disabled={isLoading}
+                  disabled={isLoading || !patientId}
                 >
                   {isLoading ? 'Calculando...' : 'Calcular'}
                 </button>
 
-                {result !== null && (
+                {/* Calculation result */}
+                {result && result.ok && (
                   <div className="mt-4 p-4 bg-gray-700/30 border border-gray-600/50 rounded-lg">
-                    <h3 className="text-lg font-medium text-white mb-2">Resultado:</h3>
-                    <div className="text-2xl font-bold text-teal-400">
-                      {typeof result === 'number' ? result.toFixed(2) : result}
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium text-white">Resultado:</h3>
+                      <button
+                        onClick={handleSaveResultAsTag}
+                        className="text-xs bg-teal-600 text-white px-2 py-1 rounded hover:bg-teal-700"
+                      >
+                        Salvar como Tag
+                      </button>
                     </div>
+                    {Object.entries(result.values).map(([key, value]) => {
+                      const output = formData.outputs.find(o => o.key === key);
+                      return (
+                        <div key={key} className="text-gray-300">
+                          <span className="font-medium">{output?.label || key}:</span>
+                          <span className="text-2xl font-bold text-teal-400 ml-2">
+                            {typeof value === 'number' ? value.toFixed(output?.rounding || 2) : value}
+                            {output?.unit && ` ${output.unit}`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Show calculation steps if available */}
+                    {result.steps && result.steps.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="text-sm text-teal-400 cursor-pointer">Ver passos do cálculo</summary>
+                        <div className="mt-1 text-sm text-teal-300 space-y-1">
+                          {result.steps.map((step, idx) => (
+                            <div key={idx} className="font-mono">{step}</div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                )}
+                
+                {/* Missing inputs warning */}
+                {result && !result.ok && result.missingInputs && (
+                  <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
+                    <h4 className="font-medium text-yellow-300">Dados faltantes:</h4>
+                    <ul className="text-yellow-200 text-sm mt-1">
+                      {result.missingInputs.map(tag => (
+                        <li key={tag}>• {tag}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
@@ -425,154 +603,186 @@ const CalculatorModal = ({ calculator, onClose, isNew }) => {
                 </select>
               </div>
 
+              {/* Input tags selection */}
               <div>
                 <label className="block text-gray-300 mb-2">
-                  Tags
+                  Tags de Entrada
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-gray-600/50 rounded-lg p-2 bg-gray-700/30">
-                  {availableTags.length > 0 ? (
-                    availableTags.map((tag) => (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => handleTagToggle(tag.id)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
-                          selectedTags.includes(tag.id)
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-gray-600/50 text-gray-300 hover:bg-gray-500/70'
-                        }`}
-                      >
-                        {tag.name}
-                      </button>
-                    ))
+                <div className="max-h-40 overflow-y-auto border border-gray-600/50 rounded-lg p-2 bg-gray-700/30">
+                  {(tags?.length ?? 0) === 0 ? (
+                    <p className="text-gray-400 text-sm">Nenhuma tag disponível</p>
                   ) : (
-                    <span className="text-sm text-gray-400">
-                      Nenhuma tag disponível
-                    </span>
+                    tags.map((tag) => (
+                      <label key={tag.key} className="flex items-center space-x-2 py-1 text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={selectedInputTags.includes(tag.key)}
+                          onChange={() => handleInputTagToggle(tag.key)}
+                          className="rounded"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">{tag.label}</span>
+                          <span className="text-xs text-gray-500 ml-2">({tag.key})</span>
+                          {tag.unit && (
+                            <span className="text-xs text-gray-500 ml-1">[{tag.unit}]</span>
+                          )}
+                          {tag.examples && (
+                            <div className="text-xs text-gray-400">
+                              Ex: {tag.examples.slice(0, 2).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    ))
                   )}
                 </div>
-                {selectedTags.length > 0 && (
-                  <div className="mt-2">
-                    <span className="text-sm text-gray-400">
-                      {selectedTags.length} tag(s) selecionada(s)
-                    </span>
+              </div>
+
+              {/* Expression/Formula */}
+              <div>
+                <label className="block text-gray-300 mb-1">Expressão de Cálculo</label>
+                <textarea
+                  name="expression"
+                  value={formData.expression}
+                  onChange={(e) => {
+                    handleFormChange(e);
+                    // Validate expression on change
+                    setTimeout(() => validateExpression(), 100);
+                  }}
+                  className={`input w-full h-20 ${
+                    validationErrors.length > 0 ? 'border-red-500' : ''
+                  }`}
+                  placeholder="Ex: P / (H * H) para IMC"
+                ></textarea>
+                <div className="flex justify-between items-start mt-1">
+                  <p className="text-xs text-gray-400">
+                    Use as chaves das tags selecionadas (ex: P, H, FC)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={validateExpression}
+                    className="text-xs text-teal-400 hover:text-teal-300"
+                  >
+                    Validar
+                  </button>
+                </div>
+                
+                {/* Expression preview */}
+                {formData.expression && (
+                  <div className="mt-2 p-2 bg-gray-700/50 rounded text-xs">
+                    <div className="font-medium text-gray-300">Preview com valores de exemplo:</div>
+                    <div className="font-mono text-gray-400">{generatePreview()}</div>
                   </div>
                 )}
               </div>
 
+              {/* Input configuration */}
               <div>
-                <label className="block text-gray-300 mb-1">Fórmula</label>
-                <input
-                  type="text"
-                  name="formula"
-                  value={formData.formula}
-                  onChange={handleFormChange}
-                  className="input w-full"
-                  placeholder="Ex: (peso / (altura * altura))"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Use os nomes dos campos exatamente como definidos abaixo.
-                </p>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-gray-300">Campos</label>
-                </div>
-
-                {formData.fields.length > 0 ? (
-                  <div className="space-y-2 mb-4">
-                    {formData.fields.map((field, index) => (
-                      <div key={index} className="flex items-center bg-gray-700 p-2 rounded">
+                <label className="block text-gray-300 mb-2">
+                  Configuração das Entradas
+                </label>
+                
+                {/* List of configured inputs */}
+                <div className="space-y-2 mb-4">
+                  {formData.inputs.map((input, index) => {
+                    const tagDef = tags.find(t => t.key === input.tag);
+                    return (
+                      <div key={index} className="flex items-center space-x-2 p-2 bg-gray-700/50 rounded">
                         <div className="flex-1">
-                          <div className="text-white font-medium">{field.label || field.name}</div>
-                          <div className="text-xs text-gray-400">
-                            Nome: {field.name} • {field.type === 'number' ? 'Número' : 'Texto'}
-                            {field.unit && ` • Unidade: ${field.unit}`}
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-white">{input.label || tagDef?.label || input.tag}</span>
+                            <span className="text-xs text-gray-400">({input.tag})</span>
+                            {(input.unit || tagDef?.unit) && (
+                              <span className="text-xs text-gray-400">[{input.unit || tagDef?.unit}]</span>
+                            )}
+                          </div>
+                          <div className="flex space-x-2 mt-1">
+                            <input
+                              type="text"
+                              value={input.label || ''}
+                              onChange={(e) => handleInputUpdate(index, 'label', e.target.value)}
+                              placeholder="Rótulo personalizado"
+                              className="text-xs px-2 py-1 bg-gray-600 border border-gray-500 rounded flex-1 text-white"
+                            />
+                            <input
+                              type="text"
+                              value={input.unit || ''}
+                              onChange={(e) => handleInputUpdate(index, 'unit', e.target.value)}
+                              placeholder="Unidade"
+                              className="text-xs px-2 py-1 bg-gray-600 border border-gray-500 rounded w-20 text-white"
+                            />
                           </div>
                         </div>
                         <button
-                          onClick={() => handleRemoveField(index)}
+                          type="button"
+                          onClick={() => handleRemoveInput(index)}
                           className="text-red-400 hover:text-red-300"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-gray-400 text-center py-4 mb-4 bg-gray-700 bg-opacity-30 rounded">
-                    Nenhum campo adicionado
-                  </div>
-                )}
-
-                <div className="bg-gray-700 p-3 rounded">
-                  <h4 className="text-white font-medium mb-2">Adicionar novo campo</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                    <div>
-                      <input
-                        type="text"
-                        name="name"
-                        value={newField.name}
-                        onChange={handleNewFieldChange}
-                        className="input w-full"
-                        placeholder="Nome do campo (ex: peso)"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        name="label"
-                        value={newField.label}
-                        onChange={handleNewFieldChange}
-                        className="input w-full"
-                        placeholder="Rótulo (ex: Peso do paciente)"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div>
-                      <input
-                        type="text"
-                        name="unit"
-                        value={newField.unit}
-                        onChange={handleNewFieldChange}
-                        className="input w-full"
-                        placeholder="Unidade (ex: kg)"
-                      />
-                    </div>
-                    <div>
-                      <select
-                        name="type"
-                        value={newField.type}
-                        onChange={handleNewFieldChange}
-                        className="input w-full"
-                      >
-                        <option value="number">Número</option>
-                        <option value="text">Texto</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleAddField}
-                    className="btn btn-secondary w-full mt-2"
-                  >
-                    Adicionar Campo
-                  </button>
+                    );
+                  })}
                 </div>
+              </div>
+              
+              {/* Output configuration */}
+              <div>
+                <label className="block text-gray-300 mb-2">
+                  Configuração das Saídas
+                </label>
+                
+                {formData.outputs.map((output, index) => (
+                  <div key={index} className="flex items-center space-x-2 p-2 bg-teal-900/20 rounded mb-2">
+                    <div className="flex-1 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={output.key || ''}
+                          onChange={(e) => handleOutputUpdate(index, 'key', e.target.value)}
+                          placeholder="Chave (ex: BMI)"
+                          className="text-sm px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white"
+                        />
+                        <input
+                          type="text"
+                          value={output.label || ''}
+                          onChange={(e) => handleOutputUpdate(index, 'label', e.target.value)}
+                          placeholder="Rótulo (ex: Índice de Massa Corporal)"
+                          className="text-sm px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          type="text"
+                          value={output.unit || ''}
+                          onChange={(e) => handleOutputUpdate(index, 'unit', e.target.value)}
+                          placeholder="Unidade (ex: kg/m²)"
+                          className="text-sm px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white"
+                        />
+                        <input
+                          type="number"
+                          value={output.rounding || 2}
+                          onChange={(e) => handleOutputUpdate(index, 'rounding', parseInt(e.target.value))}
+                          placeholder="Casas decimais"
+                          className="text-sm px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white"
+                          min="0"
+                          max="10"
+                        />
+                        <select
+                          value={output.type || 'number'}
+                          onChange={(e) => handleOutputUpdate(index, 'type', e.target.value)}
+                          className="text-sm px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white"
+                        >
+                          <option value="number">Número</option>
+                          <option value="text">Texto</option>
+                          <option value="boolean">Verdadeiro/Falso</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex items-center">

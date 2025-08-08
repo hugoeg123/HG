@@ -5,6 +5,9 @@ import CalculatorCard from './CalculatorCard';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { useCalculatorStore } from '../../store/calculatorStore';
+import { useTagCatalogStore } from '../../store/tagCatalogStore';
+import { eventUtils, EVENT_TYPES } from '../../lib/events';
 
 /**
  * Calculators component - Displays and manages medical calculators
@@ -12,32 +15,50 @@ import { Badge } from '../ui/badge';
  * @component
  * @example
  * return (
- *   <Calculators />
+ *   <Calculators patientId="patient-123" />
  * )
  * 
- * Integra com: services/api.js para calls a /calculators/, e components/Tools/CalculatorModal.jsx
+ * Integrates with:
+ * - store/calculatorStore.js for calculator management and execution
+ * - store/tagCatalogStore.js for tag definitions
+ * - components/Tools/CalculatorModal.jsx for calculator editing/usage
+ * - lib/events.js for reactive updates
  * 
- * IA prompt: Adicionar categorização de calculadoras por especialidade médica
+ * @param {Object} props
+ * @param {string} props.patientId - ID of the current patient for calculations
+ * 
+ * IA prompt: Add calculator marketplace, formula builder, and calculation history
  */
-const Calculators = () => {
-  const [calculators, setCalculators] = useState([]);
+const Calculators = ({ patientId = null }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCalculator, setSelectedCalculator] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  
+  // Store hooks
+  const { calculators, getAll, seedCalculators } = useCalculatorStore();
+  const { refresh: refreshTags } = useTagCatalogStore();
 
-  // Carregar calculadoras
+  // Load calculators and tags on mount
   useEffect(() => {
-    const fetchCalculators = async () => {
+    const initializeData = async () => {
       try {
         setIsLoading(true);
-        const response = await calculatorService.getAll();
-        // Backend agora retorna array diretamente
-        const calculatorsList = Array.isArray(response.data) ? response.data : [];
-        setCalculators(calculatorsList);
         setError(null);
+        
+        // Refresh tags first
+        await refreshTags();
+        
+        // Load calculators from store and API
+        await getAll();
+        
+        // Seed with default calculators if none exist
+        if (calculators.length === 0) {
+          seedCalculators(); // agora é método do store
+        }
+        
       } catch (err) {
         console.error('Erro ao carregar calculadoras:', err);
         setError('Não foi possível carregar as calculadoras médicas');
@@ -46,8 +67,26 @@ const Calculators = () => {
       }
     };
 
-    fetchCalculators();
-  }, []);
+    initializeData();
+  }, [getAll, refreshTags, seedCalculators]);
+  
+  // Listen for calculator events
+  useEffect(() => {
+    const handleCalculatorUpdate = () => {
+      // Refresh calculators when updated
+      getAll();
+    };
+    
+    eventUtils.on(EVENT_TYPES.CALCULATOR_CREATED, handleCalculatorUpdate);
+    eventUtils.on(EVENT_TYPES.CALCULATOR_UPDATED, handleCalculatorUpdate);
+    eventUtils.on(EVENT_TYPES.CALCULATOR_DELETED, handleCalculatorUpdate);
+    
+    return () => {
+      eventUtils.off(EVENT_TYPES.CALCULATOR_CREATED, handleCalculatorUpdate);
+      eventUtils.off(EVENT_TYPES.CALCULATOR_UPDATED, handleCalculatorUpdate);
+      eventUtils.off(EVENT_TYPES.CALCULATOR_DELETED, handleCalculatorUpdate);
+    };
+  }, [getAll]);
 
   // Get unique categories for filter options
   const categories = Array.isArray(calculators) ? 
@@ -87,14 +126,22 @@ const Calculators = () => {
     setSelectedCalculator(null);
   };
 
-  // Criar nova calculadora
+  // Create new calculator
   const handleNewCalculator = () => {
     setSelectedCalculator({
+      id: '',
       name: '',
       description: '',
       category: '',
-      formula: '',
-      fields: [],
+      expression: '',
+      inputs: [],
+      outputs: [{
+        key: 'result',
+        label: 'Resultado',
+        type: 'number',
+        unit: '',
+        rounding: 2
+      }],
       isPersonal: true,
     });
     setShowModal(true);
@@ -287,12 +334,14 @@ const Calculators = () => {
         </div>
       )}
 
-        {/* Modal da calculadora */}
+        {/* Calculator Modal */}
         {showModal && selectedCalculator && (
           <CalculatorModal
+            isOpen={showModal}
             calculator={selectedCalculator}
             onClose={closeCalculator}
-            isNew={!selectedCalculator.id}
+            mode={!selectedCalculator.id ? 'create' : 'use'}
+            patientId={patientId}
           />
         )}
     </div>

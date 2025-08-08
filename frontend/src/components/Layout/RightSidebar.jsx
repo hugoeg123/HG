@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { MessageSquare, Calculator, AlertTriangle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import AIAssistant from '../AI/AIAssistant';
 import Calculators from '../Tools/Calculators';
@@ -18,14 +19,16 @@ import TabContentPanel from './TabContentPanel';
  * Integra com: components/AI/AIAssistant.jsx, components/Tools/Calculators.jsx, 
  * components/Tools/Alerts.jsx e components/Tools/KnowledgeBase.jsx
  * 
+ * Hook: Uses useParams to get current patientId and pass to Calculators component
  * IA prompt: Adicionar histórico de interações com IA e favoritos de calculadoras
  */
 const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
   const [activeTab, setActiveTab] = useState('chat');
+  const { id: patientId } = useParams(); // Get current patient ID from URL
 
   const tabConfig = {
     chat: { title: 'Chat', component: <AIAssistant />, icon: <MessageSquare size={16} /> },
-    calculators: { title: 'Calculadoras', component: <Calculators />, icon: <Calculator size={16} /> },
+    calculators: { title: 'Calculadoras', component: <Calculators patientId={patientId} />, icon: <Calculator size={16} /> },
     alerts: { title: 'Alertas', component: <Alerts />, icon: <AlertTriangle size={16} /> },
     knowledge: { title: 'Conhecimento', component: <KnowledgeBase />, icon: <BookOpen size={16} /> },
   };
@@ -80,3 +83,4 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
 export default RightSidebar;
 
 // Conector: Integra com MainLayout.jsx para exibição na interface principal e com os componentes de ferramentas
+// Hook: Passes patientId from URL params to Calculators component for patient-specific calculations
