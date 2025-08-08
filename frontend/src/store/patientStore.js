@@ -119,16 +119,47 @@ const usePatientStore = create((set, get) => ({
         insurancePlan: patient?.insurancePlan || null,
         observations: patient?.observations || null,
         records: Array.isArray(patient?.records) ? patient.records : [],
+        recordCount: patient?.recordCount || 0, // Incluir contagem de registros do backend
         ...patient
       })) : [];
       
+      // Carregar registros para cada paciente que tem registros
+      // Hook: Carrega registros completos para exibição na sidebar
+      const patientsWithRecords = await Promise.all(
+        patients.map(async (patient) => {
+          if (patient.recordCount > 0) {
+            try {
+              // Verificar cache primeiro
+              const cachedRecords = get().loadRecordsFromCache(patient.id);
+              if (cachedRecords.length > 0) {
+                return { ...patient, records: cachedRecords };
+              }
+              
+              // Se não há cache, carregar da API
+              if (recordService && recordService.getByPatient) {
+                const recordsResponse = await recordService.getByPatient(patient.id);
+                const records = Array.isArray(recordsResponse?.data?.records) ? recordsResponse.data.records : [];
+                
+                // Salvar no cache
+                get().saveRecordsToCache(patient.id, records);
+                
+                return { ...patient, records };
+              }
+            } catch (error) {
+              console.warn(`Erro ao carregar registros do paciente ${patient.id}:`, error);
+            }
+          }
+          return patient;
+        })
+      );
+      
       // Reset retry count on success
-      set({ patients, isLoading: false, retryCount: 0 });
+      set({ patients: patientsWithRecords, isLoading: false, retryCount: 0 });
       
       // Salvar no cache
-      localStorage.setItem('patients', JSON.stringify(patients));
+      localStorage.setItem('patients', JSON.stringify(patientsWithRecords));
       
-      return patients;
+      return patientsWithRecords;
     } catch (error) {
       const currentState = get();
       
@@ -538,9 +569,15 @@ const usePatientStore = create((set, get) => ({
       const response = await recordService.getByPatient(patientId);
       console.log('fetchPatientRecords: Resposta da API recebida:', response);
       
-      // Garantir que response.data é um array
-      const records = Array.isArray(response?.data) ? response.data : [];
+      // O backend retorna { records: [...], pagination: {...} }
+      const records = Array.isArray(response?.data?.records) ? response.data.records : [];
       console.log('fetchPatientRecords: Registros processados:', records.length);
+      console.log('fetchPatientRecords: Estrutura da resposta:', {
+        hasRecords: !!response?.data?.records,
+        recordsLength: response?.data?.records?.length || 0,
+        patientIdSolicitado: patientId,
+        currentPatientId: get().currentPatient?.id
+      });
       
       // Salvar registros no cache
       get().saveRecordsToCache(patientId, records);
@@ -620,17 +657,17 @@ const usePatientStore = create((set, get) => ({
         headers: response.headers
       });
       
-      // Tentar diferentes estruturas de resposta possíveis
+      // O backend retorna { success: true, message: '...', data: record }
       let newRecord;
-      if (response.data && response.data.record) {
-        // Estrutura: { record: { id, title, ... } }
+      if (response.data && response.data.data) {
+        // Estrutura padrão: { success: true, data: { id, title, ... } }
+        newRecord = response.data.data;
+      } else if (response.data && response.data.record) {
+        // Estrutura alternativa: { record: { id, title, ... } }
         newRecord = response.data.record;
       } else if (response.data && response.data.id) {
-        // Estrutura: { id, title, ... }
+        // Estrutura direta: { id, title, ... }
         newRecord = response.data;
-      } else if (response.data && response.data.data) {
-        // Estrutura: { data: { id, title, ... } }
-        newRecord = response.data.data;
       } else {
         console.error('❌ Estrutura de resposta não reconhecida:', response.data);
         throw new Error("A resposta da API é inválida ou não contém o registro criado.");
@@ -648,7 +685,11 @@ const usePatientStore = create((set, get) => ({
         // 1. Atualiza a lista de registros aninhada dentro do paciente na lista principal
         const updatedPatients = state.patients.map(p =>
           p.id === recordData.patientId
-            ? { ...p, records: [newRecord, ...(p.records || [])] }
+            ? { 
+                ...p, 
+                records: [newRecord, ...(p.records || [])],
+                recordCount: (p.recordCount || 0) + 1 // Atualizar contagem de registros
+              }
             : p
         );
 
@@ -690,7 +731,8 @@ const usePatientStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.put(`/records/${recordId}`, recordData);
-      const updatedRecord = response.data.record || response.data; // Compatibilidade com diferentes formatos
+      // O backend retorna { success: true, message: '...', data: record }
+      const updatedRecord = response.data.data || response.data.record || response.data; // Compatibilidade com diferentes formatos
       
       // Atualizar o registro na lista de registros do paciente
       set(state => {
@@ -699,6 +741,17 @@ const usePatientStore = create((set, get) => ({
           ? updatedRecord 
           : state.currentRecord;
           
+        // Atualizar a lista de pacientes na sidebar
+        const updatedPatients = state.patients.map(p => {
+          if (p.records && p.records.some(r => r.id === recordId)) {
+            return {
+              ...p,
+              records: p.records.map(r => r.id === recordId ? updatedRecord : r)
+            };
+          }
+          return p;
+        });
+          
         // Se temos um paciente atual e o registro pertence a ele
         if (state.currentPatient && state.currentPatient.records) {
           const updatedRecords = state.currentPatient.records.map(r => 
@@ -706,6 +759,7 @@ const usePatientStore = create((set, get) => ({
           );
           
           return {
+            patients: updatedPatients,
             currentPatient: {
               ...state.currentPatient,
               records: updatedRecords
@@ -716,6 +770,7 @@ const usePatientStore = create((set, get) => ({
         }
         
         return { 
+          patients: updatedPatients,
           currentRecord: updatedCurrentRecord,
           isLoading: false 
         };
@@ -753,11 +808,25 @@ const usePatientStore = create((set, get) => ({
           ? null 
           : state.currentRecord;
           
+        // Atualizar a lista de pacientes na sidebar
+        const updatedPatients = state.patients.map(p => {
+          if (p.records && p.records.some(r => r.id === recordId)) {
+            const filteredRecords = p.records.filter(r => r.id !== recordId);
+            return {
+              ...p,
+              records: filteredRecords,
+              recordCount: Math.max((p.recordCount || 0) - 1, 0) // Decrementar contagem
+            };
+          }
+          return p;
+        });
+          
         // Se temos um paciente atual com registros
         if (state.currentPatient && state.currentPatient.records) {
           const updatedRecords = state.currentPatient.records.filter(r => r.id !== recordId);
           
           return {
+            patients: updatedPatients,
             currentPatient: {
               ...state.currentPatient,
               records: updatedRecords
@@ -768,6 +837,7 @@ const usePatientStore = create((set, get) => ({
         }
         
         return { 
+          patients: updatedPatients,
           currentRecord: updatedCurrentRecord,
           isLoading: false 
         };
