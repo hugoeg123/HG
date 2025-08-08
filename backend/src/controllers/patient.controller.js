@@ -7,7 +7,8 @@
  */
 
 const { validationResult } = require('express-validator');
-const { Patient } = require('../models');
+const { Patient, Record } = require('../models');
+const { Sequelize } = require('sequelize');
 
 // Obter todos os pacientes
 exports.getAllPatients = async (req, res) => {
@@ -41,23 +42,40 @@ exports.getAllPatients = async (req, res) => {
     
     console.log('getAllPatients - Query where conditions:', where);
     
-    // Executar consulta
-    const { count, rows: patients } = await Patient.findAndCountAll({
+    // Executar consulta simplificada - separar contagem total da busca de pacientes
+    // Primeiro, obter contagem total
+    const totalCount = await Patient.count({ where });
+    
+    // Depois, buscar pacientes sem GROUP BY para evitar subquery complexa
+    const patients = await Patient.findAll({
       where,
       order: [[sortField, sortOrder]],
       limit,
       offset
     });
     
-    console.log('getAllPatients - Found patients count:', count);
+    // Adicionar contagem de registros para cada paciente de forma separada
+    const patientsWithRecordCount = await Promise.all(
+      patients.map(async (patient) => {
+        const recordCount = await Record.count({
+          where: { patientId: patient.id }
+        });
+        return {
+          ...patient.toJSON(),
+          recordCount
+        };
+      })
+    );
+    
+    console.log('getAllPatients - Found patients count:', totalCount);
     
     res.json({
-      patients,
+      patients: patientsWithRecordCount,
       pagination: {
         page,
         limit,
-        total: count,
-        pages: Math.ceil(count / limit)
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit)
       }
     });
   } catch (error) {
@@ -98,14 +116,14 @@ exports.createPatient = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
     
-    if (!req.user || !req.user.sub) {
+    if (!req.user || !req.user.id) {
       console.error('Erro ao criar paciente: Usuário não autenticado ou ID ausente.');
       return res.status(401).json({ message: 'Autenticação necessária para criar paciente.' });
     }
 
     const patient = await Patient.create({
       ...req.body,
-      createdBy: req.user.sub
+      createdBy: req.user.id
     });
     
     res.status(201).json(patient);

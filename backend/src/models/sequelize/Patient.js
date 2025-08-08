@@ -126,7 +126,11 @@ Patient.init({
   // ID do usuário que criou o paciente
   createdBy: {
     type: DataTypes.UUID,
-    allowNull: true
+    allowNull: true,
+    references: {
+      model: 'medicos',
+      key: 'id'
+    }
   }
 }, {
   sequelize,
