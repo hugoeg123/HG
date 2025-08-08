@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useImperativeHandle } from 'react';
 import { Sparkles, Hash, ChevronRight } from 'lucide-react';
 
 /**
@@ -16,16 +16,19 @@ import { Sparkles, Hash, ChevronRight } from 'lucide-react';
  * Connector: Integrates with HybridEditor.jsx for section management
  * Hook: Optimized with React.memo to prevent unnecessary re-renders
  */
-const SectionBlock = React.memo(({ 
+const SectionBlock = React.forwardRef(({ 
   section, 
   onContentChange, 
   onAddToChat,
   onKeyDown,
   tagMap = {},
   categoryColors = {}
-}) => {
+}, ref) => {
   const textareaRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Expose textarea ref to parent component
+  useImperativeHandle(ref, () => textareaRef.current, []);
 
   // Auto-redimensionar textarea
   const adjustTextareaHeight = useCallback(() => {
@@ -40,13 +43,8 @@ const SectionBlock = React.memo(({
     adjustTextareaHeight();
   }, [section.content, adjustTextareaHeight]);
 
-  useEffect(() => {
-    // Foca no textarea se ele deve estar ativo
-    const isActive = document.activeElement === textareaRef.current;
-    if (isActive) {
-      textareaRef.current.focus();
-    }
-  }, [section.content]); // Reavalia o foco quando o conteúdo muda
+  // Removed focus management useEffect to prevent focus interference
+  // The textarea will maintain focus naturally during typing
 
   // Extract tag and content from section
   const { tagInfo, contentValue } = React.useMemo(() => {
@@ -127,11 +125,11 @@ const SectionBlock = React.memo(({
     }
   }, [section.content]);
   
-  // Handle content change
-  const handleChange = (e) => {
+  // Handle content change with immediate update to prevent focus loss
+  const handleChange = useCallback((e) => {
     const newValue = e.target.value;
     onContentChange(section.id, newValue);
-  };
+  }, [section.id, onContentChange]);
   
   // Handle key down
   const handleKeyDown = (e) => {
@@ -244,12 +242,16 @@ const SectionBlock = React.memo(({
 // Display name for debugging
 SectionBlock.displayName = 'SectionBlock';
 
-// Memoize component for performance
-export default React.memo(SectionBlock, (prevProps, nextProps) => {
-  // Custom comparison for optimal re-rendering
+// Optimized comparison function for React.memo to prevent unnecessary re-renders
+const areEqual = (prevProps, nextProps) => {
+  // Only re-render if section content actually changed
   return (
     prevProps.section.id === nextProps.section.id &&
-    prevProps.section.content === nextProps.section.content &&
-    prevProps.tagMap === nextProps.tagMap
+    prevProps.section.content === nextProps.section.content
+    // Skip function comparisons as they may change on every render
+    // but functionality remains the same
   );
-});
+};
+
+// Export with memoization for performance
+export default React.memo(SectionBlock, areEqual);

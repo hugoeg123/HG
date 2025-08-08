@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-O servidor do backend estará rodando em `http://localhost:5000`.
+O servidor do backend estará rodando em `http://localhost:5001`.
 
 ### 2. Frontend
 
@@ -39,12 +39,12 @@ npm install
 npm run dev
 ```
 
-O servidor do frontend estará rodando em `http://localhost:3000`.
+O servidor do frontend estará rodando em `http://localhost:3001` (ou 3000 se disponível).
 
 ## 🔗 Mapa de Integrações
 
 ### Backend ↔ Frontend
-- **API REST**: O backend expõe endpoints em `http://localhost:5000/api`
+- **API REST**: O backend expõe endpoints em `http://localhost:5001/api`
 - **Autenticação**: JWT tokens para autenticação stateless
 - **CORS**: Configurado para permitir requisições do frontend
 
@@ -79,13 +79,13 @@ O servidor do frontend estará rodando em `http://localhost:3000`.
 **Verificações**:
 - Dependências instaladas? (`npm install`)
 - Arquivo `.env` existe no frontend?
-- Backend está rodando em `http://localhost:5000`?
+- Backend está rodando em `http://localhost:5001`?
 
 ### Erro de autenticação
 **Solução**: Crie um médico de teste:
 ```bash
 cd backend
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"medico@teste.com","senha":"123456","nome":"Dr. Teste"}'
 ```

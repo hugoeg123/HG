@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Save, X, UserCircle, Sparkles, BookText, Stethoscope, FlaskConical, ClipboardList, Pill } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
 import { tagService, templateService } from '../../services/api';
-import { parseSections } from '../../../../shared/parser.js';
+import { parseSections } from '../../shared/parser.js';
 import { useDebounce, useDebounceCallback } from '../../hooks/useDebounce';
 import SectionBlock from './SectionBlock';
 import TagToolbar from './TagToolbar';
@@ -56,6 +56,10 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   
+  // CORREÇÃO: Gerenciamento de estado local para seções com IDs estáveis
+  const [sections, setSections] = useState([]);
+  const [sectionIdCounter, setSectionIdCounter] = useState(0);
+  
   // Tag management state
   const [openCategories, setOpenCategories] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,22 +102,53 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   // Note: groupedTags logic moved to TagToolbar.jsx for better encapsulation
   // Hook: TagToolbar now handles all tag categorization internally
   
-  // Parse content into sections
-  const sections = useMemo(() => {
-    if (!editorContent.trim()) return [];
+  // CORREÇÃO: Função para sincronizar seções com conteúdo do editor
+  const syncSectionsFromContent = useCallback((content) => {
+    if (!content.trim()) {
+      setSections([]);
+      return;
+    }
     
     try {
       // Split by double newlines for sections
-      const sectionTexts = editorContent.split('\n\n').filter(text => text.trim());
-      return sectionTexts.map((content, index) => ({
-        id: `s_${Date.now()}_${index}`,
-        content: content.trim()
-      }));
+      const sectionTexts = content.split('\n\n').filter(text => text.trim());
+      
+      setSections(prevSections => {
+        // Reutilizar IDs existentes quando possível para manter estabilidade
+        const newSections = sectionTexts.map((sectionContent, index) => {
+          const existingSection = prevSections[index];
+          if (existingSection && existingSection.content === sectionContent.trim()) {
+            return existingSection; // Manter seção existente
+          }
+          
+          // Criar nova seção com ID estável
+          return {
+            id: existingSection?.id || `section_${sectionIdCounter + index}`,
+            content: sectionContent.trim()
+          };
+        });
+        
+        // Atualizar contador apenas se criamos novas seções
+        const newSectionsCount = newSections.filter((_, index) => !prevSections[index]).length;
+        if (newSectionsCount > 0) {
+          setSectionIdCounter(prev => prev + newSectionsCount);
+        }
+        
+        return newSections;
+      });
     } catch (error) {
       console.error('Error parsing sections:', error);
-      return [{ id: `s_${Date.now()}`, content: editorContent }];
+      setSections([{ id: `section_${sectionIdCounter}`, content }]);
+      setSectionIdCounter(prev => prev + 1);
     }
-  }, [editorContent]);
+  }, [sectionIdCounter]);
+  
+  // CORREÇÃO: Sincronizar seções quando o conteúdo do editor mudar
+  useEffect(() => {
+    if (isSegmented) {
+      syncSectionsFromContent(editorContent);
+    }
+  }, [editorContent, isSegmented, syncSectionsFromContent]);
   
   // Load initial data
   // Hook: Ensures state consistency and prevents rendering crashes
@@ -174,8 +209,8 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     setIsSegmented(prev => !prev);
   }, []);
   
-  // Handle text change with debounce
-  const handleTextChange = useDebounceCallback((sectionId, newContent) => {
+  // CORREÇÃO: Handle text change com estado local das seções para estabilizar foco
+  const handleTextChange = useCallback((sectionId, newContent) => {
     if (!isSegmented) {
       setEditorContent(newContent);
       return;
@@ -189,42 +224,58 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       const contentBefore = newContent.substring(0, match.index);
       const newSectionContent = match[1].trim();
       
-      const currentSectionIndex = sections.findIndex(s => s.id === sectionId);
-      const updatedSections = [...sections];
+      setSections(prevSections => {
+        const currentSectionIndex = prevSections.findIndex(s => s.id === sectionId);
+        const updatedSections = [...prevSections];
+        
+        // Update current section
+        updatedSections[currentSectionIndex] = {
+          ...updatedSections[currentSectionIndex],
+          content: contentBefore.trim()
+        };
+        
+        // Add new section with stable ID
+        const newSection = {
+          id: `section_${sectionIdCounter}`,
+          content: newSectionContent
+        };
+        updatedSections.splice(currentSectionIndex + 1, 0, newSection);
+        
+        // Update editor content
+        const newEditorContent = updatedSections.map(s => s.content).join('\n\n');
+        setEditorContent(newEditorContent);
+        
+        // Focus new section
+        setTimeout(() => {
+          const newSectionRef = sectionRefs.current[newSection.id];
+          if (newSectionRef) {
+            newSectionRef.focus();
+          }
+        }, 50);
+        
+        return updatedSections;
+      });
       
-      // Update current section
-      updatedSections[currentSectionIndex] = {
-        ...updatedSections[currentSectionIndex],
-        content: contentBefore.trim()
-      };
-      
-      // Add new section
-      const newSection = {
-        id: `s_${Date.now()}`,
-        content: newSectionContent
-      };
-      updatedSections.splice(currentSectionIndex + 1, 0, newSection);
-      
-      // Update editor content
-      const newEditorContent = updatedSections.map(s => s.content).join('\n\n');
-      setEditorContent(newEditorContent);
-      
-      // Focus new section
-      setTimeout(() => {
-        const newSectionRef = sectionRefs.current[newSection.id];
-        if (newSectionRef) {
-          newSectionRef.focus();
-        }
-      }, 50);
+      setSectionIdCounter(prev => prev + 1);
     } else {
-      // Normal content update
-      const updatedSections = sections.map(s => 
-        s.id === sectionId ? { ...s, content: newContent } : s
+      // CORREÇÃO: Atualização normal - modifica apenas a seção específica
+      setSections(prevSections => 
+        prevSections.map(s => 
+          s.id === sectionId ? { ...s, content: newContent } : s
+        )
       );
-      const newEditorContent = updatedSections.map(s => s.content).join('\n\n');
-      setEditorContent(newEditorContent);
+      
+      // Atualiza o conteúdo do editor de forma reativa
+      setSections(currentSections => {
+        const newEditorContent = currentSections.map(s => s.content).join('\n\n');
+        setEditorContent(newEditorContent);
+        return currentSections;
+      });
     }
-  }, [isSegmented, sections], 300);
+  }, [isSegmented, sectionIdCounter]);
+  
+  // Debounced version for auto-save functionality
+  const debouncedHandleTextChange = useDebounceCallback(handleTextChange, 300);
   
   // Handle key down events
   const handleKeyDown = useCallback((e, sectionId) => {
@@ -285,28 +336,87 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   
   // Handle save
   const handleSave = useCallback(async () => {
+    // Validação básica antes de salvar
+    if (!editorContent.trim()) {
+      console.warn('Conteúdo vazio, salvamento ignorado.');
+      return;
+    }
+    
+    if (!safePatientId) {
+      console.error('ID do paciente não encontrado');
+      return;
+    }
+    
     try {
       const recordData = {
-        title: safeTitle,
-        content: editorContent,
+        title: editableTitle || safeTitle,
+        content: editorContent.trim(),
         patientId: safePatientId,
         type: safeRecordType,
         tags: [] // Will be populated by backend parser
       };
       
+      console.log('Salvando registro:', { 
+        title: recordData.title, 
+        contentLength: recordData.content.length,
+        patientId: recordData.patientId,
+        type: recordData.type
+      });
+      
+      let result;
       if (safeRecord) {
-        await updateRecord(safeRecord.id, recordData);
+        result = await updateRecord(safeRecord.id, recordData);
+        console.log('Registro atualizado com sucesso:', result);
       } else {
-        await createRecord(recordData);
+        result = await createRecord(recordData);
+        console.log('Registro criado com sucesso:', result);
       }
       
       if (onSave) {
         onSave();
       }
     } catch (error) {
-      console.error('Error saving record:', error);
+      console.error('❌ Error saving record:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        stack: error.stack
+      });
+      
+      // Melhor feedback de erro para o usuário
+      let userMessage = 'Erro desconhecido ao salvar registro';
+      
+      if (error.response) {
+        // Erro HTTP do servidor
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message || error.response.data?.error;
+        
+        if (status === 400) {
+          userMessage = serverMessage || 'Dados inválidos. Verifique o conteúdo do registro.';
+        } else if (status === 401) {
+          userMessage = 'Sessão expirada. Faça login novamente.';
+        } else if (status === 403) {
+          userMessage = 'Você não tem permissão para salvar este registro.';
+        } else if (status === 500) {
+          userMessage = 'Erro interno do servidor. Tente novamente em alguns minutos.';
+        } else {
+          userMessage = serverMessage || `Erro do servidor (${status})`;
+        }
+      } else if (error.message) {
+        // Erro de validação ou processamento local
+        userMessage = error.message;
+      }
+      
+      console.error('❌ Mensagem para o usuário:', userMessage);
+      
+      // Criar um erro mais informativo para a UI
+      const enhancedError = new Error(userMessage);
+      enhancedError.originalError = error;
+      enhancedError.isUserFriendly = true;
+      
+      throw enhancedError;
     }
-  }, [editorContent, safeTitle, safePatientId, safeRecordType, safeRecord, updateRecord, createRecord, onSave]);
+  }, [editorContent, editableTitle, safeTitle, safePatientId, safeRecordType, safeRecord, updateRecord, createRecord, onSave]);
   
   // Handle add to chat
   const handleAddToChat = useCallback((content) => {

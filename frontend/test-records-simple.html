@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Simples de Registros</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Teste Simples de Registros - Health Guardian</h1>
+    
+    <div class="section">
+        <h2>1. Teste de Conectividade Backend</h2>
+        <button onclick="testBackend()">Testar Backend</button>
+        <div id="backend-result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Teste de Autenticação</h2>
+        <button onclick="testAuth()">Testar Login</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. Teste de Busca de Registros</h2>
+        <button onclick="testRecords()">Buscar Registros</button>
+        <div id="records-result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. Logs do Console</h2>
+        <div id="console-logs"></div>
+    </div>
+
+    <script>
+        // Configuração da API
+        const API_BASE = 'http://localhost:5001/api';
+        const PATIENT_ID = '0a3565f7-14e6-44e7-9385-5974e117065d';
+        const TEST_CREDENTIALS = {
+            email: 'joao.silva@example.com',
+            password: 'senha123'
+        };
+        let authToken = null;
+        
+        // Capturar logs do console
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsoleLog(type, message) {
+            const logsDiv = document.getElementById('console-logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `<strong>[${type.toUpperCase()}]</strong> ${message}`;
+            logsDiv.appendChild(logEntry);
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsoleLog('info', args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsoleLog('error', args.join(' '));
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsoleLog('error', args.join(' '));
+        };
+        
+        async function testBackend() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.innerHTML = '<p class="info">Testando conectividade...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<p class="success">✓ Backend conectado!</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">✗ Erro: ${response.status} - ${response.statusText}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">✗ Erro de conexão: ${error.message}</p>`;
+            }
+        }
+        
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.innerHTML = '<p class="info">Testando autenticação...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'joao.silva@example.com',
+                        password: 'senha123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    resultDiv.innerHTML = `<p class="success">✓ Login bem-sucedido!</p><pre>Token: ${authToken.substring(0, 50)}...</pre>`;
+                } else {
+                    const errorData = await response.text();
+                    resultDiv.innerHTML = `<p class="error">✗ Erro de login: ${response.status}</p><pre>${errorData}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">✗ Erro de autenticação: ${error.message}</p>`;
+            }
+        }
+        
+        async function testRecords() {
+            const resultDiv = document.getElementById('records-result');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">✗ Faça login primeiro!</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p class="info">Buscando registros...</p>';
+            
+            try {
+                console.log('Iniciando busca de registros para paciente:', PATIENT_ID);
+                console.log('Token usado:', authToken.substring(0, 50) + '...');
+                
+                const response = await fetch(`${API_BASE}/records/patient/${PATIENT_ID}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                console.log('Resposta da API:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Dados recebidos:', data);
+                    
+                    const recordsCount = data.records ? data.records.length : 0;
+                    const totalRecords = data.pagination ? data.pagination.total : recordsCount;
+                    
+                    let resultText = `✓ Registros encontrados: ${recordsCount} de ${totalRecords}`;
+                    
+                    if (data.records && data.records.length > 0) {
+                        const firstRecord = data.records[0];
+                        resultText += `<br><br><strong>Primeiro registro:</strong><br>`;
+                        resultText += `ID: ${firstRecord.id}<br>`;
+                        resultText += `Título: ${firstRecord.title}<br>`;
+                        resultText += `Tipo: ${firstRecord.type}<br>`;
+                        resultText += `Data: ${firstRecord.date}<br>`;
+                        resultText += `Conteúdo: ${firstRecord.content?.substring(0, 100)}...<br>`;
+                    }
+                    
+                    resultDiv.innerHTML = `<p class="success">${resultText}</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const errorData = await response.text();
+                    console.error('Erro na resposta:', errorData);
+                    resultDiv.innerHTML = `<p class="error">✗ Erro: ${response.status} - ${response.statusText}</p><pre>${errorData}</pre>`;
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                resultDiv.innerHTML = `<p class="error">✗ Erro na busca: ${error.message}</p>`;
+            }
+        }
+        
+        // Teste automático ao carregar
+        window.onload = function() {
+            console.log('Página carregada, iniciando testes...');
+            testBackend();
+        };
+    </script>
+</body>
+</html>

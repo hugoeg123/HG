@@ -76,6 +76,7 @@ const usePatientStore = create((set, get) => ({
   currentPatient: null,
   currentRecord: null,
   dashboardData: null,
+  viewMode: 'dashboard',
   isLoading: false,
   error: null,
   retryCount: 0,
@@ -184,6 +185,18 @@ const usePatientStore = create((set, get) => ({
       return currentPatient;
     } catch (error) {
       console.error(`Erro ao buscar paciente ${patientId}:`, error);
+      
+      // Auto-correção de cache: Se erro 404, recarregar lista de pacientes
+      if (error.response?.status === 404) {
+        console.log('Paciente não encontrado (404), atualizando cache...');
+        try {
+          await get().fetchPatients(false); // Force refresh sem cache
+          console.log('Cache de pacientes atualizado após erro 404');
+        } catch (refreshError) {
+          console.error('Erro ao atualizar cache após 404:', refreshError);
+        }
+      }
+      
       set({ 
         error: error.response?.data?.message || 'Erro ao carregar dados do paciente', 
         isLoading: false,
@@ -226,14 +239,12 @@ const usePatientStore = create((set, get) => ({
         const response = await api.post('/patients', patientData);
         const realPatient = response.data;
         
-        // Substituir paciente temporário pelo real
+        // Substituir paciente temporário pelo real e limpar estado conflitante
         set(state => ({
           patients: state.patients.map(p => 
             p.id === tempId ? realPatient : p
           ),
-          currentPatient: state.currentPatient?.id === tempId 
-            ? realPatient 
-            : state.currentPatient,
+          currentPatient: realPatient, // Sempre definir o novo paciente como atual
           isLoading: false,
           error: null
         }));
@@ -244,6 +255,10 @@ const usePatientStore = create((set, get) => ({
         // Clear dashboard cache for new patient
         const dashboardCacheKey = getCacheKey('GET', `/patients/${realPatient.id}/dashboard`);
         requestCache.delete(dashboardCacheKey);
+        
+        // Limpar qualquer cache de registros antigos
+        const recordsCacheKey = getCacheKey('GET', `/patients/${realPatient.id}/records`);
+        requestCache.delete(recordsCacheKey);
         
         return realPatient;
       } catch (error) {
@@ -452,32 +467,88 @@ const usePatientStore = create((set, get) => ({
     }
   },
   
+  // Hook: Load records from localStorage cache
+  loadRecordsFromCache: (patientId) => {
+    try {
+      const cacheKey = `patient_${patientId}_records`;
+      const cachedRecords = localStorage.getItem(cacheKey);
+      if (cachedRecords) {
+        const records = JSON.parse(cachedRecords);
+        return Array.isArray(records) ? records : [];
+      }
+    } catch (error) {
+      console.warn('Erro ao carregar registros do cache:', error);
+    }
+    return [];
+  },
+
+  // Hook: Save records to localStorage cache
+  saveRecordsToCache: (patientId, records) => {
+    try {
+      const cacheKey = `patient_${patientId}_records`;
+      localStorage.setItem(cacheKey, JSON.stringify(records));
+    } catch (error) {
+      console.warn('Erro ao salvar registros no cache:', error);
+    }
+  },
+
   // Gerenciamento de registros médicos
   fetchPatientRecords: async (patientId) => {
+    console.log('fetchPatientRecords: Iniciando busca para paciente:', patientId);
+    
     // Validar ID do paciente
     if (!patientId) {
-      console.error('Erro ao buscar registros: ID do paciente não fornecido');
+      console.error('fetchPatientRecords: ID do paciente não fornecido');
       set({ error: 'ID do paciente não encontrado', isLoading: false });
       return [];
     }
     
     // Verificar se recordService está disponível
     if (typeof recordService === 'undefined' || !recordService || !recordService.getByPatient) {
-      console.error('Erro: recordService não está definido ou não possui método getByPatient');
+      console.error('fetchPatientRecords: recordService não está definido ou não possui método getByPatient');
       set({ error: 'Serviço de registros indisponível', isLoading: false });
       return [];
     }
     
+    console.log('fetchPatientRecords: recordService disponível, verificando cache...');
+    
+    // Carregar registros do cache primeiro para exibição imediata
+    const cachedRecords = get().loadRecordsFromCache(patientId);
+    if (cachedRecords.length > 0) {
+      console.log('fetchPatientRecords: Encontrados', cachedRecords.length, 'registros no cache');
+      // Atualizar estado com dados do cache
+      set(state => {
+        if (state.currentPatient?.id === patientId) {
+          return {
+            currentPatient: {
+              ...state.currentPatient,
+              records: cachedRecords
+            }
+          };
+        }
+        return state;
+      });
+    } else {
+      console.log('fetchPatientRecords: Nenhum registro encontrado no cache');
+    }
+    
+    console.log('fetchPatientRecords: Fazendo requisição à API...');
     set({ isLoading: true, error: null });
     try {
       const response = await recordService.getByPatient(patientId);
+      console.log('fetchPatientRecords: Resposta da API recebida:', response);
       
       // Garantir que response.data é um array
       const records = Array.isArray(response?.data) ? response.data : [];
+      console.log('fetchPatientRecords: Registros processados:', records.length);
+      
+      // Salvar registros no cache
+      get().saveRecordsToCache(patientId, records);
       
       // Atualizar os registros do paciente atual
       set(state => {
         if (state.currentPatient?.id === patientId) {
+          console.log('fetchPatientRecords: Atualizando estado do paciente atual');
           return {
             currentPatient: {
               ...state.currentPatient,
@@ -486,6 +557,7 @@ const usePatientStore = create((set, get) => ({
             isLoading: false
           };
         }
+        console.log('fetchPatientRecords: Paciente atual não corresponde ao ID solicitado');
         return { isLoading: false };
       });
       
@@ -496,7 +568,7 @@ const usePatientStore = create((set, get) => ({
         error: error.response?.data?.message || 'Erro ao carregar registros médicos', 
         isLoading: false 
       });
-      return [];
+      return cachedRecords; // Retornar cache em caso de erro
     }
   },
   
@@ -532,17 +604,85 @@ const usePatientStore = create((set, get) => ({
   },
   
   createRecord: async (recordData) => {
+    if (!recordData.content?.trim()) {
+      console.warn('Conteúdo vazio, salvamento ignorado.');
+      return null; // Validação para não salvar registros vazios
+    }
+
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/records', recordData);
-      // FORÇA A ATUALIZAÇÃO DA LISTA DE REGISTROS
-      await get().fetchPatientRecords(recordData.patientId);
-      set({ isLoading: false });
-      return response.data;
+      
+      // Debug: Log da resposta completa para diagnóstico
+      console.log('🔍 Resposta completa da API:', {
+        status: response.status,
+        data: response.data,
+        headers: response.headers
+      });
+      
+      // Tentar diferentes estruturas de resposta possíveis
+      let newRecord;
+      if (response.data && response.data.record) {
+        // Estrutura: { record: { id, title, ... } }
+        newRecord = response.data.record;
+      } else if (response.data && response.data.id) {
+        // Estrutura: { id, title, ... }
+        newRecord = response.data;
+      } else if (response.data && response.data.data) {
+        // Estrutura: { data: { id, title, ... } }
+        newRecord = response.data.data;
+      } else {
+        console.error('❌ Estrutura de resposta não reconhecida:', response.data);
+        throw new Error("A resposta da API é inválida ou não contém o registro criado.");
+      }
+
+      if (!newRecord || !newRecord.id) {
+        console.error('❌ Registro inválido na resposta:', newRecord);
+        throw new Error("A resposta da API é inválida ou não contém o registro criado.");
+      }
+      
+      console.log('✅ Registro extraído com sucesso:', newRecord);
+
+      // ATUALIZAÇÃO OTIMISTA E REATIVA DO ESTADO
+      set((state) => {
+        // 1. Atualiza a lista de registros aninhada dentro do paciente na lista principal
+        const updatedPatients = state.patients.map(p =>
+          p.id === recordData.patientId
+            ? { ...p, records: [newRecord, ...(p.records || [])] }
+            : p
+        );
+
+        // 2. Atualiza a lista de registros do paciente atualmente selecionado
+        const updatedCurrentPatient = state.currentPatient?.id === recordData.patientId
+          ? { ...state.currentPatient, records: [newRecord, ...(state.currentPatient.records || [])] }
+          : state.currentPatient;
+
+        // 3. Salvar registros atualizados no cache
+        const updatedRecords = updatedCurrentPatient?.records || [];
+        if (recordData.patientId && updatedRecords.length > 0) {
+          get().saveRecordsToCache(recordData.patientId, updatedRecords);
+        }
+
+        return {
+          patients: updatedPatients,
+          currentPatient: updatedCurrentPatient,
+          currentRecord: newRecord,
+          isLoading: false,
+        };
+      });
+
+      // Limpar cache do dashboard para forçar atualização na próxima consulta
+      const dashboardCacheKey = getCacheKey('GET', `/patients/${recordData.patientId}/dashboard`);
+      requestCache.delete(dashboardCacheKey);
+
+      // Salvar no localStorage para persistir os registros
+      localStorage.setItem('patients', JSON.stringify(get().patients));
+
+      return newRecord;
     } catch (error) {
-      console.error('Erro ao criar registro:', error);
-      set({ error: 'Falha ao salvar o registro.', isLoading: false });
-      throw error;
+      console.error('❌ Falha crítica ao criar registro:', error);
+      set({ error: 'Erro ao salvar o registro.', isLoading: false });
+      throw error; // Propaga o erro para a UI (ex: Toast)
     }
   },
   
@@ -550,18 +690,19 @@ const usePatientStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.put(`/records/${recordId}`, recordData);
+      const updatedRecord = response.data.record || response.data; // Compatibilidade com diferentes formatos
       
       // Atualizar o registro na lista de registros do paciente
       set(state => {
         // Atualizar o registro atual
         const updatedCurrentRecord = state.currentRecord?.id === recordId 
-          ? response.data 
+          ? updatedRecord 
           : state.currentRecord;
           
         // Se temos um paciente atual e o registro pertence a ele
         if (state.currentPatient && state.currentPatient.records) {
           const updatedRecords = state.currentPatient.records.map(r => 
-            r.id === recordId ? response.data : r
+            r.id === recordId ? updatedRecord : r
           );
           
           return {
@@ -580,7 +721,16 @@ const usePatientStore = create((set, get) => ({
         };
       });
       
-      return response.data;
+      // Limpar cache do dashboard para forçar atualização na próxima consulta
+      if (recordData.patientId) {
+        const dashboardCacheKey = getCacheKey('GET', `/patients/${recordData.patientId}/dashboard`);
+        requestCache.delete(dashboardCacheKey);
+      }
+      
+      // Salvar no localStorage para persistir as atualizações de registros
+      localStorage.setItem('patients', JSON.stringify(get().patients));
+      
+      return updatedRecord;
     } catch (error) {
       console.error(`Erro ao atualizar registro ${recordId}:`, error);
       set({ 
@@ -622,6 +772,9 @@ const usePatientStore = create((set, get) => ({
           isLoading: false 
         };
       });
+      
+      // Salvar no localStorage para persistir a remoção do registro
+      localStorage.setItem('patients', JSON.stringify(get().patients));
       
       return true;
     } catch (error) {
@@ -728,8 +881,9 @@ const usePatientStore = create((set, get) => ({
     }
   },
   setCurrentRecord: (record) => set({ currentRecord: record }),
-  clearCurrentPatient: () => set({ currentPatient: null, currentRecord: null, dashboardData: null }),
-  clearCurrentRecord: () => set({ currentRecord: null }),
+  clearCurrentPatient: () => set({ currentPatient: null, currentRecord: null, dashboardData: null, viewMode: 'dashboard' }),
+  clearCurrentRecord: () => set({ currentRecord: null, viewMode: 'dashboard' }),
+  setViewMode: (mode) => set({ viewMode: mode }),
   clearError: () => set({ error: null }),
   // Hook: Force reset loading state to prevent stuck UI
   forceResetLoading: () => set({ isLoading: false }),

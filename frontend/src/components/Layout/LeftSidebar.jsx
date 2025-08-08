@@ -30,7 +30,7 @@ const LeftSidebar = ({ collapsed }) => {
   const { id: activePatientId } = useParams(); // Get active patient ID from URL
   
   // Usar o store para gerenciar pacientes
-  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient } = usePatientStore();
+  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient, setCurrentRecord, clearCurrentRecord } = usePatientStore();
 
   // Carregar a lista de pacientes
   // Hook: Removed fetchPatients from dependencies to prevent infinite loop
@@ -57,6 +57,8 @@ const LeftSidebar = ({ collapsed }) => {
       setExpandedPatient(null);
     } else {
       setExpandedPatient(patient.id);
+      // Clear current record when selecting a different patient
+      clearCurrentRecord();
       setCurrentPatient(patient);
       navigate(`/patients/${patient.id}`);
     }
@@ -116,7 +118,17 @@ const LeftSidebar = ({ collapsed }) => {
 
   // Manipular clique em um registro específico
   const handleRecordClick = (patientId, recordId) => {
-    navigate(`/patients/${patientId}/records/${recordId}`);
+    // Find the record in the current patient's records
+    const patient = patients.find(p => p.id === patientId);
+    if (patient && patient.records) {
+      const record = patient.records.find(r => r.id === recordId);
+      if (record) {
+        // Set the current record in the store
+        setCurrentRecord(record);
+        // Navigate to the patient view (not to a specific record route)
+        navigate(`/patients/${patientId}`);
+      }
+    }
   };
 
   // Criar novo paciente
@@ -209,13 +221,13 @@ const LeftSidebar = ({ collapsed }) => {
               const patientName = patient?.name || 'Sem Nome';
               const patientId = patient?.id || `temp-patient-${index}-${Date.now()}`;
               
-              // Check if this patient is currently active
+              // Check if this patient is currently active (only use URL as source of truth)
               const isActive = String(patient.id) === String(activePatientId);
               
               return (
                 <li key={`patient-${patientId}`} className="mb-2">
                   <SidebarItem
-                    isActive={isActive || expandedPatient === patientId}
+                    isActive={isActive}
                     title={patientName}
                     subtitle={patient.age ? `${patient.age} anos • ${patient.gender === 'M' ? 'Masculino' : patient.gender === 'F' ? 'Feminino' : 'Não informado'}` : undefined}
                     icon={

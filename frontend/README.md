@@ -39,7 +39,9 @@ frontend/
     Crie um arquivo `.env` na raiz do `frontend` e adicione a URL da API do backend:
 
     ```
-    VITE_API_URL=http://localhost:5000/api
+    VITE_API_URL=http://localhost:5001/api
+    VITE_SOCKET_URL=http://localhost:5001
+    VITE_NODE_ENV=development
     ```
 
 3.  **Inicie o servidor de desenvolvimento:**

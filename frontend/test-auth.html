@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Autenticação</title>
+</head>
+<body>
+    <h1>Teste de Autenticação Health Guardian</h1>
+    <button onclick="testAuth()">Testar API com Token</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAuth() {
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjU5MDMzMC1kOTVhLTQzZmUtYjNiOS0zMGIwNjlhOGE3NTMiLCJlbWFpbCI6ImhnYXJpYjk0QGdtYWlsLmNvbSIsIm5vbWUiOiJodWdvIiwicm9sZSI6Im1lZGljbyIsImlhdCI6MTc1NDYwNjQ2OCwiZXhwIjoxNzU1MjExMjY4fQ.BjoMFBD9tdRnT9lfQrvoOkcVO-eYZ1zVFZCZSEy8Dgw';
+            
+            try {
+                const response = await fetch('http://localhost:5001/api/records/patient/4d841625-1a5d-41b3-b055-1947cf56ba4f', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h3>Resultado:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Registros encontrados: ${data.records ? data.records.length : 'N/A'}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>Erro:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

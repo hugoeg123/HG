@@ -7,6 +7,7 @@ import HybridEditor from './HybridEditor';
 import RecordsList from './RecordsList';
 import ExportOptions from './ExportOptions';
 import PatientDashboard from './PatientDashboard';
+import RecordViewer from './RecordViewer';
 
 /**
  * PatientView component - Exibe e gerencia a visualização detalhada de um paciente
@@ -34,7 +35,12 @@ const PatientView = () => {
     fetchPatientRecords,
     updatePatient,
     clearCurrentPatient,
-    clearCurrentRecord
+    clearCurrentRecord,
+    currentRecord,
+    setCurrentRecord,
+    setChatContext,
+    viewMode,
+    setViewMode
   } = usePatientStore();
   
   const [isEditingName, setIsEditingName] = useState(false);
@@ -47,14 +53,30 @@ const PatientView = () => {
   const [showDashboard, setShowDashboard] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
   const [isNewPatient, setIsNewPatient] = useState(false);
+  // viewMode is now managed by the store
 
   // Load patient data when component mounts
   // Hook: Removed store functions from dependencies to prevent infinite loop
   // since Zustand functions are recreated on each render
   useEffect(() => {
     if (id) {
-      fetchPatientById(id);
-      fetchPatientRecords(id);
+      console.log('PatientView: Carregando dados do paciente:', id);
+      // Clear current record when navigating to a different patient
+      clearCurrentRecord();
+      
+      // Fetch patient data
+      fetchPatientById(id).then(() => {
+        console.log('PatientView: Paciente carregado, buscando registros...');
+      }).catch(error => {
+        console.error('PatientView: Erro ao carregar paciente:', error);
+      });
+      
+      // Fetch patient records
+      fetchPatientRecords(id).then((records) => {
+        console.log('PatientView: Registros carregados:', records?.length || 0);
+      }).catch(error => {
+        console.error('PatientView: Erro ao carregar registros:', error);
+      });
     }
   }, [id]);
 
@@ -84,20 +106,34 @@ const PatientView = () => {
     }
   }, [currentPatient, records]);
 
+  // Handle record selection from sidebar
+  useEffect(() => {
+    if (currentRecord) {
+      setViewMode('viewer');
+      setShowEditor(false);
+    }
+  }, [currentRecord, setViewMode]);
+
   // Handle new record creation
   const handleNewRecord = (recordType = 'anamnese') => {
     setActiveTab(recordType);
-    setShowDashboard(false);
     setShowEditor(true);
-    clearCurrentRecord();
+    setViewMode('editor');
+    setCurrentRecord(null); // Clear any selected record
   };
 
   // Handle back to dashboard
   const handleBackToDashboard = () => {
+    setViewMode('dashboard');
     setShowEditor(false);
-    setShowDashboard(true);
-    clearCurrentRecord();
+    setCurrentRecord(null);
   };
+
+  // Handle sending content to chat
+   const handleSendToChat = (content) => {
+     setChatContext(content);
+     // You can add additional logic here to focus on chat input
+   };
 
   // Handle tab change
   const handleTabChange = (tabId) => {
@@ -222,17 +258,17 @@ const PatientView = () => {
 
   return (
     <div className="patient-view-container h-full flex flex-col">
-      {/* Show Dashboard for existing patients */}
-      {showDashboard && !showEditor && !isNewPatient && (
-        <PatientDashboard 
-          key={`dashboard-${id}`}
-          patientId={id} 
-          onNewRecord={handleNewRecord}
+      {/* Record viewer mode */}
+      {viewMode === 'viewer' && currentRecord && (
+        <RecordViewer
+          record={currentRecord}
+          onBack={handleBackToDashboard}
+          onSendToChat={handleSendToChat}
         />
       )}
-      
-      {/* Show Editor when creating new record or for new patients */}
-      {showEditor && (
+
+      {/* Editor mode */}
+      {(viewMode === 'editor' || showEditor) && (
         <div className="space-y-4">
           {/* Navigation Header */}
           <div className="flex items-center justify-between bg-theme-card p-4 rounded-lg border border-theme-border">
@@ -280,6 +316,49 @@ const PatientView = () => {
             onCancel={isNewPatient ? () => navigate('/patients') : handleBackToDashboard}
           />
         </div>
+      )}
+
+      {/* New patient welcome screen */}
+      {isNewPatient && viewMode === 'dashboard' && (
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+          <div className="max-w-md">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Bem-vindo, {patientName}!
+            </h2>
+            <p className="text-gray-400 mb-6">
+              Este é um novo paciente. Comece criando seu primeiro registro médico.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleNewRecord('anamnese')}
+                className="w-full px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+              >
+                Criar Anamnese
+              </button>
+              <button
+                onClick={() => handleNewRecord('exame-fisico')}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Criar Exame Físico
+              </button>
+              <button
+                onClick={() => handleNewRecord('evolucao')}
+                className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              >
+                Criar Evolução
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Default dashboard view */}
+      {viewMode === 'dashboard' && !isNewPatient && (
+        <PatientDashboard 
+          key={`dashboard-${id}`}
+          patientId={id} 
+          onNewRecord={handleNewRecord}
+        />
       )}
       
       {/* Details tab content */}

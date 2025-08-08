@@ -3,7 +3,27 @@ import { usePatientStore } from '../../store/patientStore';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useMultipleAbortControllers } from '../../hooks/useAbortController';
 import { useToast } from '../ui/Toast';
-import { PlusCircle, UserCircle, FileText, AlertTriangle, Pill, HeartPulse, Microscope, Clock, Target, TestTube, ArrowRight, Search, Beaker, NotebookPen, History, Edit2, Save, X } from 'lucide-react';
+import { parseSections } from '../../shared/parser.js';
+import { 
+  PlusCircle, 
+  UserCircle, 
+  FileText, 
+  AlertTriangle, 
+  Pill, 
+  HeartPulse, 
+  Microscope, 
+  Clock, 
+  Target, 
+  TestTube, 
+  ArrowRight, 
+  Search, 
+  Beaker, 
+  NotebookPen, 
+  History, 
+  Edit2, 
+  Save, 
+  X 
+} from 'lucide-react';
 
 // Tipos de dados para o dashboard
 const statusColors = {
@@ -28,6 +48,7 @@ const TimelineItem = ({ item }) => {
     'Resultado de Exame': <Microscope size={18}/>,
     'Prescrição': <Pill size={18}/>,
     'Orientação': <NotebookPen size={18}/>,
+    'Registro Médico': <FileText size={18}/>
   };
 
   // Safe text rendering helper
@@ -50,16 +71,51 @@ const TimelineItem = ({ item }) => {
     );
   }
 
+  // Handle click to navigate to record section
+  const handleItemClick = () => {
+    if (item.recordLink) {
+      // Navigate to the record with section anchor
+      window.location.href = item.recordLink;
+    } else if (item.recordId) {
+      // Fallback to record without section
+      window.location.href = `/records/${item.recordId}`;
+    }
+  };
+
+  const isClickable = item.recordLink || item.recordId;
+
   return (
     <div className="relative pl-8 py-2 group">
       <div className="absolute left-0 top-4 w-px h-full bg-gray-700"></div>
       <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-theme-background group-hover:bg-teal-500 transition-colors"></div>
-      <div className="bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer">
+      <div 
+        className={`bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 ${
+          isClickable ? 'cursor-pointer' : ''
+        }`}
+        onClick={isClickable ? handleItemClick : undefined}
+      >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
-          <div>
+          <div className="flex-1">
             <p className="text-xs sm:text-sm text-gray-400">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
-            <h3 className="font-semibold text-sm sm:text-base text-white mt-1">{safeText(item.descricao)}</h3>
+            <div className="flex items-start gap-2 mt-1">
+              <h3 className="font-semibold text-sm sm:text-base text-white flex-1">
+                {safeText(item.title || item.descricao)}
+              </h3>
+              {isClickable && (
+                <ArrowRight size={14} className="text-teal-400 mt-1 flex-shrink-0" />
+              )}
+            </div>
+            {item.content && item.content !== item.descricao && (
+              <p className="text-xs text-gray-300 mt-2 line-clamp-2">
+                {item.content.substring(0, 150)}{item.content.length > 150 ? '...' : ''}
+              </p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Registrado por: {safeText(item.medico)}</p>
+            {item.tag && (
+              <span className="inline-block mt-2 px-2 py-1 text-xs bg-teal-600/20 text-teal-300 rounded border border-teal-500/30">
+                {item.tag.name || item.tag.code}
+              </span>
+            )}
           </div>
           <div className="text-teal-400 flex-shrink-0 mt-1 self-start sm:self-auto" title={safeText(item.tipo)}>
             {iconMap[safeText(item.tipo)] || <FileText size={18}/>}
@@ -241,6 +297,104 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
     }
   }, [safePatientId, createSignal, fetchPatientDashboard, toast]);
   
+  // Parse records by category using shared/parser.js
+  const parsedRecordsByCategory = useMemo(() => {
+    if (!safeCurrentPatient?.records || !Array.isArray(safeCurrentPatient.records)) {
+      return {
+        timeline: [],
+        investigacao: [],
+        planos: []
+      };
+    }
+
+    const categorizedData = {
+      timeline: [],
+      investigacao: [],
+      planos: []
+    };
+
+    // Process each record and extract sections by category
+    safeCurrentPatient.records.forEach(record => {
+      if (!record.content) return;
+
+      try {
+        const sections = parseSections(record.content);
+        
+        sections.forEach(section => {
+          // Extract tag code from content for categorization
+          const tagMatch = section.content?.match(/^(#[A-Z_]+|>>[A-Z_]+):/m);
+          const tagCode = tagMatch ? tagMatch[1].toUpperCase() : null;
+          
+          const sectionData = {
+            id: `${record.id}_${section.id}`,
+            recordId: record.id,
+            sectionId: section.id,
+            title: section.tag?.name || section.tag?.code || 'Seção',
+            content: section.content,
+            tag: section.tag,
+            data: record.createdAt ? new Date(record.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível',
+            hora: record.createdAt ? new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+            contexto: record.context || 'Registro Médico',
+            medico: record.doctorName || 'Médico não identificado',
+            tipo: 'Registro Médico',
+            descricao: section.content.substring(0, 100) + (section.content.length > 100 ? '...' : ''),
+            recordLink: `/records/${record.id}#${section.id}`
+          };
+
+          // Categorize based on tag codes
+          if (tagCode && (
+            tagCode.includes('INVESTIGACAO') || 
+            tagCode.includes('EXAME') || 
+            tagCode.includes('LABORATORIO') ||
+            tagCode.includes('IMAGEM') ||
+            tagCode.includes('DIAGNOSTICO') ||
+            tagCode.includes('DX')
+          )) {
+            categorizedData.investigacao.push(sectionData);
+          } else if (tagCode && (
+            tagCode.includes('PLANO') || 
+            tagCode.includes('CONDUTA') || 
+            tagCode.includes('TRATAMENTO') ||
+            tagCode.includes('MEDICAMENTO') ||
+            tagCode.includes('PRESCRICAO')
+          )) {
+            categorizedData.planos.push(sectionData);
+          } else {
+            // Default to timeline for general content
+            categorizedData.timeline.push(sectionData);
+          }
+        });
+      } catch (error) {
+        console.warn('Error parsing record sections:', error);
+        // Fallback: add entire record to timeline
+        categorizedData.timeline.push({
+          id: record.id,
+          recordId: record.id,
+          title: 'Registro Médico',
+          content: record.content,
+          data: record.createdAt ? new Date(record.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível',
+          hora: record.createdAt ? new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+          contexto: record.context || 'Registro Médico',
+          medico: record.doctorName || 'Médico não identificado',
+          tipo: 'Registro Médico',
+          descricao: record.content.substring(0, 100) + (record.content.length > 100 ? '...' : ''),
+          recordLink: `/records/${record.id}`
+        });
+      }
+    });
+
+    // Sort by date (newest first)
+    Object.keys(categorizedData).forEach(category => {
+      categorizedData[category].sort((a, b) => {
+        const dateA = safeCurrentPatient.records.find(r => r.id === a.recordId)?.createdAt;
+        const dateB = safeCurrentPatient.records.find(r => r.id === b.recordId)?.createdAt;
+        return new Date(dateB) - new Date(dateA);
+      });
+    });
+
+    return categorizedData;
+  }, [safeCurrentPatient?.records]);
+
   // Usar dados reais do store ou fallback para dados vazios
   const realData = {
     sinaisVitais: dashboardData?.sinaisVitais || {
@@ -249,9 +403,9 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
       saturacao: { valor: '--', status: 'warning', timestamp: '--' },
       frequencia: { valor: '--', status: 'warning', timestamp: '--' }
     },
-    timeline: dashboardData?.historicoConsultas || [],
-    investigacao: dashboardData?.investigacoesEmAndamento || [],
-    planos: dashboardData?.planos || [],
+    timeline: [...(dashboardData?.historicoConsultas || []), ...parsedRecordsByCategory.timeline],
+    investigacao: [...(dashboardData?.investigacoesEmAndamento || []), ...parsedRecordsByCategory.investigacao],
+    planos: [...(dashboardData?.planos || []), ...parsedRecordsByCategory.planos],
     problemasAtivos: dashboardData?.problemasAtivos || [],
     alergias: dashboardData?.alergias || [],
     medicamentosEmUso: dashboardData?.medicamentosEmUso || [],

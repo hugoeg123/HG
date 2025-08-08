@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Custom hook for debouncing values to prevent excessive API calls
@@ -30,7 +30,7 @@ export const useDebounce = (value, delay) => {
 };
 
 /**
- * Custom hook for debouncing function calls
+ * Custom hook for debouncing function calls - optimized to prevent re-renders
  * 
  * @param {Function} func - Function to debounce
  * @param {number} delay - Delay in milliseconds
@@ -39,30 +39,32 @@ export const useDebounce = (value, delay) => {
  * @example
  * const debouncedFetch = useDebounceCallback(fetchData, 500);
  * 
- * Hook: Prevents multiple rapid function calls that could cause resource errors
+ * Hook: Prevents multiple rapid function calls without causing component re-renders
  */
 export const useDebounceCallback = (func, delay) => {
-  const [debounceTimer, setDebounceTimer] = useState(null);
+  const debounceTimer = useRef(null);
+  const funcRef = useRef(func);
+  
+  // Update function reference without causing re-render
+  funcRef.current = func;
 
-  const debouncedFunction = (...args) => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
+  const debouncedFunction = useCallback((...args) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
 
-    const newTimer = setTimeout(() => {
-      func(...args);
+    debounceTimer.current = setTimeout(() => {
+      funcRef.current(...args);
     }, delay);
-
-    setDebounceTimer(newTimer);
-  };
+  }, [delay]);
 
   useEffect(() => {
     return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
       }
     };
-  }, [debounceTimer]);
+  }, []);
 
   return debouncedFunction;
 };

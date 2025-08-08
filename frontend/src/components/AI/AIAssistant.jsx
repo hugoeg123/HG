@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
 import { aiService } from '../../services/api';
 import { usePatientStore } from '../../store/patientStore';
 
@@ -19,6 +20,7 @@ const AIAssistant = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [contextContent, setContextContent] = useState('');
   const messagesEndRef = useRef(null);
   const { currentPatient, chatContext, clearChatContext } = usePatientStore();
 
@@ -28,17 +30,19 @@ const AIAssistant = () => {
   }, [messages]);
 
   // Hook: Listen for chatContext changes from HybridEditor Add to Chat functionality
+  // Shows content in a green transparent div instead of inserting into input
   useEffect(() => {
     if (chatContext && chatContext.trim()) {
-      const contextMessage = {
-        id: Date.now(),
-        content: `📋 **Conteúdo da seção adicionado:**\n\n${chatContext}`,
-        sender: 'system',
-        timestamp: new Date(),
-      };
-      
-      setMessages((prev) => [...prev, contextMessage]);
+      setContextContent(chatContext);
       clearChatContext(); // Clear after adding to prevent duplicates
+      
+      // Focus input
+      setTimeout(() => {
+        const inputElement = document.getElementById('ai-message-input');
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }, 100);
     }
   }, [chatContext, clearChatContext]);
 
@@ -46,26 +50,37 @@ const AIAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Remove context content
+  const removeContext = () => {
+    setContextContent('');
+  };
+
   // Enviar mensagem para a API de IA
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
+    // Combine context and input for the message content
+    const messageContent = contextContent ? `${contextContent}\n\n${input}` : input;
+
     const userMessage = {
       id: Date.now(),
-      content: input,
+      content: input, // Show only user input in chat
       sender: 'user',
       timestamp: new Date(),
+      hasContext: !!contextContent,
+      contextContent: contextContent
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    setContextContent(''); // Clear context after sending
     setIsLoading(true);
 
     try {
       // Enviar a mensagem para a API com o ID do paciente atual, se disponível
       const response = await aiService.chat(
-        input,
+        messageContent, // Send combined content to AI
         currentPatient ? currentPatient.id : null
       );
 
@@ -154,6 +169,12 @@ const AIAssistant = () => {
                   message.isError ? 'bg-red-900 bg-opacity-50' : ''
                 }`}
               >
+                {message.hasContext && (
+                  <div className="text-xs text-green-400 mb-1 flex items-center">
+                    <span className="mr-1">📋</span>
+                    Incluiu contexto
+                  </div>
+                )}
                 <div className="message-content whitespace-pre-wrap">{message.content}</div>
                 <div className="text-xs text-gray-400 mt-1 text-right">
                   {formatMessageTime(message.timestamp)}
@@ -179,6 +200,26 @@ const AIAssistant = () => {
       </div>
 
       <form onSubmit={sendMessage} className="chat-input">
+        {/* Context content display */}
+        {contextContent && (
+          <div className="mb-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg relative">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="text-xs text-green-400 font-medium mb-1">📋 Conteúdo adicionado:</div>
+                <div className="text-sm text-green-300 whitespace-pre-wrap">{contextContent}</div>
+              </div>
+              <button
+                type="button"
+                onClick={removeContext}
+                className="ml-2 p-1 text-green-400 hover:text-green-300 hover:bg-green-500/20 rounded transition-colors"
+                aria-label="Remover contexto"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="flex space-x-2">
           <input
             id="ai-message-input"

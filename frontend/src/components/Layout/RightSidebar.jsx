@@ -39,7 +39,7 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-white">Ferramentas</h2>
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={onToggleExpansion}
           className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-lg transition-all duration-200"
           title={expanded ? 'Reduzir barra lateral' : 'Expandir barra lateral'}
         >
