@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { calculatorService } from '../../services/api';
 import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
-import ConversaoGotejamento from './ConversaoGotejamento';
+import ConversaoGotejamentoDialog from './prebuilt/ConversaoGotejamento';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -351,10 +351,9 @@ const Calculators = ({ patientId = null }) => {
 
         {/* Hardcoded Calculator - Conversão de Gotejamento */}
         {showHardcodedCalculator === 'conv-gotejamento' && (
-          <ConversaoGotejamento
-            isOpen={true}
-            onClose={closeHardcodedCalculator}
-            patientId={patientId}
+          <ConversaoGotejamentoDialog 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
           />
         )}
 
