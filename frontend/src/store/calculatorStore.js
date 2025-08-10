@@ -136,6 +136,28 @@ const useCalculatorStore = create(
       },
 
       /**
+       * Cleanup unwanted auto-created calculators
+       * Hook: Runs on load to ensure only desired prebuilt remains
+       */
+      cleanupUnwanted: () => {
+        const UNWANTED_IDS = ['bmi', 'bsa'];
+        const UNWANTED_NAME_PATTERNS = [/mcg.*kg.*min.*ml.*h/i];
+        const current = get().calculators || [];
+        const cleaned = current.filter(calc => {
+          if (!calc) return false;
+          if (calc.id === 'conv-gotejamento') return true; // keep the prebuilt
+          if (calc.id === 'conv-mcg-kg-min') return true; // keep the new prebuilt
+          if (UNWANTED_IDS.includes(calc.id)) return false; // drop known seeds
+          // Drop known mcg/kg/min-ml/h calculator variants by name match (only user-created or old versions)
+          if (typeof calc.name === 'string' && UNWANTED_NAME_PATTERNS.some(re => re.test(calc.name)) && !calc.isHardcoded) return false;
+          return true; // keep all others (user-created)
+        });
+        if (cleaned.length !== current.length) {
+          set({ calculators: cleaned });
+        }
+      },
+
+      /**
        * Seed calculators with default definitions
        * Hook: Called when no calculators exist to provide initial set
        */
@@ -144,8 +166,6 @@ const useCalculatorStore = create(
         if (calculators.length) return; // já tem calculadoras, não repete
 
         const seedCalcs = [
-          { id: 'bmi', name: 'IMC', category: 'Geral', description: 'Índice de Massa Corporal' },
-          { id: 'bsa', name: 'BSA', category: 'Geral', description: 'Superfície Corporal' },
           { 
             id: 'conv-gotejamento', 
             name: 'Conversão de Gotejamento', 
@@ -155,6 +175,16 @@ const useCalculatorStore = create(
             immutable: true,
             tags: ['gotejamento', 'infusão', 'conversão'],
             summary: 'Conversão entre gotas por minuto e mL por hora com contador manual'
+          },
+          { 
+            id: 'conv-mcg-kg-min', 
+            name: 'Conversão mcg/kg/min ↔ mL/h', 
+            category: 'Conversões', 
+            description: 'Drogas vasoativas: mcg/kg/min ↔ mL/h',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['mcg', 'kg', 'min', 'mL/h', 'vasoativas', 'conversão'],
+            summary: 'Conversão de dosagem de drogas vasoativas entre mcg/kg/min e mL/h'
           }
         ];
 
@@ -166,11 +196,13 @@ const useCalculatorStore = create(
        * Hook: Compatibility method for legacy code
        */
       getAll: async () => {
-        const { calculators, seedCalculators } = get();
+        const { calculators, seedCalculators, cleanupUnwanted } = get();
         // Se não há calculadoras, inicializa com as padrão
         if (calculators.length === 0) {
           seedCalculators();
         }
+        // Ensure unwanted defaults are removed (including persisted ones)
+        cleanupUnwanted();
         return get().calculators;
       },
 
@@ -564,5 +596,3 @@ export const useCalculatorResults = (patientId, calculatorIds = []) => {
     }, {});
   });
 };
-
-// Função seedCalculators removida - agora integrada ao store como método seedCalculators()

@@ -3,6 +3,7 @@ import { calculatorService } from '../../services/api';
 import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
 import ConversaoGotejamentoDialog from './prebuilt/ConversaoGotejamento';
+import ConversaoMcgKgMinDialog from './prebuilt/ConversaoMcgKgMin';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -125,6 +126,10 @@ const Calculators = ({ patientId = null }) => {
       setShowHardcodedCalculator(calculator.id);
       return;
     }
+    if (calculator.isHardcoded && calculator.id === 'conv-mcg-kg-min') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
     
     setSelectedCalculator(calculator);
     setShowModal(true);
@@ -226,102 +231,48 @@ const Calculators = ({ patientId = null }) => {
           >
             Públicas
           </Badge>
-          {categories.map(category => (
-            <Badge
-              key={category}
-              variant={selectedCategory === category ? 'default' : 'secondary'}
-              className={`cursor-pointer transition-colors ${
-                selectedCategory === category 
-                  ? 'bg-teal-600 text-white hover:bg-teal-700'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </Badge>
-          ))}
         </div>
 
         {/* Create new calculator button */}
-        <Button
-          onClick={handleNewCalculator}
-          className="btn btn-primary w-full md:w-auto mb-4"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div className="flex justify-end mb-4">
+          <Button 
+            onClick={handleNewCalculator} 
+            className="bg-teal-600 hover:bg-teal-700 text-white"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          + Criar Nova Calculadora
-        </Button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Nova Calculadora
+          </Button>
+        </div>
       </div>
 
-      {/* Main content */}
+      {/* Grid of calculators */}
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-400">Carregando calculadoras...</div>
         </div>
       ) : error ? (
-        <div className="text-red-400 text-center py-4">{error}</div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-red-400">{error}</div>
+        </div>
       ) : (
-        <div>
-          {/* Results summary */}
-          <div className="mb-4">
-            <p className="text-gray-400 text-sm">
-              {filteredCalculators.length === 0 
-                ? 'Nenhuma calculadora encontrada' 
-                : `${filteredCalculators.length} calculadora${filteredCalculators.length !== 1 ? 's' : ''} encontrada${filteredCalculators.length !== 1 ? 's' : ''}`
-              }
-              {searchQuery && ` para "${searchQuery}"`}
-              {selectedCategory !== 'all' && ` na categoria "${selectedCategory === 'personal' ? 'Minhas' : selectedCategory === 'public' ? 'Públicas' : selectedCategory}"`}
-            </p>
-          </div>
-
-          {/* Calculators grid */}
+        <div className="flex-1">
           {filteredCalculators.length === 0 ? (
-            <div className="text-center py-12">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-500 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-300 mb-2">
-                {searchQuery || selectedCategory !== 'all' 
-                  ? 'Nenhuma calculadora encontrada' 
-                  : 'Nenhuma calculadora disponível'
-                }
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {searchQuery || selectedCategory !== 'all'
-                  ? 'Tente ajustar os filtros ou criar uma nova calculadora.'
-                  : 'Comece criando sua primeira calculadora médica.'
-                }
-              </p>
-              <Button
-                onClick={handleNewCalculator}
-                className="btn btn-primary"
+            <div className="text-center text-gray-400 py-10">
+              <div className="mb-4">Nenhuma calculadora encontrada</div>
+              <Button 
+                onClick={handleNewCalculator} 
+                className="bg-teal-600 hover:bg-teal-700 text-white"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 mr-2"
-                  fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
@@ -354,6 +305,14 @@ const Calculators = ({ patientId = null }) => {
           <ConversaoGotejamentoDialog 
             open={true} 
             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {/* Hardcoded Calculator - Conversão mcg/kg/min ↔ mL/h */}
+        {showHardcodedCalculator === 'conv-mcg-kg-min' && (
+          <ConversaoMcgKgMinDialog
+            open={true}
+            onOpenChange={closeHardcodedCalculator}
           />
         )}
 
