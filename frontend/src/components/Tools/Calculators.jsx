@@ -4,6 +4,7 @@ import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
 import ConversaoGotejamentoDialog from './prebuilt/ConversaoGotejamento';
 import ConversaoMcgKgMinDialog from './prebuilt/ConversaoMcgKgMin';
+import ConversaoMcgKgMinGttMinDialog from './prebuilt/ConversaoMcgKgMinGttMin';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -127,6 +128,10 @@ const Calculators = ({ patientId = null }) => {
       return;
     }
     if (calculator.isHardcoded && calculator.id === 'conv-mcg-kg-min') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'conv-mcg-kg-min-gtt-min') {
       setShowHardcodedCalculator(calculator.id);
       return;
     }
@@ -311,6 +316,14 @@ const Calculators = ({ patientId = null }) => {
         {/* Hardcoded Calculator - Conversão mcg/kg/min ↔ mL/h */}
         {showHardcodedCalculator === 'conv-mcg-kg-min' && (
           <ConversaoMcgKgMinDialog
+            open={true}
+            onOpenChange={closeHardcodedCalculator}
+          />
+        )}
+
+        {/* Hardcoded Calculator - Conversão mcg/kg/min ↔ gtt/min */}
+        {showHardcodedCalculator === 'conv-mcg-kg-min-gtt-min' && (
+          <ConversaoMcgKgMinGttMinDialog
             open={true}
             onOpenChange={closeHardcodedCalculator}
           />

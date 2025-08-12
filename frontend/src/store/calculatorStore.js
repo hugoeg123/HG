@@ -147,6 +147,7 @@ const useCalculatorStore = create(
           if (!calc) return false;
           if (calc.id === 'conv-gotejamento') return true; // keep the prebuilt
           if (calc.id === 'conv-mcg-kg-min') return true; // keep the new prebuilt
+          if (calc.id === 'conv-mcg-kg-min-gtt-min') return true; // keep the new gtt/min prebuilt
           if (UNWANTED_IDS.includes(calc.id)) return false; // drop known seeds
           // Drop known mcg/kg/min-ml/h calculator variants by name match (only user-created or old versions)
           if (typeof calc.name === 'string' && UNWANTED_NAME_PATTERNS.some(re => re.test(calc.name)) && !calc.isHardcoded) return false;
@@ -162,8 +163,8 @@ const useCalculatorStore = create(
        * Hook: Called when no calculators exist to provide initial set
        */
       seedCalculators: () => {
-        const { register, calculators } = get();
-        if (calculators.length) return; // já tem calculadoras, não repete
+        const { register } = get();
+        const current = get().calculators || [];
 
         const seedCalcs = [
           { 
@@ -185,22 +186,34 @@ const useCalculatorStore = create(
             immutable: true,
             tags: ['mcg', 'kg', 'min', 'mL/h', 'vasoativas', 'conversão'],
             summary: 'Conversão de dosagem de drogas vasoativas entre mcg/kg/min e mL/h'
+          },
+          {
+            id: 'conv-mcg-kg-min-gtt-min',
+            name: 'Conversão mcg/kg/min ↔ gtt/min',
+            category: 'Conversões',
+            description: 'Converte mcg/kg/min para gtt/min e vice-versa, com Tap para contagem de gotas',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['mcg', 'kg', 'min', 'gtt/min', 'infusão', 'conversão'],
+            summary: 'Dose → gotas por minuto com base em peso, concentração e fator de gotas'
           }
         ];
 
-        seedCalcs.forEach(calc => register(calc));
+        // Register only missing seeds
+        seedCalcs.forEach((calc) => {
+          const exists = current.some((c) => c && c.id === calc.id);
+          if (!exists) register(calc);
+        });
       },
 
       /**
        * Get all calculators
        * Hook: Compatibility method for legacy code
        */
-      getAll: async () => {
-        const { calculators, seedCalculators, cleanupUnwanted } = get();
-        // Se não há calculadoras, inicializa com as padrão
-        if (calculators.length === 0) {
-          seedCalculators();
-        }
+      getAll: () => {
+        const { seedCalculators, cleanupUnwanted } = get();
+        // Always ensure core calculators exist
+        seedCalculators();
         // Ensure unwanted defaults are removed (including persisted ones)
         cleanupUnwanted();
         return get().calculators;
