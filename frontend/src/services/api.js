@@ -289,6 +289,43 @@ export const calculatorService = {
   search: (query) => throttledApi.get(`/calculators/search?q=${query}`),
 };
 
+/**
+ * Dynamic Calculator Service - Handles dynamic calculator operations
+ * 
+ * Integrates with:
+ * - backend/src/routes/dynamic-calculator.routes.js for API endpoints
+ * - backend/src/controllers/DynamicCalculatorController.js for business logic
+ * - Used by frontend components for dynamic calculator functionality
+ * 
+ * Hook: Provides interface for dynamic calculators and unit conversions
+ */
+export const dynamicCalculatorService = {
+  // Calculator operations
+  listCalculators: () => throttledApi.get('/dynamic-calculators'),
+  getCalculatorSchema: (calculatorId) => throttledApi.get(`/dynamic-calculators/${calculatorId}`),
+  calculate: (calculatorId, inputs) => throttledApi.post(`/dynamic-calculators/${calculatorId}/calculate`, inputs),
+  reloadSchemas: () => throttledApi.post('/dynamic-calculators/reload'),
+  
+  // Unit conversion operations
+  convertUnits: (conversionData) => throttledApi.post('/dynamic-calculators/convert/units', conversionData),
+  getUnits: (dimension = null) => {
+    const endpoint = dimension ? `/dynamic-calculators/units/${dimension}` : '/dynamic-calculators/units';
+    return throttledApi.get(endpoint);
+  },
+  
+  // Analyte operations
+  getAnalytes: (analyte = null) => {
+    const endpoint = analyte ? `/dynamic-calculators/analytes/${analyte}` : '/dynamic-calculators/analytes';
+    return throttledApi.get(endpoint);
+  },
+  getAnalyteDetails: (analyte) => throttledApi.get(`/dynamic-calculators/analytes/${analyte}/details`),
+  
+  // Validation
+  validateConversion: (validationData) => throttledApi.post('/dynamic-calculators/validate', validationData),
+};
+
+// Connector: Used by dynamic calculator components for API communication
+
 export const templateService = {
   getAll: () => throttledApi.get('/templates'),
   getById: (id) => throttledApi.get(`/templates/${id}`),

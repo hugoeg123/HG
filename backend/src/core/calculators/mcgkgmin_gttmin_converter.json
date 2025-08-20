@@ -1,0 +1,436 @@
+{
+  "name": "Conversor μg/kg/min ↔ gtt/min",
+  "description": "Converte entre dose em microgramas por quilograma por minuto e gotas por minuto para infusões de drogas vasoativas",
+  "category": "infusion",
+  "version": "1.0.0",
+  "inputs": [
+    {
+      "name": "dose",
+      "label": "Dose (μg/kg/min)",
+      "description": "Dose desejada em microgramas por quilograma por minuto",
+      "type": "number",
+      "unit": "μg/kg/min",
+      "min": 0.001,
+      "max": 1000,
+      "step": 0.001,
+      "decimals": 3,
+      "required": false
+    },
+    {
+      "name": "weight",
+      "label": "Peso do paciente (kg)",
+      "description": "Peso corporal do paciente em quilogramas",
+      "type": "number",
+      "unit": "kg",
+      "min": 0.5,
+      "max": 300,
+      "step": 0.1,
+      "decimals": 1,
+      "required": true
+    },
+    {
+      "name": "concentration",
+      "label": "Concentração (μg/mL)",
+      "description": "Concentração da solução em microgramas por mililitro",
+      "type": "number",
+      "unit": "μg/mL",
+      "min": 0.1,
+      "max": 10000,
+      "step": 0.1,
+      "decimals": 1,
+      "required": true
+    },
+    {
+      "name": "drop_factor",
+      "label": "Fator de gotejamento",
+      "description": "Número de gotas por mL do equipo utilizado",
+      "type": "number",
+      "unit": "gtt/mL",
+      "min": 1,
+      "max": 100,
+      "step": 1,
+      "default": 60,
+      "required": true,
+      "options": [
+        { "value": 10, "label": "Macrogotas (10 gtt/mL)" },
+        { "value": 15, "label": "Equipo padrão (15 gtt/mL)" },
+        { "value": 20, "label": "Microgotas (20 gtt/mL)" },
+        { "value": 60, "label": "Microgotas finas (60 gtt/mL)" }
+      ]
+    },
+    {
+      "name": "gtt_min_input",
+      "label": "Gotas por minuto",
+      "description": "Taxa de gotejamento observada em gotas por minuto",
+      "type": "number",
+      "unit": "gtt/min",
+      "min": 0.1,
+      "max": 1000,
+      "step": 0.1,
+      "decimals": 1,
+      "required": false
+    },
+    {
+      "name": "drug_amount",
+      "label": "Quantidade do fármaco (mg)",
+      "description": "Quantidade total do fármaco na solução",
+      "type": "number",
+      "unit": "mg",
+      "min": 0.1,
+      "max": 1000,
+      "step": 0.1,
+      "decimals": 1,
+      "required": false
+    },
+    {
+      "name": "solution_volume",
+      "label": "Volume da solução (mL)",
+      "description": "Volume total da solução preparada",
+      "type": "number",
+      "unit": "mL",
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "decimals": 0,
+      "required": false
+    }
+  ],
+  "expressions": {
+    "rate_mlh": "dose * weight * 60 / concentration",
+    "gtt_per_min": "(dose * weight * 60 / concentration) * drop_factor / 60",
+    "dose_mcgkgmin_reverse": "(gtt_min_input * 60 / drop_factor) * concentration / (weight * 60)",
+    "rate_mlh_from_gtt": "gtt_min_input * 60 / drop_factor",
+    "concentration_calculated": "drug_amount * 1000 / solution_volume",
+    "dose_per_hour_mcg": "dose * weight * 60",
+    "dose_per_day_mcg": "dose * weight * 60 * 24",
+    "drug_consumed_per_hour_mg": "(dose * weight * 60 / concentration) * concentration / 1000",
+    "drug_consumed_per_day_mg": "(dose * weight * 60 / concentration) * concentration * 24 / 1000",
+    "drops_per_second": "gtt_per_min / 60",
+    "interval_between_drops": "60 / gtt_per_min",
+    "infusion_duration_hours": "solution_volume / (dose * weight * 60 / concentration)"
+  },
+  "outputs": [
+    {
+      "name": "rate_mlh",
+      "label": "Taxa (mL/h)",
+      "description": "Taxa de infusão calculada em mL/h",
+      "type": "number",
+      "unit": "mL/h",
+      "decimals": 1
+    },
+    {
+      "name": "gtt_per_min",
+      "label": "Gotas por minuto",
+      "description": "Taxa de gotejamento calculada",
+      "type": "number",
+      "unit": "gtt/min",
+      "decimals": 1
+    },
+    {
+      "name": "dose_mcgkgmin_reverse",
+      "label": "Dose calculada (μg/kg/min)",
+      "description": "Dose calculada a partir do gotejamento",
+      "type": "number",
+      "unit": "μg/kg/min",
+      "decimals": 3
+    },
+    {
+      "name": "rate_mlh_from_gtt",
+      "label": "Taxa do gotejamento (mL/h)",
+      "description": "Taxa calculada a partir das gotas por minuto",
+      "type": "number",
+      "unit": "mL/h",
+      "decimals": 1
+    },
+    {
+      "name": "concentration_calculated",
+      "label": "Concentração calculada (μg/mL)",
+      "description": "Concentração calculada a partir da preparação",
+      "type": "number",
+      "unit": "μg/mL",
+      "decimals": 1
+    },
+    {
+      "name": "dose_per_hour_mcg",
+      "label": "Dose por hora (μg/h)",
+      "description": "Dose total por hora em microgramas",
+      "type": "number",
+      "unit": "μg/h",
+      "decimals": 1
+    },
+    {
+      "name": "dose_per_day_mcg",
+      "label": "Dose por dia (μg/dia)",
+      "description": "Dose total por dia em microgramas",
+      "type": "number",
+      "unit": "μg/dia",
+      "decimals": 0
+    },
+    {
+      "name": "drug_consumed_per_hour_mg",
+      "label": "Fármaco por hora (mg/h)",
+      "description": "Quantidade de fármaco consumida por hora",
+      "type": "number",
+      "unit": "mg/h",
+      "decimals": 2
+    },
+    {
+      "name": "drug_consumed_per_day_mg",
+      "label": "Fármaco por dia (mg/dia)",
+      "description": "Quantidade de fármaco consumida por dia",
+      "type": "number",
+      "unit": "mg/dia",
+      "decimals": 1
+    },
+    {
+      "name": "drops_per_second",
+      "label": "Gotas por segundo",
+      "description": "Frequência de gotejamento por segundo",
+      "type": "number",
+      "unit": "gtt/s",
+      "decimals": 2
+    },
+    {
+      "name": "interval_between_drops",
+      "label": "Intervalo entre gotas",
+      "description": "Tempo em segundos entre cada gota",
+      "type": "number",
+      "unit": "s",
+      "decimals": 2
+    },
+    {
+      "name": "infusion_duration_hours",
+      "label": "Duração da infusão (h)",
+      "description": "Tempo total de infusão em horas",
+      "type": "number",
+      "unit": "h",
+      "decimals": 1
+    }
+  ],
+  "modes": {
+    "dose_to_drops": {
+      "name": "Dose → Gotas",
+      "description": "Calcular gotas por minuto a partir da dose desejada",
+      "required_inputs": ["dose", "weight", "concentration", "drop_factor"],
+      "outputs": [
+        {
+          "name": "gtt_per_min",
+          "label": "Gotas por minuto",
+          "description": "Taxa de gotejamento para atingir a dose",
+          "type": "number",
+          "unit": "gtt/min",
+          "decimals": 1
+        },
+        {
+          "name": "rate_mlh",
+          "label": "Taxa (mL/h)",
+          "description": "Taxa de infusão equivalente",
+          "type": "number",
+          "unit": "mL/h",
+          "decimals": 1
+        },
+        {
+          "name": "drops_per_second",
+          "label": "Gotas por segundo",
+          "description": "Frequência de gotejamento",
+          "type": "number",
+          "unit": "gtt/s",
+          "decimals": 2
+        },
+        {
+          "name": "interval_between_drops",
+          "label": "Intervalo entre gotas",
+          "description": "Tempo entre gotas",
+          "type": "number",
+          "unit": "s",
+          "decimals": 2
+        },
+        {
+          "name": "dose_per_hour_mcg",
+          "label": "Dose por hora (μg/h)",
+          "description": "Dose total por hora",
+          "type": "number",
+          "unit": "μg/h",
+          "decimals": 1
+        }
+      ]
+    },
+    "drops_to_dose": {
+      "name": "Gotas → Dose",
+      "description": "Calcular dose resultante a partir do gotejamento observado",
+      "required_inputs": ["gtt_min_input", "weight", "concentration", "drop_factor"],
+      "outputs": [
+        {
+          "name": "dose_mcgkgmin_reverse",
+          "label": "Dose resultante (μg/kg/min)",
+          "description": "Dose calculada a partir do gotejamento",
+          "type": "number",
+          "unit": "μg/kg/min",
+          "decimals": 3
+        },
+        {
+          "name": "rate_mlh_from_gtt",
+          "label": "Taxa (mL/h)",
+          "description": "Taxa de infusão equivalente",
+          "type": "number",
+          "unit": "mL/h",
+          "decimals": 1
+        },
+        {
+          "name": "dose_per_hour_mcg",
+          "label": "Dose por hora (μg/h)",
+          "description": "Dose total por hora",
+          "type": "number",
+          "unit": "μg/h",
+          "decimals": 1
+        },
+        {
+          "name": "drug_consumed_per_hour_mg",
+          "label": "Fármaco por hora (mg/h)",
+          "description": "Consumo de fármaco por hora",
+          "type": "number",
+          "unit": "mg/h",
+          "decimals": 2
+        }
+      ],
+      "expressions": {
+        "dose": "(gtt_min_input * 60 / drop_factor) * concentration / (weight * 60)",
+        "rate_mlh": "gtt_min_input * 60 / drop_factor",
+        "dose_per_hour_mcg": "((gtt_min_input * 60 / drop_factor) * concentration / (weight * 60)) * weight * 60",
+        "drug_consumed_per_hour_mg": "(gtt_min_input * 60 / drop_factor) * concentration / 1000"
+      }
+    }
+  },
+  "drug_examples": {
+    "dopamine": {
+      "name": "Dopamina",
+      "typical_dose_range": "2-20 μg/kg/min",
+      "standard_concentration": 800,
+      "example": {
+        "dose": 5,
+        "weight": 70,
+        "concentration": 800,
+        "drop_factor": 60,
+        "expected_gtt_per_min": 32.8
+      }
+    },
+    "dobutamine": {
+      "name": "Dobutamina",
+      "typical_dose_range": "2.5-15 μg/kg/min",
+      "standard_concentration": 1000,
+      "example": {
+        "dose": 7.5,
+        "weight": 80,
+        "concentration": 1000,
+        "drop_factor": 60,
+        "expected_gtt_per_min": 36.0
+      }
+    },
+    "norepinephrine": {
+      "name": "Norepinefrina",
+      "typical_dose_range": "0.01-3 μg/kg/min",
+      "standard_concentration": 16,
+      "example": {
+        "dose": 0.1,
+        "weight": 70,
+        "concentration": 16,
+        "drop_factor": 60,
+        "expected_gtt_per_min": 26.3
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "Dopamina - Dose para Gotas",
+      "description": "Paciente de 70kg, dopamina 5 μg/kg/min, concentração 800 μg/mL, microgotas",
+      "inputs": {
+        "dose": 5,
+        "weight": 70,
+        "concentration": 800,
+        "drop_factor": 60
+      },
+      "mode": "dose_to_drops",
+      "expected_outputs": {
+        "gtt_per_min": 32.8,
+        "rate_mlh": 26.3
+      }
+    },
+    {
+      "name": "Norepinefrina - Gotas para Dose",
+      "description": "Paciente de 80kg, observando 15 gtt/min, concentração 16 μg/mL, microgotas",
+      "inputs": {
+        "gtt_min_input": 15,
+        "weight": 80,
+        "concentration": 16,
+        "drop_factor": 60
+      },
+      "mode": "drops_to_dose",
+      "expected_outputs": {
+        "dose_mcgkgmin_reverse": 0.05,
+        "rate_mlh_from_gtt": 15.0
+      }
+    }
+  ],
+  "safety_alerts": [
+    {
+      "condition": "dose > 20 && drug_type == 'dopamine'",
+      "level": "warning",
+      "message": "Dose de dopamina acima de 20 μg/kg/min pode causar vasoconstrição excessiva"
+    },
+    {
+      "condition": "dose > 3 && drug_type == 'norepinephrine'",
+      "level": "warning",
+      "message": "Dose de norepinefrina acima de 3 μg/kg/min requer monitorização intensiva"
+    },
+    {
+      "condition": "gtt_per_min > 200",
+      "level": "caution",
+      "message": "Taxa de gotejamento muito alta - verificar cálculos e concentração"
+    },
+    {
+      "condition": "gtt_per_min < 1",
+      "level": "caution",
+      "message": "Taxa de gotejamento muito baixa - considerar usar concentração mais diluída"
+    },
+    {
+      "condition": "interval_between_drops > 30",
+      "level": "info",
+      "message": "Intervalo entre gotas superior a 30 segundos - monitorar cuidadosamente"
+    }
+  ],
+  "clinical_notes": [
+    {
+      "title": "Escolha do Equipo",
+      "content": "Para drogas vasoativas, prefira microgotas (60 gtt/mL) para maior precisão no gotejamento."
+    },
+    {
+      "title": "Monitorização",
+      "content": "Sempre monitore a pressão arterial e frequência cardíaca durante ajustes de dose."
+    },
+    {
+      "title": "Compatibilidade",
+      "content": "Verifique a compatibilidade da droga com a solução diluente antes da preparação."
+    }
+  ],
+  "references": [
+    {
+      "title": "Vasoactive Drug Administration in Critical Care",
+      "author": "Society of Critical Care Medicine",
+      "year": 2021,
+      "description": "Guidelines for vasoactive drug dosing and administration"
+    },
+    {
+      "title": "Infusion Therapy Standards of Practice",
+      "author": "Infusion Nurses Society",
+      "year": 2021,
+      "description": "Standards for IV therapy and drug calculations"
+    }
+  ],
+  "metadata": {
+    "created_at": "2024-01-16",
+    "updated_at": "2024-01-16",
+    "version": "1.0.0",
+    "author": "Health Guardian System",
+    "tags": ["infusion", "vasoactive", "drops", "dose_calculation", "critical_care", "iv_therapy"]
+  }
+}

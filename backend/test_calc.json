@@ -1,0 +1,9 @@
+{
+  "inputs": {
+    "dose": 5,
+    "weight": 70,
+    "concentration": 800,
+    "drop_factor": 60
+  },
+  "mode": "dose_to_drops"
+}

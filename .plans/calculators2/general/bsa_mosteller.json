@@ -1,0 +1,14 @@
+{
+  "name": "Área de superfície corporal (Mosteller)",
+  "domain": "geral",
+  "description": "Estima a área de superfície corporal usando a fórmula de Mosteller: BSA (m²) = sqrt((altura(cm) × peso(kg)) / 3600).",
+  "inputs": [
+    {"name": "altura", "symbol": "length", "unit": "cm", "description": "Altura em centímetros"},
+    {"name": "peso", "symbol": "mass", "unit": "kg", "description": "Peso em quilogramas"}
+  ],
+  "output": {"name": "asc", "unit": "m^2", "description": "Área de superfície corporal"},
+  "formula": "ASC = sqrt((altura × peso) / 3600)",
+  "references": [
+    {"citation": "Mosteller RD. Simplified calculation of body surface area", "url": "https://www.e-echocardiography.com/calculators/miscellaneous/body-surface-area"}
+  ]
+}

@@ -1,0 +1,435 @@
+[
+  {
+    "key": "sodium",
+    "category": "electrolyte",
+    "names": ["Sódio", "Sodium"],
+    "synonyms": ["Na", "Na+"],
+    "molar_mass_g_per_mol": 22.9898,
+    "valence": 1,
+    "units_allowed": ["mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mEq/L", "to": "mmol/L", "factor": 1.0, "source": "monovalent ion"}
+    ],
+    "notes": "Para sódio, mEq/L equivale a mmol/L pois é monovalente."
+  },
+  {
+    "key": "potassium",
+    "category": "electrolyte",
+    "names": ["Potássio", "Potassium"],
+    "synonyms": ["K", "K+"],
+    "molar_mass_g_per_mol": 39.0983,
+    "valence": 1,
+    "units_allowed": ["mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mEq/L", "to": "mmol/L", "factor": 1.0, "source": "monovalent ion"}
+    ],
+    "notes": "Para potássio, mEq/L equivale a mmol/L (valência +1)."
+  },
+  {
+    "key": "chloride",
+    "category": "electrolyte",
+    "names": ["Cloreto", "Chloride"],
+    "synonyms": ["Cl", "Cl-"],
+    "molar_mass_g_per_mol": 35.453,
+    "valence": -1,
+    "units_allowed": ["mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mEq/L", "to": "mmol/L", "factor": 1.0, "source": "monovalent ion"}
+    ],
+    "notes": "Íon monovalente (carga negativa) – mEq/L = mmol/L."
+  },
+  {
+    "key": "bicarbonate",
+    "category": "electrolyte",
+    "names": ["Bicarbonato", "Bicarbonate"],
+    "synonyms": ["HCO3", "HCO3-"],
+    "molar_mass_g_per_mol": 61.016,
+    "valence": -1,
+    "units_allowed": ["mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mEq/L", "to": "mmol/L", "factor": 1.0, "source": "monovalent ion"}
+    ],
+    "notes": "O bicarbonato é monovalente; 1 mEq/L = 1 mmol/L."
+  },
+  {
+    "key": "calcium",
+    "category": "electrolyte",
+    "names": ["Cálcio", "Calcium"],
+    "synonyms": ["Ca", "Ca2+"],
+    "molar_mass_g_per_mol": 40.078,
+    "valence": 2,
+    "units_allowed": ["mg/dL", "mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.2495, "source": "tabela NCBI/GlobalRPH"},
+      {"from": "mEq/L", "to": "mmol/L", "factor": 0.5, "source": "valência 2"}
+    ],
+    "notes": "1 mg/dL = 0,2495 mmol/L【911062317544151†L90-L100】; 1 mEq/L = 0,5 mmol/L pelo número de cargas."
+  },
+  {
+    "key": "magnesium",
+    "category": "electrolyte",
+    "names": ["Magnésio", "Magnesium"],
+    "synonyms": ["Mg", "Mg2+"],
+    "molar_mass_g_per_mol": 24.305,
+    "valence": 2,
+    "units_allowed": ["mg/dL", "mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.411, "source": "tabela GlobalRPH"},
+      {"from": "mEq/L", "to": "mmol/L", "factor": 0.5, "source": "valência 2"}
+    ],
+    "notes": "Para magnésio, 1 mg/dL ≈ 0,411 mmol/L【22319840393631†L186-L212】; 1 mEq/L = 0,5 mmol/L."
+  },
+  {
+    "key": "phosphate",
+    "category": "electrolyte",
+    "names": ["Fosfato", "Phosphate"],
+    "synonyms": ["PO4", "P", "Fosforo"],
+    "molar_mass_g_per_mol": 94.97,
+    "valence": -3,
+    "units_allowed": ["mg/dL", "mmol/L", "mEq/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.3229, "source": "tabela NCBI"},
+      {"from": "mEq/L", "to": "mmol/L", "factor": 0.3333, "source": "valência 3"}
+    ],
+    "notes": "1 mg/dL = 0,3229 mmol/L【911062317544151†L90-L100】; como ânion trivalente, 1 mEq/L = 0,3333 mmol/L."
+  },
+  {
+    "key": "glucose",
+    "category": "metabolite",
+    "names": ["Glicose", "Glucose"],
+    "synonyms": ["Glu"],
+    "molar_mass_g_per_mol": 180.156,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.0555, "source": "ScyMed"}
+    ],
+    "notes": "O fator mg/dL→mmol/L é 0,0555【849077817658800†L378-L385】."
+  },
+  {
+    "key": "creatinine",
+    "category": "metabolite",
+    "names": ["Creatinina", "Creatinine"],
+    "synonyms": ["Cr"],
+    "molar_mass_g_per_mol": 113.12,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "µmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "µmol/L", "factor": 88.4, "source": "ScyMed"}
+    ],
+    "notes": "1 mg/dL = 88,4 µmol/L【821160149144614†L378-L385】."
+  },
+  {
+    "key": "urea",
+    "category": "metabolite",
+    "names": ["Ureia", "Urea"],
+    "synonyms": ["Ur"],
+    "molar_mass_g_per_mol": 60.06,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.166, "source": "PMC/GlobalRPH"}
+    ],
+    "notes": "O fator de conversão mg/dL→mmol/L para ureia é 0,166【69708408235377†L270-L289】."
+  },
+  {
+    "key": "bun",
+    "category": "metabolite",
+    "names": ["Nitrogênio ureico", "Blood Urea Nitrogen"],
+    "synonyms": ["BUN"],
+    "molar_mass_g_per_mol": 28.014,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.3571, "source": "ScyMed"}
+    ],
+    "notes": "1 mg/dL de BUN equivale a 0,3571 mmol/L【921542071020346†L377-L385】."
+  },
+  {
+    "key": "uric_acid",
+    "category": "metabolite",
+    "names": ["Ácido úrico", "Uric acid"],
+    "synonyms": ["UA"],
+    "molar_mass_g_per_mol": 168.11,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "µmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "µmol/L", "factor": 59.48, "source": "GlobalRPH/PMC"}
+    ],
+    "notes": "O fator mg/dL→µmol/L é 59,48【69708408235377†L270-L289】."
+  },
+  {
+    "key": "lactate",
+    "category": "metabolite",
+    "names": ["Lactato", "Lactate"],
+    "synonyms": ["Lac"],
+    "molar_mass_g_per_mol": 90.08,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.111, "source": "GlobalRPH"}
+    ],
+    "notes": "1 mg/dL de lactato corresponde a 0,111 mmol/L (fator de conversão)."
+  },
+  {
+    "key": "cholesterol_total",
+    "category": "lipid",
+    "names": ["Colesterol total", "Total cholesterol"],
+    "synonyms": ["TC"],
+    "molar_mass_g_per_mol": 386.65,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.0259, "source": "ScyMed"}
+    ],
+    "notes": "1 mg/dL de colesterol = 0,0259 mmol/L【263903294296872†L378-L385】."
+  },
+  {
+    "key": "ldl_cholesterol",
+    "category": "lipid",
+    "names": ["LDL colesterol", "LDL cholesterol"],
+    "synonyms": ["LDL"],
+    "molar_mass_g_per_mol": 386.65,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.0259, "source": "igual ao colesterol total"}
+    ],
+    "notes": "Usa o mesmo fator de conversão de colesterol total (0,0259)."
+  },
+  {
+    "key": "hdl_cholesterol",
+    "category": "lipid",
+    "names": ["HDL colesterol", "HDL cholesterol"],
+    "synonyms": ["HDL"],
+    "molar_mass_g_per_mol": 386.65,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.0259, "source": "igual ao colesterol total"}
+    ],
+    "notes": "Mesma molécula básica que o colesterol total, portanto usa 0,0259."
+  },
+  {
+    "key": "triglycerides",
+    "category": "lipid",
+    "names": ["Triglicerídeos", "Triglycerides"],
+    "synonyms": ["TG"],
+    "molar_mass_g_per_mol": 885.0,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mmol/L", "factor": 0.0113, "source": "ScyMed"}
+    ],
+    "notes": "O fator mg/dL→mmol/L para triglicerídeos é 0,0113【137621767871269†L376-L385】."
+  },
+  {
+    "key": "bilirubin",
+    "category": "hepatic",
+    "names": ["Bilirrubina", "Bilirubin"],
+    "synonyms": ["Tbil", "Bili"],
+    "molar_mass_g_per_mol": 585.7,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "µmol/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "µmol/L", "factor": 17.1, "source": "ScyMed"}
+    ],
+    "notes": "1 mg/dL de bilirrubina corresponde a 17,1 µmol/L【760840787940421†L376-L385】."
+  },
+  {
+    "key": "alt",
+    "category": "hepatic",
+    "names": ["Alanina aminotransferase", "ALT"],
+    "synonyms": ["GPT"],
+    "molar_mass_g_per_mol": 0,
+    "valence": 0,
+    "units_allowed": ["U/L", "µkat/L"],
+    "canonical_conversions": [
+      {"from": "U/L", "to": "µkat/L", "factor": 0.0167, "source": "eClinPath"}
+    ],
+    "notes": "Atividade enzimática: 1 U/L = 0,0167 µkat/L【254122015148545†L1050-L1054】."
+  },
+  {
+    "key": "ast",
+    "category": "hepatic",
+    "names": ["Aspartato aminotransferase", "AST"],
+    "synonyms": ["GOT"],
+    "molar_mass_g_per_mol": 0,
+    "valence": 0,
+    "units_allowed": ["U/L", "µkat/L"],
+    "canonical_conversions": [
+      {"from": "U/L", "to": "µkat/L", "factor": 0.0167, "source": "similar ao ALT"}
+    ],
+    "notes": "Atividade enzimática: 1 U/L = 0,0167 µkat/L."
+  },
+  {
+    "key": "ggt",
+    "category": "hepatic",
+    "names": ["Gama‑glutamil transferase", "GGT"],
+    "synonyms": ["Gamma GT"],
+    "molar_mass_g_per_mol": 0,
+    "valence": 0,
+    "units_allowed": ["U/L", "µkat/L"],
+    "canonical_conversions": [
+      {"from": "U/L", "to": "µkat/L", "factor": 0.0167, "source": "por analogia"}
+    ],
+    "notes": "Atividade enzimática expressa em U/L ou µkat/L; usa o mesmo fator de 0,0167."
+  },
+  {
+    "key": "tsh",
+    "category": "hormone",
+    "names": ["Hormônio estimulante da tireoide", "TSH"],
+    "synonyms": ["Thyroid stimulating hormone"],
+    "molar_mass_g_per_mol": 28000.0,
+    "valence": 0,
+    "units_allowed": ["mIU/L", "µIU/mL", "IU/L"],
+    "canonical_conversions": [
+      {"from": "µIU/mL", "to": "mIU/L", "factor": 1.0, "source": "unidades equivalentes"},
+      {"from": "mIU/L", "to": "IU/L", "factor": 0.001, "source": "1 IU = 1000 mIU"}
+    ],
+    "notes": "1 µIU/mL = 1 mIU/L; 1000 mIU = 1 IU."
+  },
+  {
+    "key": "t4_total",
+    "category": "hormone",
+    "names": ["Tiroxina total", "Total thyroxine"],
+    "synonyms": ["T4"],
+    "molar_mass_g_per_mol": 776.87,
+    "valence": 0,
+    "units_allowed": ["µg/dL", "nmol/L"],
+    "canonical_conversions": [
+      {"from": "µg/dL", "to": "nmol/L", "factor": 12.87, "source": "ScyMed"}
+    ],
+    "notes": "1 µg/dL de T4 = 12,87 nmol/L【97673066490813†L379-L388】."
+  },
+  {
+    "key": "t3_total",
+    "category": "hormone",
+    "names": ["Triiodotironina total", "Total triiodothyronine"],
+    "synonyms": ["T3"],
+    "molar_mass_g_per_mol": 650.97,
+    "valence": 0,
+    "units_allowed": ["ng/dL", "nmol/L"],
+    "canonical_conversions": [
+      {"from": "ng/dL", "to": "nmol/L", "factor": 0.0154, "source": "calculadora T3/T4"}
+    ],
+    "notes": "1 ng/dL de T3 = 0,0154 nmol/L【43328819020557†L91-L93】."
+  },
+  {
+    "key": "cortisol",
+    "category": "hormone",
+    "names": ["Cortisol", "Cortisol"],
+    "synonyms": ["F"],
+    "molar_mass_g_per_mol": 362.46,
+    "valence": 0,
+    "units_allowed": ["µg/dL", "nmol/L"],
+    "canonical_conversions": [
+      {"from": "µg/dL", "to": "nmol/L", "factor": 27.59, "source": "ScyMed"}
+    ],
+    "notes": "1 µg/dL de cortisol = 27,59 nmol/L【265952885615040†L378-L386】."
+  },
+  {
+    "key": "prolactin",
+    "category": "hormone",
+    "names": ["Prolactina", "Prolactin"],
+    "synonyms": ["PRL"],
+    "molar_mass_g_per_mol": 23000.0,
+    "valence": 0,
+    "units_allowed": ["ng/mL", "µg/L"],
+    "canonical_conversions": [
+      {"from": "ng/mL", "to": "µg/L", "factor": 1.0, "source": "ScyMed"}
+    ],
+    "notes": "1 ng/mL = 1 µg/L【643149597367735†L377-L386】."
+  },
+  {
+    "key": "insulin",
+    "category": "hormone",
+    "names": ["Insulina", "Insulin"],
+    "synonyms": ["INS"],
+    "molar_mass_g_per_mol": 5808.0,
+    "valence": 0,
+    "units_allowed": ["µU/mL", "pmol/L"],
+    "canonical_conversions": [
+      {"from": "µU/mL", "to": "pmol/L", "factor": 7.175, "source": "ScyMed"}
+    ],
+    "notes": "1 µU/mL = 7,175 pmol/L【497742499132081†L377-L387】."
+  },
+  {
+    "key": "vitamin_d",
+    "category": "vitamin",
+    "names": ["25-hidroxivitamina D", "25-hydroxy vitamin D"],
+    "synonyms": ["25OHD", "VitD"],
+    "molar_mass_g_per_mol": 400.63,
+    "valence": 0,
+    "units_allowed": ["ng/mL", "nmol/L"],
+    "canonical_conversions": [
+      {"from": "ng/mL", "to": "nmol/L", "factor": 2.5, "source": "consenso: 1 ng/mL ≈ 2,5 nmol/L"}
+    ],
+    "notes": "Para a 25‑hidroxivitamina D, 1 ng/mL ≈ 2,5 nmol/L conforme recomendações clínicas【102862601734252†L447-L453】."
+  },
+  {
+    "key": "vitamin_b12",
+    "category": "vitamin",
+    "names": ["Vitamina B12", "Vitamin B12"],
+    "synonyms": ["Cobalamina", "cobalamin"],
+    "molar_mass_g_per_mol": 1355.0,
+    "valence": 0,
+    "units_allowed": ["pg/mL", "pmol/L"],
+    "canonical_conversions": [
+      {"from": "pg/mL", "to": "pmol/L", "factor": 0.738, "source": "ScyMed"}
+    ],
+    "notes": "1 pg/mL = 0,738 pmol/L【10385593336919†L377-L387】."
+  },
+  {
+    "key": "ferritin",
+    "category": "marker",
+    "names": ["Ferritina", "Ferritin"],
+    "synonyms": ["Fer"],
+    "molar_mass_g_per_mol": 474000.0,
+    "valence": 0,
+    "units_allowed": ["ng/mL", "µg/L"],
+    "canonical_conversions": [
+      {"from": "ng/mL", "to": "µg/L", "factor": 1.0, "source": "ScyMed"}
+    ],
+    "notes": "1 ng/mL de ferritina = 1 µg/L【522523097366455†L377-L386】."
+  },
+  {
+    "key": "crp",
+    "category": "marker",
+    "names": ["Proteína C-reativa", "C‑reactive protein"],
+    "synonyms": ["PCR", "CRP"],
+    "molar_mass_g_per_mol": 120000.0,
+    "valence": 0,
+    "units_allowed": ["mg/dL", "mg/L"],
+    "canonical_conversions": [
+      {"from": "mg/dL", "to": "mg/L", "factor": 10.0, "source": "ScyMed"}
+    ],
+    "notes": "Para CRP, 1 mg/dL = 10 mg/L【12973720691843†L377-L385】."
+  },
+  {
+    "key": "epinephrine",
+    "category": "catecholamine",
+    "names": ["Epinefrina", "Epinephrine"],
+    "synonyms": ["Adrenalina", "EPI"],
+    "molar_mass_g_per_mol": 183.2,
+    "valence": 0,
+    "units_allowed": ["pg/mL", "pmol/L"],
+    "canonical_conversions": [
+      {"from": "pg/mL", "to": "pmol/L", "factor": 5.46, "source": "GlobalRPH"}
+    ],
+    "notes": "1 pg/mL de epinefrina ≈ 5,46 pmol/L【469458493508779†L80-L202】."
+  },
+  {
+    "key": "norepinephrine",
+    "category": "catecholamine",
+    "names": ["Norepinefrina", "Norepinephrine"],
+    "synonyms": ["Noradrenalina", "NE"],
+    "molar_mass_g_per_mol": 169.18,
+    "valence": 0,
+    "units_allowed": ["pg/mL", "pmol/L"],
+    "canonical_conversions": [
+      {"from": "pg/mL", "to": "pmol/L", "factor": 5.911, "source": "ScyMed"}
+    ],
+    "notes": "1 pg/mL de norepinefrina = 5,911 pmol/L【786037735245928†L377-L387】."
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "name": "Fórmula de Friedewald (LDL)",
+  "domain": "cardiologia",
+  "description": "Calcula o LDL-colesterol estimado quando triglicerídeos ≤ 400 mg/dL: LDL = colesterol total – HDL – triglicerídeos/5.",
+  "inputs": [
+    {"name": "colesterol_total", "symbol": "total_cholesterol_mg_dl", "unit": "mg/dL", "description": "Colesterol total"},
+    {"name": "HDL", "symbol": "hdl_mg_dl", "unit": "mg/dL", "description": "HDL-colesterol"},
+    {"name": "triglicerideos", "symbol": "triglycerides_mg_dl", "unit": "mg/dL", "description": "Triglicerídeos"}
+  ],
+  "output": {"name": "LDL", "unit": "mg/dL", "description": "LDL-colesterol estimado"},
+  "formula": "LDL = colesterol_total – HDL – (triglicerídeos/5)",
+  "references": [
+    {"citation": "Friedewald formula for LDL cholesterol", "lines": "494884547596442†L594-L609"}
+  ]
+}

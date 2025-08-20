@@ -1,0 +1,16 @@
+{
+  "name": "Depuração de creatinina (medida)",
+  "domain": "nefrologia",
+  "description": "Calcula a depuração de creatinina a partir de uma coleta urinária cronometrada. Representa a taxa de filtração glomerular medida.",
+  "inputs": [
+    {"name": "creatinina_urina", "symbol": "U_Cr", "unit": "mg/dL", "description": "Concentração de creatinina na urina"},
+    {"name": "volume_urina", "symbol": "U_vol", "unit": "mL", "description": "Volume total de urina coletada"},
+    {"name": "creatinina_sérica", "symbol": "P_Cr", "unit": "mg/dL", "description": "Concentração de creatinina no plasma"},
+    {"name": "tempo_coleta", "symbol": "t", "unit": "min", "description": "Duração da coleta urinária"}
+  ],
+  "output": {"name": "depuracao_creatinina", "unit": "mL/min", "description": "Depuração de creatinina medida"},
+  "formula": "CrCl = (U_Cr × volume_urina × (1/100)) / (P_Cr × tempo_coleta)",
+  "references": [
+    {"citation": "Conceito clássico de depuração de creatinina medida a partir de coleta de 24 horas", "url": "https://en.wikipedia.org/wiki/Creatinine_clearance"}
+  ]
+}

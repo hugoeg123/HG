@@ -1,0 +1,16 @@
+{
+  "name": "Conversão entre mcg/kg/min e mL/h",
+  "domain": "conversões",
+  "description": "Converte doses de infusão expressas em microgramas por quilo por minuto (mcg/kg/min) para taxas em mL/h, e vice‑versa, considerando a concentração da solução.",
+  "inputs": [
+    {"name": "dose_mcg_kg_min", "symbol": "dose", "unit": "mcg/kg/min", "description": "Dose de infusão (usar quando converter para mL/h)", "optional": true},
+    {"name": "taxa_mL_h", "symbol": "rate", "unit": "mL/h", "description": "Taxa de infusão (usar quando converter para mcg/kg/min)", "optional": true},
+    {"name": "peso", "symbol": "weight", "unit": "kg", "description": "Peso do paciente"},
+    {"name": "concentração", "symbol": "concentration", "unit": "mg/mL", "description": "Concentração da droga na solução"}
+  ],
+  "output": {"name": "valor_convertido", "unit": "mL/h ou mcg/kg/min", "description": "Valor convertido"},
+  "formula": "mL/h = (dose × peso × 60) / (concentração × 1000); mcg/kg/min = (taxa × concentração × 1000) / (peso × 60)",
+  "references": [
+    {"citation": "Fórmulas padrão para conversão de doses de infusão", "url": "https://www.globalrph.com/infusion/—drip—rate—mcg—kg—min/"}
+  ]
+}

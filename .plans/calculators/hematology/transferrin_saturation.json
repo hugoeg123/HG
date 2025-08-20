@@ -1,0 +1,14 @@
+{
+  "name": "Índice de saturação de transferrina (IST)",
+  "domain": "hematologia",
+  "description": "Calcula o IST dividindo o ferro sérico pelo TIBC e multiplicando por 100 para obter a porcentagem de saturação das proteínas transportadoras de ferro.",
+  "inputs": [
+    {"name": "ferro_serico", "symbol": "iron_serum_ug_dl", "unit": "μg/dL", "description": "Ferro sérico"},
+    {"name": "TIBC", "symbol": "tibc_ug_dl", "unit": "μg/dL", "description": "Capacidade total de ligação de ferro"}
+  ],
+  "output": {"name": "IST", "unit": "%", "description": "Índice de saturação de transferrina"},
+  "formula": "IST (%) = (ferro_serico / TIBC) × 100",
+  "references": [
+    {"citation": "Transferrin saturation formula", "lines": "867153819379181†L123-L125"}
+  ]
+}

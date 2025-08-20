@@ -1,0 +1,15 @@
+{
+  "name": "Peso corporal magro (Hume)",
+  "domain": "geral",
+  "description": "Calcula a massa magra utilizando as fórmulas de Hume: homens = 0,32810×peso + 0,33929×altura_cm – 29,5336; mulheres = 0,29569×peso + 0,41813×altura_cm – 43,2933.",
+  "inputs": [
+    {"name": "sexo", "symbol": "sex", "type": "string", "allowed_values": ["M", "F"], "description": "Sexo do paciente"},
+    {"name": "peso", "symbol": "weight_kg", "unit": "kg", "description": "Peso corporal atual"},
+    {"name": "altura", "symbol": "height_cm", "unit": "cm", "description": "Altura em centímetros"}
+  ],
+  "output": {"name": "peso_magreza", "unit": "kg", "description": "Massa corporal magra"},
+  "formula": "Homens: 0,32810×peso + 0,33929×altura_cm – 29,5336; Mulheres: 0,29569×peso + 0,41813×altura_cm – 43,2933",
+  "references": [
+    {"citation": "Hume formulas for lean body weight", "lines": "786873193218403†L256-L260"}
+  ]
+}

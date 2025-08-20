@@ -91,54 +91,60 @@ const Login = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Errors are now handled by Toast notifications */}
         
-        <div className="relative">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+        <div className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300">
             Email
           </label>
-          <FaEnvelope className="absolute left-3 top-9 text-gray-400" />
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="input"
-            autoComplete="email"
-          />
+          <div className="relative">
+            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" />
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="input"
+              autoComplete="email"
+              placeholder="Digite seu email"
+            />
+          </div>
         </div>
         
-        <div className="relative">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+        <div className="space-y-2">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300">
             Senha
           </label>
-          <FaLock className="absolute left-3 top-9 text-gray-400" />
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="input"
-            autoComplete="current-password"
-          />
+          <div className="relative">
+            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" />
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="input"
+              autoComplete="current-password"
+              placeholder="Digite sua senha"
+            />
+          </div>
         </div>
         
-        <div>
+        <div className="pt-4">
           <button
             type="submit"
             disabled={isLoading}
-            className="btn btn-primary w-full"
+            className="btn btn-primary w-full py-3 text-base font-medium"
           >
             {isLoading ? 'Entrando...' : 'Acessar Sistema'}
           </button>
         </div>
       </form>
       
-      <div className="mt-6 text-center text-sm text-gray-400">
+      <div className="mt-8 text-center text-sm text-gray-400">
         Não é cadastrado?{' '}
-        <Link to="/register" className="text-teal-500 hover:text-teal-400 transition-colors duration-200">
+        <Link to="/register" className="text-teal-400 hover:text-teal-300 transition-colors duration-200 font-medium">
           Cadastre-se como profissional
         </Link>
       </div>

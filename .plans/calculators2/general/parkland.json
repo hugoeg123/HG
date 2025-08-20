@@ -1,0 +1,15 @@
+{
+  "name": "Reposição volêmica em queimaduras (Parkland)",
+  "domain": "pediatria/geral",
+  "description": "Estima o volume de cristaloide (Ringer lactato) necessário nas primeiras 24 h após uma queimadura. Para adultos usa-se 4 mL por kg por %TBSA e para crianças 3 mL por kg por %TBSA. Metade do volume é administrada nas primeiras 8 h.",
+  "inputs": [
+    {"name": "peso", "unit": "kg", "description": "Peso do paciente"},
+    {"name": "superficie_queimada", "unit": "%", "description": "Percentual da superfície corporal queimada"},
+    {"name": "pediatrico", "type": "boolean", "description": "Indica se o paciente é pediátrico (usa 3 mL) ou adulto (4 mL)"}
+  ],
+  "output": {"name": "volumes", "description": "Volume total e volumes para 0–8 h e 8–24 h", "unit": "mL"},
+  "formula": "Volume total = fator × peso × %TBSA, onde fator = 4 mL (adulto) ou 3 mL (criança). Metade em 0–8 h e metade em 8–24 h.",
+  "references": [
+    {"citation": "StatPearls – Parkland formula", "url": "https://www.ncbi.nlm.nih.gov/books/NBK537190/"}
+  ]
+}

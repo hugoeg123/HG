@@ -1,0 +1,14 @@
+{
+  "name": "Índice de Massa Corporal",
+  "domain": "geral",
+  "description": "Calcula o índice de massa corporal (IMC) dividindo o peso (kg) pelo quadrado da altura (m). Utilizado para classificar baixo peso, peso normal, sobrepeso e obesidade.",
+  "inputs": [
+    {"name": "peso", "symbol": "mass", "unit": "kg", "description": "Peso corporal"},
+    {"name": "altura", "symbol": "length", "unit": "m", "description": "Altura corporal"}
+  ],
+  "output": {"name": "imc", "unit": "kg/m^2", "description": "Índice de massa corporal"},
+  "formula": "IMC = peso / (altura^2)",
+  "references": [
+    {"citation": "CDC – Body Mass Index formula", "url": "https://www.cdc.gov/healthyweight/assessing/bmi/"}
+  ]
+}

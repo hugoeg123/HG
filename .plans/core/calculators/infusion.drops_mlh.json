@@ -1,0 +1,27 @@
+{
+  "id": "infusion.drops_mlh",
+  "name": "Gotas/min ↔ mL/h",
+  "version": "1.0.0",
+  "inputs": [
+    {"id": "drops_count", "label": "Contagem de gotas", "type": "integer", "unit": "gtt", "min": 1},
+    {"id": "time_seconds", "label": "Tempo de contagem (s)", "type": "number", "unit": "s", "min": 1},
+    {"id": "drop_factor", "label": "Fator de gotejamento (gtt/mL)", "type": "number", "unit": "gtt/mL", "min": 5, "max": 120}
+  ],
+  "expressions": {
+    "gtt_per_min": "(drops_count) / (time_seconds/60)",
+    "ml_per_h": "(gtt_per_min / drop_factor) * 60"
+  },
+  "outputs": [
+    {"id": "gtt_per_min", "unit": "gtt/min", "decimals": 0},
+    {"id": "ml_per_h", "unit": "mL/h", "decimals": 1}
+  ],
+  "examples": [
+    {"in": {"drops_count": 30, "time_seconds": 20, "drop_factor": 20}, "out": {"gtt_per_min": 90, "ml_per_h": 270.0}},
+    {"in": {"drops_count": 40, "time_seconds": 30, "drop_factor": 15}, "out": {"gtt_per_min": 80, "ml_per_h": 320.0}},
+    {"in": {"drops_count": 25, "time_seconds": 15, "drop_factor": 20}, "out": {"gtt_per_min": 100, "ml_per_h": 300.0}},
+    {"in": {"drops_count": 60, "time_seconds": 60, "drop_factor": 20}, "out": {"gtt_per_min": 60, "ml_per_h": 180.0}},
+    {"in": {"drops_count": 90, "time_seconds": 45, "drop_factor": 15}, "out": {"gtt_per_min": 120, "ml_per_h": 480.0}}
+  ],
+  "notes": "Calcula a taxa de gotas por minuto e o volume equivalente em mL/h com base na contagem manual de gotas.",
+  "references": ["Whitebook/UpToDate", "consenso institucional"]
+}

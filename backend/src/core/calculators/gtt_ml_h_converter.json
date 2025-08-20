@@ -1,0 +1,296 @@
+{
+  "name": "Conversor Gotas/min ↔ mL/h",
+  "description": "Converte entre gotas por minuto e mililitros por hora para infusões intravenosas",
+  "category": "infusion",
+  "version": "1.0.0",
+  "inputs": [
+    {
+      "name": "gtt_per_min",
+      "label": "Gotas por minuto",
+      "description": "Taxa de gotejamento em gotas por minuto",
+      "type": "number",
+      "unit": "gtt/min",
+      "min": 0,
+      "max": 1000,
+      "step": 1,
+      "required": false
+    },
+    {
+      "name": "rate_ml_h",
+      "label": "Taxa em mL/h",
+      "description": "Taxa de infusão em mililitros por hora",
+      "type": "number",
+      "unit": "mL/h",
+      "min": 0,
+      "max": 10000,
+      "step": 0.1,
+      "required": false
+    },
+    {
+      "name": "drop_factor",
+      "label": "Fator de gotejamento",
+      "description": "Número de gotas por mL do equipo utilizado",
+      "type": "number",
+      "unit": "gtt/mL",
+      "min": 1,
+      "max": 100,
+      "step": 1,
+      "default": 20,
+      "required": true,
+      "options": [
+        { "value": 10, "label": "Macrogotas (10 gtt/mL)" },
+        { "value": 15, "label": "Equipo padrão (15 gtt/mL)" },
+        { "value": 20, "label": "Microgotas (20 gtt/mL)" },
+        { "value": 60, "label": "Microgotas finas (60 gtt/mL)" }
+      ]
+    },
+    {
+      "name": "tap_count",
+      "label": "Contagem de gotas (Tap Mode)",
+      "description": "Número de gotas contadas no modo tap",
+      "type": "number",
+      "unit": "gotas",
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "required": false
+    },
+    {
+      "name": "tap_duration",
+      "label": "Duração da contagem (segundos)",
+      "description": "Tempo em segundos durante o qual as gotas foram contadas",
+      "type": "number",
+      "unit": "s",
+      "min": 1,
+      "max": 300,
+      "step": 1,
+      "default": 15,
+      "required": false
+    }
+  ],
+  "expressions": {
+    "gtt_per_min_calculated": "rate_ml_h * drop_factor / 60",
+    "rate_ml_h_calculated": "gtt_per_min * 60 / drop_factor",
+    "gtt_per_min_from_tap": "tap_count * 60 / tap_duration",
+    "rate_ml_h_from_tap": "(tap_count * 60 / tap_duration) * 60 / drop_factor",
+    "drops_per_second": "gtt_per_min_calculated / 60",
+    "ml_per_minute": "rate_ml_h_calculated / 60",
+    "total_ml_per_day": "rate_ml_h_calculated * 24",
+    "interval_between_drops": "60 / gtt_per_min_calculated"
+  },
+  "outputs": [
+    {
+      "name": "gtt_per_min_calculated",
+      "label": "Gotas por minuto",
+      "description": "Taxa calculada em gotas por minuto",
+      "type": "number",
+      "unit": "gtt/min",
+      "decimals": 1
+    },
+    {
+      "name": "rate_ml_h_calculated",
+      "label": "Taxa em mL/h",
+      "description": "Taxa calculada em mililitros por hora",
+      "type": "number",
+      "unit": "mL/h",
+      "decimals": 1
+    },
+    {
+      "name": "gtt_per_min_from_tap",
+      "label": "Gotas/min (do Tap Mode)",
+      "description": "Taxa calculada a partir da contagem manual",
+      "type": "number",
+      "unit": "gtt/min",
+      "decimals": 1
+    },
+    {
+      "name": "rate_ml_h_from_tap",
+      "label": "mL/h (do Tap Mode)",
+      "description": "Taxa em mL/h calculada a partir da contagem manual",
+      "type": "number",
+      "unit": "mL/h",
+      "decimals": 1
+    },
+    {
+      "name": "drops_per_second",
+      "label": "Gotas por segundo",
+      "description": "Frequência de gotejamento por segundo",
+      "type": "number",
+      "unit": "gtt/s",
+      "decimals": 2
+    },
+    {
+      "name": "ml_per_minute",
+      "label": "mL por minuto",
+      "description": "Taxa de infusão por minuto",
+      "type": "number",
+      "unit": "mL/min",
+      "decimals": 2
+    },
+    {
+      "name": "total_ml_per_day",
+      "label": "Total mL/dia",
+      "description": "Volume total infundido em 24 horas",
+      "type": "number",
+      "unit": "mL/dia",
+      "decimals": 0
+    },
+    {
+      "name": "interval_between_drops",
+      "label": "Intervalo entre gotas",
+      "description": "Tempo em segundos entre cada gota",
+      "type": "number",
+      "unit": "s",
+      "decimals": 2
+    }
+  ],
+  "modes": {
+    "ml_to_gtt": {
+      "name": "mL/h → Gotas/min",
+      "description": "Calcular gotas por minuto a partir da taxa em mL/h",
+      "required_inputs": ["rate_ml_h", "drop_factor"],
+      "outputs": [
+        {
+          "name": "gtt_per_min_calculated",
+          "label": "Gotas por minuto",
+          "description": "Taxa calculada em gotas por minuto",
+          "type": "number",
+          "unit": "gtt/min",
+          "decimals": 1
+        },
+        {
+          "name": "drops_per_second",
+          "label": "Gotas por segundo",
+          "description": "Frequência de gotejamento por segundo",
+          "type": "number",
+          "unit": "gtt/s",
+          "decimals": 2
+        },
+        {
+          "name": "interval_between_drops",
+          "label": "Intervalo entre gotas",
+          "description": "Tempo em segundos entre cada gota",
+          "type": "number",
+          "unit": "s",
+          "decimals": 2
+        }
+      ]
+    },
+    "gtt_to_ml": {
+      "name": "Gotas/min → mL/h",
+      "description": "Calcular taxa em mL/h a partir de gotas por minuto",
+      "required_inputs": ["gtt_per_min", "drop_factor"],
+      "outputs": [
+        {
+          "name": "rate_ml_h_calculated",
+          "label": "Taxa em mL/h",
+          "description": "Taxa calculada em mililitros por hora",
+          "type": "number",
+          "unit": "mL/h",
+          "decimals": 1
+        },
+        {
+          "name": "ml_per_minute",
+          "label": "mL por minuto",
+          "description": "Taxa de infusão por minuto",
+          "type": "number",
+          "unit": "mL/min",
+          "decimals": 2
+        },
+        {
+          "name": "total_ml_per_day",
+          "label": "Total mL/dia",
+          "description": "Volume total infundido em 24 horas",
+          "type": "number",
+          "unit": "mL/dia",
+          "decimals": 0
+        }
+      ]
+    },
+    "tap_mode": {
+      "name": "Modo Tap (Contagem Manual)",
+      "description": "Calcular taxa a partir da contagem manual de gotas",
+      "required_inputs": ["tap_count", "tap_duration", "drop_factor"],
+      "outputs": [
+        {
+          "name": "gtt_per_min_from_tap",
+          "label": "Gotas/min (calculado)",
+          "description": "Taxa calculada a partir da contagem manual",
+          "type": "number",
+          "unit": "gtt/min",
+          "decimals": 1
+        },
+        {
+          "name": "rate_ml_h_from_tap",
+          "label": "mL/h (calculado)",
+          "description": "Taxa em mL/h calculada a partir da contagem manual",
+          "type": "number",
+          "unit": "mL/h",
+          "decimals": 1
+        },
+        {
+          "name": "drops_per_second",
+          "label": "Gotas por segundo",
+          "description": "Frequência de gotejamento por segundo",
+          "type": "number",
+          "unit": "gtt/s",
+          "decimals": 2
+        }
+      ],
+      "expressions": {
+        "gtt_per_min": "tap_count * 60 / tap_duration",
+        "rate_ml_h": "(tap_count * 60 / tap_duration) * 60 / drop_factor",
+        "drops_per_second": "(tap_count * 60 / tap_duration) / 60"
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "Soro fisiológico - Macrogotas",
+      "description": "Infusão de 125 mL/h com equipo de macrogotas",
+      "inputs": {
+        "rate_ml_h": 125,
+        "drop_factor": 10
+      },
+      "mode": "ml_to_gtt",
+      "expected_outputs": {
+        "gtt_per_min_calculated": 20.8
+      }
+    },
+    {
+      "name": "Contagem manual - 15 segundos",
+      "description": "Contagem de 8 gotas em 15 segundos com microgotas",
+      "inputs": {
+        "tap_count": 8,
+        "tap_duration": 15,
+        "drop_factor": 20
+      },
+      "mode": "tap_mode",
+      "expected_outputs": {
+        "gtt_per_min_from_tap": 32.0,
+        "rate_ml_h_from_tap": 96.0
+      }
+    }
+  ],
+  "references": [
+    {
+      "title": "Cálculos de Medicamentos e Soluções",
+      "author": "Giovani de Figueiredo",
+      "year": 2020,
+      "description": "Referência para cálculos de infusão e gotejamento"
+    },
+    {
+      "title": "Manual de Terapia Intravenosa",
+      "author": "INS - Infusion Nurses Society",
+      "year": 2021,
+      "description": "Padrões para terapia intravenosa e cálculos de infusão"
+    }
+  ],
+  "metadata": {
+    "created_at": "2024-01-16",
+    "updated_at": "2024-01-16",
+    "version": "1.0.0",
+    "author": "Health Guardian System",
+    "tags": ["infusion", "drops", "flow_rate", "iv_therapy", "nursing"]
+  }
+}

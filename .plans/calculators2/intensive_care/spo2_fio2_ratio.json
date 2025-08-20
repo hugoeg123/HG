@@ -1,0 +1,14 @@
+{
+  "name": "Relação SpO2/FiO2",
+  "domain": "terapia intensiva",
+  "description": "Calcula a relação entre a saturação periférica de oxigênio (SpO2) e a fração inspirada de oxigênio (FiO2). Utilizada como substituta da relação PaO2/FiO2 quando gasometria arterial não está disponível.",
+  "inputs": [
+    {"name": "SpO2", "symbol": "SpO2", "unit": "fração", "description": "Saturação periférica de oxigênio (0–1)"},
+    {"name": "FiO2", "symbol": "FiO2", "unit": "fração", "description": "Fração inspirada de oxigênio (0–1)"}
+  ],
+  "output": {"name": "SpO2/FiO2", "unit": "—", "description": "Relação SpO2/FiO2"},
+  "formula": "SpO2/FiO2 = SpO2 / FiO2",
+  "references": [
+    {"citation": "Uso do índice SpO2/FiO2 como substituto do PaO2/FiO2 em UTI", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4530631/"}
+  ]
+}

@@ -1,0 +1,333 @@
+{
+  "families": {
+    "electrolytes": {
+      "name": "Eletrólitos",
+      "description": "Íons essenciais para funções celulares e equilíbrio ácido-base",
+      "analytes": {
+        "sodium": {
+          "name": "Sódio",
+          "symbol": "Na+",
+          "units": [
+            {"name": "mEq/L", "symbol": "mEq/L", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 1, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mEq/L", "range": {"min": 136, "max": 145}}
+          ]
+        },
+        "potassium": {
+          "name": "Potássio",
+          "symbol": "K+",
+          "units": [
+            {"name": "mEq/L", "symbol": "mEq/L", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 1, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mEq/L", "range": {"min": 3.5, "max": 5.0}}
+          ]
+        },
+        "chloride": {
+          "name": "Cloro",
+          "symbol": "Cl-",
+          "units": [
+            {"name": "mEq/L", "symbol": "mEq/L", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 1, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mEq/L", "range": {"min": 98, "max": 107}}
+          ]
+        },
+        "calcium": {
+          "name": "Cálcio",
+          "symbol": "Ca2+",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.25, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"min": 8.5, "max": 10.5}}
+          ]
+        },
+        "magnesium": {
+          "name": "Magnésio",
+          "symbol": "Mg2+",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.411, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"min": 1.7, "max": 2.2}}
+          ]
+        },
+        "phosphate": {
+          "name": "Fosfato",
+          "symbol": "PO4-",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.323, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"min": 2.5, "max": 4.5}}
+          ]
+        }
+      }
+    },
+    "metabolites": {
+      "name": "Metabólitos",
+      "description": "Produtos do metabolismo celular e marcadores de função orgânica",
+      "analytes": {
+        "glucose": {
+          "name": "Glicose",
+          "symbol": "Glu",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.0551, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult_fasting", "unit": "mg/dL", "range": {"min": 70, "max": 100}},
+            {"population": "adult_random", "unit": "mg/dL", "range": {"min": 70, "max": 140}}
+          ]
+        },
+        "urea": {
+          "name": "Ureia",
+          "symbol": "BUN",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.357, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"min": 7, "max": 20}}
+          ]
+        },
+        "creatinine": {
+          "name": "Creatinina",
+          "symbol": "Cr",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 2},
+            {"name": "μmol/L", "symbol": "μmol/L", "isSI": true, "conversionFactor": 88.4, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "mg/dL", "range": {"min": 0.7, "max": 1.3}},
+            {"population": "adult_female", "unit": "mg/dL", "range": {"min": 0.6, "max": 1.1}}
+          ]
+        },
+        "uric_acid": {
+          "name": "Ácido Úrico",
+          "symbol": "UA",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "μmol/L", "symbol": "μmol/L", "isSI": true, "conversionFactor": 59.48, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "mg/dL", "range": {"min": 3.4, "max": 7.0}},
+            {"population": "adult_female", "unit": "mg/dL", "range": {"min": 2.4, "max": 6.0}}
+          ]
+        }
+      }
+    },
+    "lipids": {
+      "name": "Lipídios",
+      "description": "Gorduras e lipoproteínas para avaliação cardiovascular",
+      "analytes": {
+        "total_cholesterol": {
+          "name": "Colesterol Total",
+          "symbol": "TC",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.0259, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"max": 200}}
+          ]
+        },
+        "ldl_cholesterol": {
+          "name": "LDL Colesterol",
+          "symbol": "LDL",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.0259, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult_optimal", "unit": "mg/dL", "range": {"max": 100}},
+            {"population": "adult_high_risk", "unit": "mg/dL", "range": {"max": 70}}
+          ]
+        },
+        "hdl_cholesterol": {
+          "name": "HDL Colesterol",
+          "symbol": "HDL",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.0259, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "mg/dL", "range": {"min": 40}},
+            {"population": "adult_female", "unit": "mg/dL", "range": {"min": 50}}
+          ]
+        },
+        "triglycerides": {
+          "name": "Triglicerídeos",
+          "symbol": "TG",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.0113, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"max": 150}}
+          ]
+        }
+      }
+    },
+    "liver_enzymes": {
+      "name": "Enzimas Hepáticas",
+      "description": "Marcadores de função e lesão hepática",
+      "analytes": {
+        "alt": {
+          "name": "ALT (TGP)",
+          "symbol": "ALT",
+          "units": [
+            {"name": "U/L", "symbol": "U/L", "isSI": true, "conversionFactor": 1, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "U/L", "range": {"max": 41}},
+            {"population": "adult_female", "unit": "U/L", "range": {"max": 33}}
+          ]
+        },
+        "ast": {
+          "name": "AST (TGO)",
+          "symbol": "AST",
+          "units": [
+            {"name": "U/L", "symbol": "U/L", "isSI": true, "conversionFactor": 1, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "U/L", "range": {"max": 40}},
+            {"population": "adult_female", "unit": "U/L", "range": {"max": 32}}
+          ]
+        },
+        "bilirubin_total": {
+          "name": "Bilirrubina Total",
+          "symbol": "BT",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "μmol/L", "symbol": "μmol/L", "isSI": true, "conversionFactor": 17.1, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"max": 1.2}}
+          ]
+        },
+        "albumin": {
+          "name": "Albumina",
+          "symbol": "Alb",
+          "units": [
+            {"name": "g/dL", "symbol": "g/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "g/L", "symbol": "g/L", "isSI": true, "conversionFactor": 10, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "g/dL", "range": {"min": 3.5, "max": 5.0}}
+          ]
+        }
+      }
+    },
+    "hematology": {
+      "name": "Hematologia",
+      "description": "Células sanguíneas e parâmetros hematológicos",
+      "analytes": {
+        "hemoglobin": {
+          "name": "Hemoglobina",
+          "symbol": "Hb",
+          "units": [
+            {"name": "g/dL", "symbol": "g/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "g/L", "symbol": "g/L", "isSI": true, "conversionFactor": 10, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "g/dL", "range": {"min": 13.5, "max": 17.5}},
+            {"population": "adult_female", "unit": "g/dL", "range": {"min": 12.0, "max": 16.0}}
+          ]
+        },
+        "hematocrit": {
+          "name": "Hematócrito",
+          "symbol": "Ht",
+          "units": [
+            {"name": "%", "symbol": "%", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "L/L", "symbol": "L/L", "isSI": true, "conversionFactor": 0.01, "precision": 3}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "%", "range": {"min": 41, "max": 53}},
+            {"population": "adult_female", "unit": "%", "range": {"min": 36, "max": 48}}
+          ]
+        },
+        "platelets": {
+          "name": "Plaquetas",
+          "symbol": "PLT",
+          "units": [
+            {"name": "×10³/μL", "symbol": "×10³/μL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "×10⁹/L", "symbol": "×10⁹/L", "isSI": true, "conversionFactor": 1, "precision": 0}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "×10³/μL", "range": {"min": 150, "max": 450}}
+          ]
+        },
+        "iron": {
+          "name": "Ferro Sérico",
+          "symbol": "Fe",
+          "units": [
+            {"name": "μg/dL", "symbol": "μg/dL", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "μmol/L", "symbol": "μmol/L", "isSI": true, "conversionFactor": 0.179, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult_male", "unit": "μg/dL", "range": {"min": 65, "max": 175}},
+            {"population": "adult_female", "unit": "μg/dL", "range": {"min": 50, "max": 170}}
+          ]
+        }
+      }
+    },
+    "blood_gases": {
+      "name": "Gasometria",
+      "description": "Gases sanguíneos e equilíbrio ácido-base",
+      "analytes": {
+        "pao2": {
+          "name": "PaO2",
+          "symbol": "PaO2",
+          "units": [
+            {"name": "mmHg", "symbol": "mmHg", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "kPa", "symbol": "kPa", "isSI": true, "conversionFactor": 0.133, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mmHg", "range": {"min": 80, "max": 100}}
+          ]
+        },
+        "paco2": {
+          "name": "PaCO2",
+          "symbol": "PaCO2",
+          "units": [
+            {"name": "mmHg", "symbol": "mmHg", "isSI": false, "conversionFactor": 1, "precision": 0},
+            {"name": "kPa", "symbol": "kPa", "isSI": true, "conversionFactor": 0.133, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mmHg", "range": {"min": 35, "max": 45}}
+          ]
+        },
+        "ph": {
+          "name": "pH",
+          "symbol": "pH",
+          "units": [
+            {"name": "pH", "symbol": "pH", "isSI": true, "conversionFactor": 1, "precision": 2}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "pH", "range": {"min": 7.35, "max": 7.45}}
+          ]
+        },
+        "lactate": {
+          "name": "Lactato",
+          "symbol": "Lac",
+          "units": [
+            {"name": "mg/dL", "symbol": "mg/dL", "isSI": false, "conversionFactor": 1, "precision": 1},
+            {"name": "mmol/L", "symbol": "mmol/L", "isSI": true, "conversionFactor": 0.111, "precision": 1}
+          ],
+          "referenceRanges": [
+            {"population": "adult", "unit": "mg/dL", "range": {"max": 18}}
+          ]
+        }
+      }
+    }
+  }
+}

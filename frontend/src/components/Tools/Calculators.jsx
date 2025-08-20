@@ -1,10 +1,37 @@
 import { useState, useEffect } from 'react';
-import { calculatorService } from '../../services/api';
+import { calculatorService, dynamicCalculatorService } from '../../services/api';
 import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
+import DynamicCalculator from './DynamicCalculator';
 import ConversaoGotejamentoDialog from './prebuilt/ConversaoGotejamento';
 import ConversaoMcgKgMinDialog from './prebuilt/ConversaoMcgKgMin';
 import ConversaoMcgKgMinGttMinDialog from './prebuilt/ConversaoMcgKgMinGttMin';
+import BMI from './prebuilt/BMI';
+import BSAMosteller from './prebuilt/BSAMosteller';
+import BSADuBois from './prebuilt/BSADuBois';
+import IdealBodyWeight from './prebuilt/IdealBodyWeight';
+import LeanBodyWeight from './prebuilt/LeanBodyWeight';
+import AdjustedBodyWeight from './prebuilt/AdjustedBodyWeight';
+import CockcroftGault from './prebuilt/CockcroftGault';
+import CKDEPI2021 from './prebuilt/CKDEPI2021';
+import FeNa from './prebuilt/FeNa';
+import FeUrea from './prebuilt/FeUrea';
+import CorrectedCalcium from './prebuilt/CorrectedCalcium';
+import Osmolarity from './prebuilt/Osmolarity';
+import IronDeficit from './prebuilt/IronDeficit';
+import FriedewaldLDL from './prebuilt/FriedewaldLDL';
+import PaO2FiO2 from './prebuilt/PaO2FiO2';
+import QTcCalculation from './prebuilt/QTcCalculation';
+import AnionGap from './prebuilt/AnionGap';
+import SpO2FiO2Ratio from './prebuilt/SpO2FiO2Ratio';
+import ChildPugh from './prebuilt/ChildPugh';
+import MELD from './prebuilt/MELD';
+// import ParklandFormula from './prebuilt/ParklandFormula';
+import qSOFA from './Calculators/prebuilt/qSOFA';
+import APACHE2 from './Calculators/prebuilt/APACHE2';
+import SOFA from './Calculators/prebuilt/SOFA';
+import CHA2DS2VASc from './Calculators/prebuilt/CHA2DS2VASc';
+import HASBLED from './Calculators/prebuilt/HASBLED';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -40,6 +67,8 @@ const Calculators = ({ patientId = null }) => {
   const [selectedCalculator, setSelectedCalculator] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showHardcodedCalculator, setShowHardcodedCalculator] = useState(null);
+  const [dynamicCalculators, setDynamicCalculators] = useState([]);
+  const [showDynamicCalculator, setShowDynamicCalculator] = useState(null);
   
   // Store hooks
   const { calculators, getAll, seedCalculators } = useCalculatorStore();
@@ -47,7 +76,7 @@ const Calculators = ({ patientId = null }) => {
 
   // Load calculators and tags on mount
   useEffect(() => {
-    const initializeData = () => {
+    const initializeData = async () => {
       try {
         setIsLoading(true);
         setError(null);
@@ -62,6 +91,21 @@ const Calculators = ({ patientId = null }) => {
         if (loadedCalculators.length === 0) {
           seedCalculators();
           loadedCalculators = getAll();
+        }
+        
+        // Load dynamic calculators from backend
+        try {
+          const dynamicResponse = await dynamicCalculatorService.listCalculators();
+          if (dynamicResponse.data && Array.isArray(dynamicResponse.data)) {
+            setDynamicCalculators(dynamicResponse.data.map(calc => ({
+              ...calc,
+              isDynamic: true,
+              category: calc.domain || 'Conversões'
+            })));
+          }
+        } catch (dynamicErr) {
+          console.warn('Erro ao carregar calculadoras dinâmicas:', dynamicErr);
+          // Don't fail the entire load if dynamic calculators fail
         }
         
       } catch (err) {
@@ -95,11 +139,11 @@ const Calculators = ({ patientId = null }) => {
   }, []);
 
   // Get unique categories for filter options
-  const categories = Array.isArray(calculators) ? 
-    [...new Set(calculators.map(calc => calc.category).filter(Boolean))] : [];
+  const allCalculators = [...(Array.isArray(calculators) ? calculators : []), ...dynamicCalculators];
+  const categories = [...new Set(allCalculators.map(calc => calc.category).filter(Boolean))];
 
   // Filter calculators based on search and category
-  const filteredCalculators = Array.isArray(calculators) ? calculators.filter(calculator => {
+  const filteredCalculators = allCalculators.filter(calculator => {
     if (!calculator) return false;
     
     // Search filter
@@ -113,15 +157,24 @@ const Calculators = ({ patientId = null }) => {
     const matchesCategory = selectedCategory === 'all' || 
       calculator.category === selectedCategory ||
       (selectedCategory === 'personal' && calculator.isPersonal) ||
-      (selectedCategory === 'public' && !calculator.isPersonal);
+      (selectedCategory === 'public' && !calculator.isPersonal) ||
+      (selectedCategory === 'dynamic' && calculator.isDynamic) ||
+      // Filter by medical categories
+      (['Cardiologia', 'Hepatologia', 'Pneumologia', 'Função Renal', 'Metabólico', 'Antropometria', 'Conversões'].includes(selectedCategory) && calculator.category === selectedCategory);
     
     return matchesSearch && matchesCategory;
-  }) : [];
+  });
 
   // Filtered calculators ready for display
 
   // Abrir modal da calculadora
   const openCalculator = (calculator) => {
+    // Check if it's a dynamic calculator
+    if (calculator.isDynamic) {
+      setShowDynamicCalculator(calculator.id);
+      return;
+    }
+    
     // Check if it's a hardcoded calculator
     if (calculator.isHardcoded && calculator.id === 'conv-gotejamento') {
       setShowHardcodedCalculator(calculator.id);
@@ -135,9 +188,113 @@ const Calculators = ({ patientId = null }) => {
       setShowHardcodedCalculator(calculator.id);
       return;
     }
-    
-    setSelectedCalculator(calculator);
-    setShowModal(true);
+    if (calculator.isHardcoded && calculator.id === 'bmi-calculator') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'bsa-mosteller') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'bsa-dubois') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'ideal-body-weight') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'lean-body-weight') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'adjusted-body-weight') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'cockcroft-gault') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'ckd-epi-2021') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'fena') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'feurea') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'corrected-calcium') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'osmolarity') {
+      setShowHardcodedCalculator(calculator.id);
+      return;
+    }
+    if (calculator.isHardcoded && calculator.id === 'iron-deficit') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'friedewald-ldl') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'pao2-fio2') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'qtc-calculation') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'anion-gap') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'spo2-fio2-ratio') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'child-pugh') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'meld-score') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'parkland-formula') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'qsofa') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'apache2') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'sofa') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'cha2ds2-vasc') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.isHardcoded && calculator.id === 'has-bled') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     
+     setSelectedCalculator(calculator);
+     setShowModal(true);
   };
 
   // Fechar modal da calculadora
@@ -149,6 +306,11 @@ const Calculators = ({ patientId = null }) => {
   // Fechar calculadora hardcoded
   const closeHardcodedCalculator = () => {
     setShowHardcodedCalculator(null);
+  };
+  
+  // Fechar calculadora dinâmica
+  const closeDynamicCalculator = () => {
+    setShowDynamicCalculator(null);
   };
 
   // Create new calculator
@@ -236,6 +398,116 @@ const Calculators = ({ patientId = null }) => {
           >
             Públicas
           </Badge>
+          <Badge
+            variant={selectedCategory === 'dynamic' ? 'default' : 'secondary'}
+            className={`cursor-pointer transition-colors ${
+              selectedCategory === 'dynamic' 
+                ? 'bg-teal-600 text-white hover:bg-teal-700'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            onClick={() => setSelectedCategory('dynamic')}
+          >
+            Dinâmicas
+          </Badge>
+          
+          {/* Medical Category Filters */}
+          {categories.includes('Cardiologia') && (
+            <Badge
+              variant={selectedCategory === 'Cardiologia' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Cardiologia' 
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Cardiologia')}
+            >
+              Cardiologia
+            </Badge>
+          )}
+          
+          {categories.includes('Hepatologia') && (
+            <Badge
+              variant={selectedCategory === 'Hepatologia' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Hepatologia' 
+                  ? 'bg-amber-600 text-white hover:bg-amber-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Hepatologia')}
+            >
+              Hepatologia
+            </Badge>
+          )}
+          
+          {categories.includes('Pneumologia') && (
+            <Badge
+              variant={selectedCategory === 'Pneumologia' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Pneumologia' 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Pneumologia')}
+            >
+              Pneumologia
+            </Badge>
+          )}
+          
+          {categories.includes('Função Renal') && (
+            <Badge
+              variant={selectedCategory === 'Função Renal' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Função Renal' 
+                  ? 'bg-cyan-600 text-white hover:bg-cyan-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Função Renal')}
+            >
+              Função Renal
+            </Badge>
+          )}
+          
+          {categories.includes('Metabólico') && (
+            <Badge
+              variant={selectedCategory === 'Metabólico' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Metabólico' 
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Metabólico')}
+            >
+              Metabólico
+            </Badge>
+          )}
+          
+          {categories.includes('Antropometria') && (
+            <Badge
+              variant={selectedCategory === 'Antropometria' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Antropometria' 
+                  ? 'bg-purple-600 text-white hover:bg-purple-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Antropometria')}
+            >
+              Antropometria
+            </Badge>
+          )}
+          
+          {categories.includes('Conversões') && (
+            <Badge
+              variant={selectedCategory === 'Conversões' ? 'default' : 'secondary'}
+              className={`cursor-pointer transition-colors ${
+                selectedCategory === 'Conversões' 
+                  ? 'bg-orange-600 text-white hover:bg-orange-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              onClick={() => setSelectedCategory('Conversões')}
+            >
+              Conversões
+            </Badge>
+          )}
         </div>
 
         {/* Create new calculator button */}
@@ -326,6 +598,201 @@ const Calculators = ({ patientId = null }) => {
           <ConversaoMcgKgMinGttMinDialog
             open={true}
             onOpenChange={closeHardcodedCalculator}
+          />
+        )}
+
+        {/* Anthropometric Calculators */}
+        {showHardcodedCalculator === 'bmi-calculator' && (
+          <BMI 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'bsa-mosteller' && (
+          <BSAMosteller 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'bsa-dubois' && (
+          <BSADuBois 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'ideal-body-weight' && (
+          <IdealBodyWeight 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'lean-body-weight' && (
+          <LeanBodyWeight 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'adjusted-body-weight' && (
+          <AdjustedBodyWeight 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+        
+        {showHardcodedCalculator === 'cockcroft-gault' && (
+          <CockcroftGault 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+        
+        {showHardcodedCalculator === 'ckd-epi-2021' && (
+          <CKDEPI2021 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+        
+        {showHardcodedCalculator === 'fena' && (
+          <FeNa 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+        
+        {showHardcodedCalculator === 'feurea' && (
+          <FeUrea 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {/* Metabolic Calculators */}
+        {showHardcodedCalculator === 'corrected-calcium' && (
+          <CorrectedCalcium 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'osmolarity' && (
+          <Osmolarity 
+            open={true} 
+            onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+          />
+        )}
+
+        {showHardcodedCalculator === 'iron-deficit' && (
+           <IronDeficit 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {/* Cardiology Calculators */}
+         {showHardcodedCalculator === 'friedewald-ldl' && (
+           <FriedewaldLDL 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {showHardcodedCalculator === 'pao2-fio2' && (
+           <PaO2FiO2 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {/* New Calculators - Phase 1 & 2 */}
+         {showHardcodedCalculator === 'qtc-calculation' && (
+           <QTcCalculation 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {showHardcodedCalculator === 'anion-gap' && (
+           <AnionGap 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {showHardcodedCalculator === 'spo2-fio2-ratio' && (
+           <SpO2FiO2Ratio 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {showHardcodedCalculator === 'child-pugh' && (
+           <ChildPugh 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {showHardcodedCalculator === 'meld-score' && (
+           <MELD 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+
+         {/* {showHardcodedCalculator === 'parkland-formula' && (
+           <ParklandFormula 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )} */}
+         
+         {showHardcodedCalculator === 'qsofa' && (
+           <qSOFA 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'apache2' && (
+           <APACHE2 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'sofa' && (
+           <SOFA 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'cha2ds2-vasc' && (
+           <CHA2DS2VASc 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'has-bled' && (
+           <HASBLED 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {/* Dynamic Calculator */}
+        {showDynamicCalculator && (
+          <DynamicCalculator
+            calculatorId={showDynamicCalculator}
+            open={true}
+            onOpenChange={(isOpen) => { if (!isOpen) closeDynamicCalculator(); }}
           />
         )}
 

@@ -14,6 +14,7 @@ const patientRoutes = require('./patient.routes');
 const recordRoutes = require('./record.routes');
 const templateRoutes = require('./template.routes');
 const calculatorRoutes = require('./calculator.routes');
+const dynamicCalculatorRoutes = require('./dynamic-calculator.routes.js');
 const alertRoutes = require('./alert.routes');
 
 // Middleware para logging de requests (desenvolvimento)
@@ -47,6 +48,7 @@ router.use('/patients', patientRoutes);
 router.use('/records', recordRoutes);
 router.use('/templates', templateRoutes);
 router.use('/calculators', calculatorRoutes);
+router.use('/dynamic-calculators', dynamicCalculatorRoutes);
 router.use('/alerts', alertRoutes);
 
 // Rota 404 para endpoints não encontrados

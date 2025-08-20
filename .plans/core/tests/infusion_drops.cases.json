@@ -1,0 +1,37 @@
+[
+  {
+    "description": "30 gotas em 20 s, fator 20",
+    "inputs": {"drops_count": 30, "time_seconds": 20, "drop_factor": 20},
+    "expected": {"gtt_per_min": 90, "ml_per_h": 270.0},
+    "absTol": {"gtt_per_min": 0.5, "ml_per_h": 0.5},
+    "relTol": {"gtt_per_min": 0.0, "ml_per_h": 0.0}
+  },
+  {
+    "description": "40 gotas em 30 s, fator 15",
+    "inputs": {"drops_count": 40, "time_seconds": 30, "drop_factor": 15},
+    "expected": {"gtt_per_min": 80, "ml_per_h": 320.0},
+    "absTol": {"gtt_per_min": 0.5, "ml_per_h": 0.5},
+    "relTol": {"gtt_per_min": 0.0, "ml_per_h": 0.0}
+  },
+  {
+    "description": "25 gotas em 15 s, fator 20",
+    "inputs": {"drops_count": 25, "time_seconds": 15, "drop_factor": 20},
+    "expected": {"gtt_per_min": 100, "ml_per_h": 300.0},
+    "absTol": {"gtt_per_min": 0.5, "ml_per_h": 0.5},
+    "relTol": {"gtt_per_min": 0.0, "ml_per_h": 0.0}
+  },
+  {
+    "description": "60 gotas em 60 s, fator 20",
+    "inputs": {"drops_count": 60, "time_seconds": 60, "drop_factor": 20},
+    "expected": {"gtt_per_min": 60, "ml_per_h": 180.0},
+    "absTol": {"gtt_per_min": 0.5, "ml_per_h": 0.5},
+    "relTol": {"gtt_per_min": 0.0, "ml_per_h": 0.0}
+  },
+  {
+    "description": "90 gotas em 45 s, fator 15",
+    "inputs": {"drops_count": 90, "time_seconds": 45, "drop_factor": 15},
+    "expected": {"gtt_per_min": 120, "ml_per_h": 480.0},
+    "absTol": {"gtt_per_min": 0.5, "ml_per_h": 0.5},
+    "relTol": {"gtt_per_min": 0.0, "ml_per_h": 0.0}
+  }
+]

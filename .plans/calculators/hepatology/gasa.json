@@ -1,0 +1,14 @@
+{
+  "name": "Gradiente albumina soro-ascite (GASA/SAAG)",
+  "domain": "hepatologia",
+  "description": "Calcula o gradiente de albumina entre soro e líquido ascítico para distinguir ascite por hipertensão portal de outras causas.",
+  "inputs": [
+    {"name": "albumina_sérica", "symbol": "Alb_serum", "unit": "g/dL", "description": "Albumina sérica"},
+    {"name": "albumina_ascítica", "symbol": "Alb_ascites", "unit": "g/dL", "description": "Albumina do líquido ascítico"}
+  ],
+  "output": {"name": "GASA", "unit": "g/dL", "description": "Gradiente soro-ascite"},
+  "formula": "GASA = albumina_sérica – albumina_ascítica",
+  "references": [
+    {"citation": "Serum-ascites albumin gradient defines portal hypertension when ≥1.1 g/dL", "url": "https://pubmed.ncbi.nlm.nih.gov/351396793089184"}
+  ]
+}

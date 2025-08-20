@@ -1,0 +1,30 @@
+# Calculadoras gerais
+
+Este diretório contém calculadoras de aplicação ampla (não restritas a um sistema orgânico específico).  Elas incluem fórmulas antropométricas, estimativas de fluidos e correções fisiológicas utilizadas em diversas áreas da medicina.
+
+| Calculadora                                              | Variáveis principais                                                                     | Fórmula / comentário |
+|----------------------------------------------------------|------------------------------------------------------------------------------------------|----------------------|
+| **Contagem absoluta de eosinófilos**                    | contagem de leucócitos, porcentagem de eosinófilos                                       | `Eosinófilos absolutos = (WBC × %Eo)/100`. |
+| **Índice de massa corporal (IMC; índice de Quetelet)**   | peso (kg), altura (m)                                                                    | `IMC = peso ÷ altura²`【265914223290611†L91-L95】. |
+| **Área de superfície corporal (ASC) – método Mosteller** | altura (cm), peso (kg)                                                                   | `BSA = √((altura × peso)/3600)`【372537320866944†L39-L44】. |
+| **Área de superfície corporal – fórmula de Du Bois**     | altura (m), peso (kg)                                                                    | `BSA = 0,20247 × altura⁰·⁷²⁵ × peso⁰·⁴²⁵` (Du Bois e Du Bois, 1916). |
+| **Peso corporal ideal (adultos)**                        | altura, sexo                                                                             | Fórmulas de Devine ou Robinson estimam peso ideal com base em altura e sexo. |
+| **Peso corporal magro (homem/mulher)**                   | altura (cm), peso (kg), sexo                                                             | Fórmulas de Hume ou James estimam a massa magra.  Para homens: `LBW = 0,3281 × peso + 0,33929 × altura – 29,5336`; para mulheres: `LBW = 0,29569 × peso + 0,41813 × altura – 43,2933`【786873193218403†L256-L260】. |
+| **Peso corporal ajustado (AjBW)**                         | peso atual (kg), peso corporal ideal (kg)                                                | Usado em farmacocinética quando o paciente está acima do peso.  Formula: `AjBW = IBW + 0,4 × (peso_atual – IBW)`【786873193218403†L140-L144】. |
+| **Ressuscitação de fluidos em queimadura – Parkland**    | peso, superfície corporal queimada (%TBSA)                                               | Volume = 4 mL × peso × %TBSA para adultos (3 mL para crianças), metade nas primeiras 8 h【39425667587724†L155-L266】. |
+| **Ressuscitação de fluidos – Brooke modificada**         | peso, %TBSA                                                                              | Volume = 2 mL × peso × %TBSA + 2 L de manutenção; variação da fórmula de Evan para queimaduras. |
+| **Estimativa da concentração de etanol no sangue**        | quantidade de álcool ingerido, peso, sexo, tempo                                         | Fórmula de Widmark: `BAC = (ingestão (g) / (peso × r)) – (eliminação × tempo)`, onde r é 0,68 para homens e 0,55 para mulheres. |
+| **Saída cardíaca**                                       | frequência cardíaca, volume sistólico                                                    | `Cardiac output = frequência × volume sistólico`. |
+| **Resistência vascular pulmonar (RVP) / sistêmica (RVS)**| gradiente de pressão (artéria pulmonar ‒ capilar pulmonar ou arterial ‒ venosa), débito cardíaco | `RVP = (PAP média – PCWP) / débito × 80`; `RVS = (PAM – PVC) / débito × 80`. |
+| **Correção do intervalo QT (ECG)**                       | intervalo QT medido, frequência cardíaca (ou intervalo RR)                               | Fórmulas de Bazett, Fridericia, Hodges ou Framingham; Bazett: `QTc = QT/√RR`. |
+| **Clearance de creatinina (medido)**                      | volume urinário, tempo de coleta, creatinina sérica e urinária                           | `CrCl = (U_Cr × volume)/(P_Cr × tempo)`. |
+| **Correção do sódio em hiperglicemia**                   | sódio medido (mEq/L), glicemia (mg/dL)                                                   | Corrige a natremia em pacientes hiperglicêmicos: `Na_corr = Na_medido + 1,6 × [(glicemia – 100)/100]` (Katz)【997213102652314†L43-L53】.  Algumas referências utilizam 2,4 em vez de 1,6. |
+| **Déficit de ferro corporal (fórmula de Ganzoni)**         | peso (kg), hemoglobina alvo (g/dL), hemoglobina atual, ferro de depósito (mg)            | `Déficit total de ferro (mg) = peso × (Hb_alvo – Hb_atual) × 2,4 + ferro_de_depósito`【268007991159399†L133-L139】.  Habitualmente, adiciona‑se 500 mg para reposição de reservas. |
+| **Estimativa média de glicemia pela HbA1c (eAG)**         | HbA1c (%)                                                                                | `eAG (mg/dL) = 28,7 × HbA1c – 46,7`. |
+| **Gradiente albumina soro‑ascite (GASA)**                 | albumina sérica, albumina do líquido ascítico                                            | GASA = albumina sérica – albumina do líquido ascítico; valores ≥ 1,1 g/dL sugerem hipertensão portal. |
+| **Índice de saturação de transferrina (IST)**             | ferro sérico, capacidade total de ligação de ferro (TIBC)                                | `IST (%) = (ferro / TIBC) × 100`. |
+| **PaO₂ ideal pela idade**                                | idade (anos)                                                                             | `PaO₂ ideal = 100 – (idade/3)` mmHg. |
+| **Relação PaO₂/FiO₂ (SARA)**                              | pressão arterial de oxigênio (PaO₂), fração inspirada de oxigênio (FiO₂)                 | Índice utilizado para classificar gravidade de síndrome de angústia respiratória aguda. |
+| **SpO₂/FiO₂ e equivalência com PaO₂/FiO₂**                | saturação periférica de oxigênio (SpO₂), FiO₂                                            | Permite estimar PaO₂/FiO₂ em pacientes sem gasometria arterial. |
+
+Além dessas calculadoras, há conversões específicas (ver diretório `conversions`) e escores de risco (ver diretório `scores`).

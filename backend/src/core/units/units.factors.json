@@ -1,0 +1,160 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Catálogo de unidades e fatores de conversão para o sistema Health-Guardian",
+    "last_updated": "2024-01-16",
+    "source": "UpToDate, Young DS 1987, protocolos hospitalares"
+  },
+  "dimensions": {
+    "mass": {
+      "base_unit": "kg",
+      "units": {
+        "kg": { "factor": 1, "name": "quilograma" },
+        "g": { "factor": 0.001, "name": "grama" },
+        "mg": { "factor": 0.000001, "name": "miligrama" },
+        "μg": { "factor": 0.000000001, "name": "micrograma" },
+        "mcg": { "factor": 0.000000001, "name": "micrograma" },
+        "ng": { "factor": 0.000000000001, "name": "nanograma" },
+        "pg": { "factor": 0.000000000000001, "name": "picograma" },
+        "lb": { "factor": 0.453592, "name": "libra" }
+      }
+    },
+    "volume": {
+      "base_unit": "L",
+      "units": {
+        "L": { "factor": 1, "name": "litro" },
+        "mL": { "factor": 0.001, "name": "mililitro" },
+        "cc": { "factor": 0.001, "name": "centímetro cúbico" },
+        "μL": { "factor": 0.000001, "name": "microlitro" },
+        "dL": { "factor": 0.1, "name": "decilitro" }
+      }
+    },
+    "time": {
+      "base_unit": "s",
+      "units": {
+        "s": { "factor": 1, "name": "segundo" },
+        "min": { "factor": 60, "name": "minuto" },
+        "h": { "factor": 3600, "name": "hora" },
+        "d": { "factor": 86400, "name": "dia" }
+      }
+    },
+    "length": {
+      "base_unit": "m",
+      "units": {
+        "m": { "factor": 1, "name": "metro" },
+        "cm": { "factor": 0.01, "name": "centímetro" },
+        "mm": { "factor": 0.001, "name": "milímetro" },
+        "ft": { "factor": 0.3048, "name": "pé" },
+        "in": { "factor": 0.0254, "name": "polegada" }
+      }
+    },
+    "concentration_mass_volume": {
+      "base_unit": "kg/L",
+      "units": {
+        "kg/L": { "factor": 1, "name": "quilograma por litro" },
+        "g/L": { "factor": 0.001, "name": "grama por litro" },
+        "mg/L": { "factor": 0.000001, "name": "miligrama por litro" },
+        "μg/L": { "factor": 0.000000001, "name": "micrograma por litro" },
+        "ng/L": { "factor": 0.000000000001, "name": "nanograma por litro" },
+        "pg/L": { "factor": 0.000000000000001, "name": "picograma por litro" },
+        "g/dL": { "factor": 0.01, "name": "grama por decilitro" },
+        "mg/dL": { "factor": 0.00001, "name": "miligrama por decilitro" },
+        "μg/dL": { "factor": 0.00000001, "name": "micrograma por decilitro" },
+        "ng/dL": { "factor": 0.00000000001, "name": "nanograma por decilitro" },
+        "pg/dL": { "factor": 0.00000000000001, "name": "picograma por decilitro" },
+        "mg/mL": { "factor": 0.001, "name": "miligrama por mililitro" },
+        "μg/mL": { "factor": 0.000001, "name": "micrograma por mililitro" },
+        "ng/mL": { "factor": 0.000000001, "name": "nanograma por mililitro" },
+        "pg/mL": { "factor": 0.000000000001, "name": "picograma por mililitro" }
+      }
+    },
+    "molar_concentration": {
+      "base_unit": "mol/L",
+      "units": {
+        "mol/L": { "factor": 1, "name": "mol por litro" },
+        "mmol/L": { "factor": 0.001, "name": "milimol por litro" },
+        "μmol/L": { "factor": 0.000001, "name": "micromol por litro" },
+        "nmol/L": { "factor": 0.000000001, "name": "nanomol por litro" },
+        "pmol/L": { "factor": 0.000000000001, "name": "picomol por litro" },
+        "M": { "factor": 1, "name": "molar" },
+        "mM": { "factor": 0.001, "name": "milimolar" },
+        "μM": { "factor": 0.000001, "name": "micromolar" },
+        "nM": { "factor": 0.000000001, "name": "nanomolar" },
+        "pM": { "factor": 0.000000000001, "name": "picomolar" }
+      }
+    },
+    "equivalent_concentration": {
+      "base_unit": "Eq/L",
+      "units": {
+        "Eq/L": { "factor": 1, "name": "equivalente por litro" },
+        "mEq/L": { "factor": 0.001, "name": "miliequivalente por litro" },
+        "μEq/L": { "factor": 0.000001, "name": "microequivalente por litro" }
+      }
+    },
+    "dose_rate_weight": {
+      "base_unit": "kg/kg/s",
+      "units": {
+        "kg/kg/s": { "factor": 1, "name": "quilograma por quilograma por segundo" },
+        "g/kg/s": { "factor": 0.001, "name": "grama por quilograma por segundo" },
+        "mg/kg/s": { "factor": 0.000001, "name": "miligrama por quilograma por segundo" },
+        "μg/kg/s": { "factor": 0.000000001, "name": "micrograma por quilograma por segundo" },
+        "mg/kg/min": { "factor": 0.000001/60, "name": "miligrama por quilograma por minuto" },
+        "μg/kg/min": { "factor": 0.000000001/60, "name": "micrograma por quilograma por minuto" },
+        "ng/kg/min": { "factor": 0.000000000001/60, "name": "nanograma por quilograma por minuto" },
+        "mg/kg/h": { "factor": 0.000001/3600, "name": "miligrama por quilograma por hora" },
+        "μg/kg/h": { "factor": 0.000000001/3600, "name": "micrograma por quilograma por hora" }
+      }
+    },
+    "flow_rate": {
+      "base_unit": "L/s",
+      "units": {
+        "L/s": { "factor": 1, "name": "litro por segundo" },
+        "L/min": { "factor": 1/60, "name": "litro por minuto" },
+        "L/h": { "factor": 1/3600, "name": "litro por hora" },
+        "mL/s": { "factor": 0.001, "name": "mililitro por segundo" },
+        "mL/min": { "factor": 0.001/60, "name": "mililitro por minuto" },
+        "mL/h": { "factor": 0.001/3600, "name": "mililitro por hora" },
+        "gtt/min": { "factor": "variable", "name": "gotas por minuto" },
+        "gtt/s": { "factor": "variable", "name": "gotas por segundo" }
+      }
+    },
+    "drop_factor": {
+      "base_unit": "gtt/mL",
+      "units": {
+        "gtt/mL": { "factor": 1, "name": "gotas por mililitro" }
+      }
+    },
+    "pressure": {
+      "base_unit": "Pa",
+      "units": {
+        "Pa": { "factor": 1, "name": "pascal" },
+        "mmHg": { "factor": 133.322, "name": "milímetro de mercúrio" },
+        "cmH2O": { "factor": 98.0665, "name": "centímetro de água" },
+        "atm": { "factor": 101325, "name": "atmosfera" },
+        "bar": { "factor": 100000, "name": "bar" },
+        "psi": { "factor": 6894.76, "name": "libra por polegada quadrada" }
+      }
+    },
+    "temperature": {
+      "base_unit": "K",
+      "units": {
+        "K": { "factor": 1, "name": "kelvin" },
+        "°C": { "factor": "offset", "offset": 273.15, "name": "grau Celsius" },
+        "°F": { "factor": "formula", "formula": "(°F - 32) * 5/9 + 273.15", "name": "grau Fahrenheit" }
+      }
+    },
+    "activity": {
+      "base_unit": "IU/L",
+      "units": {
+        "IU/L": { "factor": 1, "name": "unidade internacional por litro" },
+        "U/L": { "factor": 1, "name": "unidade por litro" },
+        "mU/L": { "factor": 0.001, "name": "miliunidade por litro" },
+        "μU/L": { "factor": 0.000001, "name": "microunidade por litro" },
+        "IU/mL": { "factor": 1000, "name": "unidade internacional por mililitro" },
+        "U/mL": { "factor": 1000, "name": "unidade por mililitro" },
+        "mU/mL": { "factor": 1, "name": "miliunidade por mililitro" },
+        "μU/mL": { "factor": 0.001, "name": "microunidade por mililitro" }
+      }
+    }
+  }
+}

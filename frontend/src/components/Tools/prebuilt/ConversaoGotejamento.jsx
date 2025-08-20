@@ -9,26 +9,45 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../
 import { Copy, Info } from "lucide-react";
 
 /**
- * ConversaoGotejamentoDialog Component - Modal para conversão de gotejamento otimizado
+ * ConversaoGotejamentoDialog Component - Calculadora de conversão de gotejamento IV
+ * 
+ * Converte entre gotas por minuto (gtt/min) e mililitros por hora (mL/h)
+ * para infusões intravenosas, com modo de contagem manual "Tap".
  * 
  * @component
+ * @param {boolean} open - Estado de abertura do modal
+ * @param {function} onOpenChange - Callback para controle do modal
+ * 
  * @example
- * return (
- *   <ConversaoGotejamentoDialog open={true} onOpenChange={setOpen} />
- * )
+ * // Uso básico
+ * <ConversaoGotejamentoDialog 
+ *   open={isOpen} 
+ *   onOpenChange={setIsOpen} 
+ * />
+ * 
+ * @example
+ * // Modo Tap: contar 20 gotas em 30 segundos com equipo 20 gtt/mL
+ * // Resultado: 40 gtt/min → 120 mL/h
+ * 
+ * @example
+ * // Conversão direta: 100 mL/h com equipo 20 gtt/mL
+ * // Resultado: 33.3 gtt/min
  * 
  * Integrates with:
- * - components/ui/* para componentes de interface (Dialog, Button, etc.)
- * - Calculators.jsx via propriedades open/onOpenChange
+ * - components/ui/* para componentes de interface padronizados
+ * - Calculators.jsx via propriedades open/onOpenChange para controle modal
  * 
  * Features:
- * - Modo "Tap": contagem de gotas com cronômetro automático
- * - Conversão direta: mL/h para gtt/min e vice-versa
- * - Valores copiáveis para clipboard
- * - Tooltips informativos sobre equipos
- * - Fórmulas matemáticas visíveis
+ * - Modo "Tap": contagem manual de gotas com cronômetro automático
+ * - Conversão direta: entrada de mL/h para cálculo instantâneo
+ * - Suporte a diferentes fatores de gotejamento (macro/micro)
+ * - Valores copiáveis com CopyableValue component
+ * - Atalho de teclado (barra de espaço) para contagem rápida
+ * - Tooltips informativos sobre tipos de equipo
+ * - Validação de entrada e formatação numérica
  * 
- * IA prompt: Adicionar histórico de conversões, templates de equipos hospitalares, e integração com prontuário
+ * IA prompt: Adicionar histórico de conversões, templates de equipos hospitalares específicos, 
+ * integração com prontuário eletrônico, e alertas de segurança para taxas extremas
  */
 
 function formatNumber(n, digits = 1) {
@@ -171,14 +190,17 @@ export default function ConversaoGotejamentoDialog({ open, onOpenChange }) {
           {/* Card de instruções */}
           <Card className="border-gray-700 bg-gray-800/50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base text-white">Como usar</CardTitle>
+              <CardTitle className="text-base text-white flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Instruções
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-gray-300">
               <ul className="list-disc space-y-1 pl-5">
-                <li><strong>Tap:</strong> toque no botão <strong>Gota</strong> a cada gota que cair. A primeira "Gota" já inicia o cronômetro.</li>
-                <li>Fator padrão: <strong>20 gtt/mL</strong>, ajuste conforme o equipo em uso.</li>
-                <li>Também é possível converter de <strong>mL/h → gtt/min</strong> diretamente na segunda aba.</li>
-                <li><strong>Dica:</strong> use a barra de espaço para contar gotas mais rapidamente.</li>
+                <li><strong>Modo Tap:</strong> toque no botão <strong>Gota</strong> a cada gota que cair. A primeira "Gota" já inicia o cronômetro automaticamente.</li>
+                <li><strong>Fator de gotejamento:</strong> padrão 20 gtt/mL (equipo macro), ajuste conforme o equipo em uso.</li>
+                <li><strong>Conversão direta:</strong> insira mL/h para obter gtt/min instantaneamente na segunda aba.</li>
+                <li><strong>Atalho:</strong> use a barra de espaço para contar gotas mais rapidamente no modo Tap.</li>
               </ul>
             </CardContent>
           </Card>
@@ -323,10 +345,27 @@ export default function ConversaoGotejamentoDialog({ open, onOpenChange }) {
             </CardContent>
           </Card>
 
-          {/* Fórmulas utilizadas */}
-          <div className="text-xs text-gray-400 text-center">
-            <strong>Fórmulas:</strong> gtt/min = nº de gotas ÷ (tempo/60) • mL/h = (gtt/min ÷ gtt/mL) × 60 • gtt/min = (mL/h × gtt/mL) ÷ 60
-          </div>
+          {/* Card de referências */}
+          <Card className="border-gray-700 bg-gray-800/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-white">Fórmulas e Referências</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-gray-300">
+              <div className="space-y-2">
+                <div><strong>Conversões:</strong></div>
+                <ul className="list-disc space-y-1 pl-5">
+                  <li>gtt/min = nº de gotas ÷ (tempo em segundos/60)</li>
+                  <li>mL/h = (gtt/min ÷ fator de gotejamento) × 60</li>
+                  <li>gtt/min = (mL/h × fator de gotejamento) ÷ 60</li>
+                </ul>
+                <div className="mt-3"><strong>Tipos de equipo:</strong></div>
+                <ul className="list-disc space-y-1 pl-5">
+                  <li>Macro: 10-20 gtt/mL (uso geral em adultos)</li>
+                  <li>Micro: 60 gtt/mL (pediatria e infusões de precisão)</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>

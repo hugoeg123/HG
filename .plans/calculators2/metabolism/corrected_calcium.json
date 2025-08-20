@@ -1,0 +1,14 @@
+{
+  "name": "Correção de cálcio pela albumina",
+  "domain": "metabolismo",
+  "description": "Calcula o cálcio sérico corrigido para hipoalbuminemia: Ca_corr = Ca_medido + 0,8 × (4,0 – albumina).",
+  "inputs": [
+    {"name": "calcio_medido", "symbol": "calcium_mg_dl", "unit": "mg/dL", "description": "Cálcio total medido"},
+    {"name": "albumina", "symbol": "albumin_g_dl", "unit": "g/dL", "description": "Albumina sérica"}
+  ],
+  "output": {"name": "calcio_corrigido", "unit": "mg/dL", "description": "Cálcio sérico corrigido"},
+  "formula": "Ca_corr = Ca_medido + 0,8 × (4,0 – albumina)",
+  "references": [
+    {"citation": "Corrected calcium formula", "lines": "269570755257146†L83-L87"}
+  ]
+}

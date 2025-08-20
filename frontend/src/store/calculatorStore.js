@@ -148,6 +148,26 @@ const useCalculatorStore = create(
           if (calc.id === 'conv-gotejamento') return true; // keep the prebuilt
           if (calc.id === 'conv-mcg-kg-min') return true; // keep the new prebuilt
           if (calc.id === 'conv-mcg-kg-min-gtt-min') return true; // keep the new gtt/min prebuilt
+          if (calc.id === 'bmi-calculator') return true; // keep the BMI calculator
+          if (calc.id === 'bsa-mosteller') return true; // keep the BSA Mosteller calculator
+          if (calc.id === 'bsa-dubois') return true; // keep the BSA DuBois calculator
+          if (calc.id === 'ideal-body-weight') return true; // keep the Ideal Body Weight calculator
+          if (calc.id === 'lean-body-weight') return true; // keep the Lean Body Weight calculator
+          if (calc.id === 'adjusted-body-weight') return true; // keep the Adjusted Body Weight calculator
+          if (calc.id === 'cockcroft-gault') return true; // keep the Cockcroft-Gault calculator
+          if (calc.id === 'ckd-epi-2021') return true; // keep the CKD-EPI 2021 calculator
+          if (calc.id === 'fena') return true; // keep the FeNa calculator
+          if (calc.id === 'feurea') return true; // keep the FeUrea calculator
+          if (calc.id === 'corrected-calcium') return true; // keep the Corrected Calcium calculator
+          if (calc.id === 'osmolarity') return true; // keep the Osmolarity calculator
+          if (calc.id === 'iron-deficit') return true; // keep the Iron Deficit calculator
+          if (calc.id === 'friedewald-ldl') return true; // keep the Friedewald LDL calculator
+          if (calc.id === 'pao2-fio2') return true; // keep the PaO2/FiO2 calculator
+          if (calc.id === 'qtc-calculation') return true; // keep the QTc calculator
+          if (calc.id === 'anion-gap') return true; // keep the Anion Gap calculator
+          if (calc.id === 'spo2-fio2-ratio') return true; // keep the SpO2/FiO2 calculator
+          if (calc.id === 'child-pugh') return true; // keep the Child-Pugh calculator
+          if (calc.id === 'meld-score') return true; // keep the MELD calculator
           if (UNWANTED_IDS.includes(calc.id)) return false; // drop known seeds
           // Drop known mcg/kg/min-ml/h calculator variants by name match (only user-created or old versions)
           if (typeof calc.name === 'string' && UNWANTED_NAME_PATTERNS.some(re => re.test(calc.name)) && !calc.isHardcoded) return false;
@@ -196,6 +216,266 @@ const useCalculatorStore = create(
             immutable: true,
             tags: ['mcg', 'kg', 'min', 'gtt/min', 'infusão', 'conversão'],
             summary: 'Dose → gotas por minuto com base em peso, concentração e fator de gotas'
+          },
+          {
+            id: 'bmi-calculator',
+            name: 'Índice de Massa Corporal (IMC)',
+            category: 'Antropometria',
+            description: 'Calcula IMC e classifica estado nutricional',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['imc', 'bmi', 'antropometria', 'peso', 'altura'],
+            summary: 'Cálculo do IMC com classificação automática segundo OMS'
+          },
+          {
+            id: 'bsa-mosteller',
+            name: 'Área de Superfície Corporal (Mosteller)',
+            category: 'Antropometria',
+            description: 'Calcula ASC pela fórmula de Mosteller',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['asc', 'bsa', 'mosteller', 'antropometria', 'superfície'],
+            summary: 'Cálculo da área de superfície corporal - padrão para quimioterapia'
+          },
+          {
+            id: 'bsa-dubois',
+            name: 'Área de Superfície Corporal (DuBois)',
+            category: 'Antropometria',
+            description: 'Calcula ASC pela fórmula de DuBois',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['asc', 'bsa', 'dubois', 'antropometria', 'superfície'],
+            summary: 'Cálculo da área de superfície corporal - fórmula histórica'
+          },
+          {
+            id: 'ideal-body-weight',
+            name: 'Peso Corporal Ideal',
+            category: 'Antropometria',
+            description: 'Calcula peso ideal pela fórmula de Robinson',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['peso', 'ideal', 'robinson', 'antropometria', 'dosagem'],
+            summary: 'Peso ideal para dosagem de medicamentos e avaliação nutricional'
+          },
+          {
+            id: 'lean-body-weight',
+            name: 'Massa Corporal Magra',
+            category: 'Antropometria',
+            description: 'Calcula a massa corporal magra pela fórmula de Boer',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['massa', 'magra', 'boer', 'antropometria', 'composição'],
+            summary: 'Massa corporal magra para dosagem e avaliação nutricional'
+          },
+          {
+            id: 'adjusted-body-weight',
+            name: 'Peso Corporal Ajustado',
+            category: 'Antropometria',
+            description: 'Calcula peso ajustado para dosagem em pacientes obesos',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['peso', 'ajustado', 'obesidade', 'dosagem', 'antropometria'],
+            summary: 'Peso ajustado para dosagem precisa em pacientes obesos'
+          },
+          {
+            id: 'cockcroft-gault',
+            name: 'Cockcroft-Gault',
+            category: 'Função Renal',
+            description: 'Estima o clearance de creatinina baseado em idade, peso e creatinina',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['clearance', 'creatinina', 'renal', 'cockcroft', 'gault'],
+            summary: 'Clearance de creatinina - fórmula clássica para função renal'
+          },
+          {
+            id: 'ckd-epi-2021',
+            name: 'CKD-EPI 2021',
+            category: 'Função Renal',
+            description: 'Taxa de filtração glomerular pela fórmula CKD-EPI 2021 (sem correção racial)',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['tfg', 'ckd-epi', 'filtração', 'glomerular', 'renal'],
+            summary: 'TFG padrão atual - CKD-EPI 2021 sem correção racial'
+          },
+          {
+            id: 'fena',
+            name: 'FeNa (Fração de Excreção de Sódio)',
+            category: 'Função Renal',
+            description: 'Diferencia lesão renal pré-renal de necrose tubular aguda',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['fena', 'sódio', 'excreção', 'prerenal', 'nta'],
+            summary: 'Diferenciação pré-renal vs NTA - padrão ouro'
+          },
+          {
+            id: 'feurea',
+            name: 'FeUrea (Fração de Excreção de Ureia)',
+            category: 'Função Renal',
+            description: 'Alternativa à FeNa, especialmente útil em pacientes usando diuréticos',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['feurea', 'ureia', 'excreção', 'diuréticos', 'prerenal'],
+            summary: 'Alternativa à FeNa - útil com diuréticos'
+          },
+          {
+            id: 'corrected-calcium',
+            name: 'Cálcio Corrigido',
+            category: 'Metabólico',
+            description: 'Correção do cálcio sérico pela albumina para avaliação precisa do status do cálcio',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['calcio', 'albumina', 'metabolico', 'eletrolitico'],
+            summary: 'Correção do cálcio sérico pela albumina'
+          },
+          {
+            id: 'osmolarity',
+            name: 'Osmolaridade Sérica',
+            category: 'Metabólico',
+            description: 'Cálculo da osmolaridade sérica baseado em sódio, glicose e ureia',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['osmolaridade', 'sodio', 'glicose', 'ureia', 'metabolico'],
+            summary: 'Cálculo da osmolaridade sérica'
+          },
+          {
+            id: 'iron-deficit',
+            name: 'Déficit de Ferro',
+            category: 'Metabólico',
+            description: 'Cálculo do déficit de ferro pela fórmula de Ganzoni para reposição terapêutica',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['ferro', 'anemia', 'ganzoni', 'hemoglobina', 'reposicao'],
+            summary: 'Déficit de ferro pela fórmula de Ganzoni'
+          },
+          {
+            id: 'friedewald-ldl',
+            name: 'LDL-Colesterol (Friedewald)',
+            category: 'Cardiologia',
+            description: 'Cálculo do LDL-colesterol pela fórmula de Friedewald para avaliação do risco cardiovascular',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['ldl', 'colesterol', 'friedewald', 'cardiovascular', 'lipidograma'],
+            summary: 'LDL-colesterol calculado - padrão para risco cardiovascular'
+          },
+          {
+            id: 'pao2-fio2',
+            name: 'Relação PaO2/FiO2',
+            category: 'Cardiologia',
+            description: 'Índice de oxigenação para diagnóstico e classificação de ARDS',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['pao2', 'fio2', 'ards', 'oxigenacao', 'ventilacao'],
+            summary: 'P/F ratio - diagnóstico e severidade de ARDS'
+          },
+          {
+            id: 'qtc-calculation',
+            name: 'QTc (Intervalo QT Corrigido)',
+            category: 'Cardiologia',
+            description: 'Cálculo do QTc pelas fórmulas Bazett, Fridericia e Framingham com interpretação automática',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['qtc', 'qt', 'bazett', 'fridericia', 'framingham', 'ecg', 'arritmia'],
+            summary: 'QTc com múltiplas fórmulas - detecção de risco arrítmico'
+          },
+          {
+            id: 'anion-gap',
+            name: 'Anion Gap',
+            category: 'Metabólico',
+            description: 'Cálculo do anion gap (Na + K) - (Cl + HCO3) com interpretação clínica automática',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['anion', 'gap', 'acidose', 'metabolica', 'eletrolitico', 'gasometria'],
+            summary: 'Anion gap - diagnóstico de acidose metabólica'
+          },
+          {
+            id: 'spo2-fio2-ratio',
+            name: 'Relação SpO2/FiO2',
+            category: 'Pneumologia',
+            description: 'Índice de oxigenação não-invasivo alternativo ao PaO2/FiO2 para ARDS',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['spo2', 'fio2', 'ards', 'oxigenacao', 'nao-invasivo', 'oximetria'],
+            summary: 'S/F ratio - alternativa não-invasiva ao P/F ratio'
+          },
+          {
+            id: 'child-pugh',
+            name: 'Child-Pugh Score',
+            category: 'Hepatologia',
+            description: 'Classificação da severidade da cirrose hepática em classes A, B ou C',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['child-pugh', 'cirrose', 'hepatico', 'bilirrubina', 'albumina', 'inr', 'ascite', 'encefalopatia'],
+            summary: 'Child-Pugh - classificação de cirrose hepática'
+          },
+          {
+            id: 'meld-score',
+            name: 'MELD Score',
+            category: 'Hepatologia',
+            description: 'Model for End-Stage Liver Disease - predição de mortalidade e prioridade para transplante',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['meld', 'hepatico', 'transplante', 'mortalidade', 'bilirrubina', 'inr', 'creatinina', 'sodio'],
+            summary: 'MELD - mortalidade hepática e prioridade de transplante'
+          },
+          {
+            id: 'parkland-formula',
+            name: 'Fórmula de Parkland',
+            category: 'Pediatria / Queimaduras',
+            description: 'Cálculo de reposição volêmica nas primeiras 24h em queimaduras extensas',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['parkland', 'queimadura', 'reposicao', 'volemica', 'cristaloide', 'ringer', 'lactato'],
+            summary: 'Parkland - reposição volêmica em queimaduras'
+          },
+          {
+            id: 'qsofa',
+            name: 'qSOFA (Quick SOFA)',
+            category: 'Terapia Intensiva',
+            description: 'Triagem rápida para sepsis - identificação de pacientes com alto risco',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['qsofa', 'sepsis', 'triagem', 'mortalidade', 'frequencia', 'respiratoria', 'pressao', 'mental'],
+            summary: 'qSOFA - triagem rápida para sepsis'
+          },
+          {
+            id: 'apache2',
+            name: 'APACHE II',
+            category: 'Terapia Intensiva',
+            description: 'Acute Physiology and Chronic Health Evaluation - prognóstico em UTI',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['apache', 'uti', 'prognostico', 'mortalidade', 'fisiologia', 'cronico'],
+            summary: 'APACHE II - prognóstico em terapia intensiva'
+          },
+          {
+            id: 'sofa',
+            name: 'SOFA Score',
+            category: 'Terapia Intensiva',
+            description: 'Sequential Organ Failure Assessment - avaliação de disfunção orgânica',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['sofa', 'orgao', 'disfuncao', 'sepsis', 'mortalidade', 'sequencial'],
+            summary: 'SOFA - avaliação de disfunção orgânica'
+          },
+          {
+            id: 'cha2ds2-vasc',
+            name: 'CHA₂DS₂-VASc',
+            category: 'Cardiologia',
+            description: 'Avaliação do risco de AVC em fibrilação atrial',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['cha2ds2vasc', 'fibrilacao', 'atrial', 'avc', 'anticoagulacao', 'risco'],
+            summary: 'CHA₂DS₂-VASc - risco de AVC em fibrilação atrial'
+          },
+          {
+            id: 'has-bled',
+            name: 'HAS-BLED',
+            category: 'Cardiologia',
+            description: 'Avaliação do risco de sangramento em anticoagulação',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['hasbled', 'sangramento', 'anticoagulacao', 'risco', 'hemorragia'],
+            summary: 'HAS-BLED - risco de sangramento em anticoagulação'
           }
         ];
 

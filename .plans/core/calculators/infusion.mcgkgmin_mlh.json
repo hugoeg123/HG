@@ -1,0 +1,27 @@
+{
+  "id": "infusion.mcgkgmin_mlh",
+  "name": "μg/kg/min ↔ mL/h",
+  "version": "1.0.0",
+  "inputs": [
+    {"id": "weight_kg", "label": "Peso (kg)", "type": "number", "unit": "kg", "min": 0.5},
+    {"id": "rate_mcgkgmin", "label": "Taxa (μg/kg/min)", "type": "number", "unit": "µg/kg/min", "min": 0},
+    {"id": "concentration_mg_ml", "label": "Concentração (mg/mL)", "type": "number", "unit": "mg/mL", "min": 0.001}
+  ],
+  "expressions": {
+    "ml_per_h": "(rate_mcgkgmin * weight_kg * 60) / (1000 * concentration_mg_ml)",
+    "rate_mcgkgmin": "(ml_per_h * concentration_mg_ml * 1000) / (60 * weight_kg)"
+  },
+  "outputs": [
+    {"id": "ml_per_h", "unit": "mL/h", "decimals": 2},
+    {"id": "rate_mcgkgmin", "unit": "µg/kg/min", "decimals": 3}
+  ],
+  "examples": [
+    {"in": {"weight_kg": 70, "rate_mcgkgmin": 5, "concentration_mg_ml": 0.2}, "out": {"ml_per_h": 105.0, "rate_mcgkgmin": 5.0}},
+    {"in": {"weight_kg": 60, "rate_mcgkgmin": 0.5, "concentration_mg_ml": 0.1}, "out": {"ml_per_h": 18.0, "rate_mcgkgmin": 0.5}},
+    {"in": {"weight_kg": 50, "rate_mcgkgmin": 1.2, "concentration_mg_ml": 0.08}, "out": {"ml_per_h": 45.0, "rate_mcgkgmin": 1.2}},
+    {"in": {"weight_kg": 80, "rate_mcgkgmin": 10, "concentration_mg_ml": 1}, "out": {"ml_per_h": 48.0, "rate_mcgkgmin": 10.0}},
+    {"in": {"weight_kg": 3.5, "rate_mcgkgmin": 20, "concentration_mg_ml": 0.05}, "out": {"ml_per_h": 168.0, "rate_mcgkgmin": 20.0}}
+  ],
+  "notes": "Converte entre taxa de infusão em μg/kg/min e volume em mL/h, considerando o peso e a concentração da solução.",
+  "references": ["Fórmulas de infusão clínica"]
+}

@@ -1,0 +1,375 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Catálogo de analitos laboratoriais com propriedades e conversões canônicas",
+    "last_updated": "2024-01-16",
+    "source": "UpToDate, Young DS 1987, protocolos laboratoriais"
+  },
+  "analytes": {
+    "sodium": {
+      "name": "Sódio",
+      "symbol": "Na+",
+      "category": "eletrólito",
+      "valence": 1,
+      "molecular_weight": 22.99,
+      "canonical_conversions": [
+        {
+          "from": "mEq/L",
+          "to": "mmol/L",
+          "factor": 1,
+          "note": "Na+ tem valência 1, então mEq/L = mmol/L"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 136, "max": 145, "unit": "mEq/L" },
+          "si": { "min": 136, "max": 145, "unit": "mmol/L" }
+        }
+      }
+    },
+    "potassium": {
+      "name": "Potássio",
+      "symbol": "K+",
+      "category": "eletrólito",
+      "valence": 1,
+      "molecular_weight": 39.10,
+      "canonical_conversions": [
+        {
+          "from": "mEq/L",
+          "to": "mmol/L",
+          "factor": 1,
+          "note": "K+ tem valência 1, então mEq/L = mmol/L"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 3.5, "max": 5.0, "unit": "mEq/L" },
+          "si": { "min": 3.5, "max": 5.0, "unit": "mmol/L" }
+        }
+      }
+    },
+    "chloride": {
+      "name": "Cloreto",
+      "symbol": "Cl-",
+      "category": "eletrólito",
+      "valence": -1,
+      "molecular_weight": 35.45,
+      "canonical_conversions": [
+        {
+          "from": "mEq/L",
+          "to": "mmol/L",
+          "factor": 1,
+          "note": "Cl- tem valência 1, então mEq/L = mmol/L"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 98, "max": 107, "unit": "mEq/L" },
+          "si": { "min": 98, "max": 107, "unit": "mmol/L" }
+        }
+      }
+    },
+    "calcium": {
+      "name": "Cálcio",
+      "symbol": "Ca2+",
+      "category": "eletrólito",
+      "valence": 2,
+      "molecular_weight": 40.08,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.2495,
+          "note": "Conversão baseada no peso molecular do cálcio"
+        },
+        {
+          "from": "mEq/L",
+          "to": "mmol/L",
+          "factor": 0.5,
+          "note": "Ca2+ tem valência 2, então mmol/L = mEq/L / 2"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 8.5, "max": 10.5, "unit": "mg/dL" },
+          "si": { "min": 2.12, "max": 2.62, "unit": "mmol/L" }
+        }
+      }
+    },
+    "magnesium": {
+      "name": "Magnésio",
+      "symbol": "Mg2+",
+      "category": "eletrólito",
+      "valence": 2,
+      "molecular_weight": 24.31,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.4114,
+          "note": "Conversão baseada no peso molecular do magnésio"
+        },
+        {
+          "from": "mEq/L",
+          "to": "mmol/L",
+          "factor": 0.5,
+          "note": "Mg2+ tem valência 2, então mmol/L = mEq/L / 2"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 1.7, "max": 2.2, "unit": "mg/dL" },
+          "si": { "min": 0.70, "max": 0.95, "unit": "mmol/L" }
+        }
+      }
+    },
+    "phosphate": {
+      "name": "Fosfato",
+      "symbol": "PO4-3",
+      "category": "eletrólito",
+      "valence": -3,
+      "molecular_weight": 94.97,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.3229,
+          "note": "Conversão baseada no peso molecular do fosfato"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 2.5, "max": 4.5, "unit": "mg/dL" },
+          "si": { "min": 0.81, "max": 1.45, "unit": "mmol/L" }
+        }
+      }
+    },
+    "glucose": {
+      "name": "Glicose",
+      "symbol": "C6H12O6",
+      "category": "metabolismo",
+      "valence": 0,
+      "molecular_weight": 180.16,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.0555,
+          "note": "Conversão padrão para glicose"
+        }
+      ],
+      "reference_ranges": {
+        "adult_fasting": {
+          "conventional": { "min": 70, "max": 100, "unit": "mg/dL" },
+          "si": { "min": 3.9, "max": 5.6, "unit": "mmol/L" }
+        }
+      }
+    },
+    "urea": {
+      "name": "Ureia",
+      "symbol": "CH4N2O",
+      "category": "função_renal",
+      "valence": 0,
+      "molecular_weight": 60.06,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.357,
+          "note": "Conversão para ureia (BUN)"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 7, "max": 20, "unit": "mg/dL" },
+          "si": { "min": 2.5, "max": 7.1, "unit": "mmol/L" }
+        }
+      }
+    },
+    "creatinine": {
+      "name": "Creatinina",
+      "symbol": "C4H7N3O",
+      "category": "função_renal",
+      "valence": 0,
+      "molecular_weight": 113.12,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "μmol/L",
+          "factor": 88.4,
+          "note": "Conversão padrão para creatinina"
+        }
+      ],
+      "reference_ranges": {
+        "adult_male": {
+          "conventional": { "min": 0.7, "max": 1.3, "unit": "mg/dL" },
+          "si": { "min": 62, "max": 115, "unit": "μmol/L" }
+        },
+        "adult_female": {
+          "conventional": { "min": 0.6, "max": 1.1, "unit": "mg/dL" },
+          "si": { "min": 53, "max": 97, "unit": "μmol/L" }
+        }
+      }
+    },
+    "albumin": {
+      "name": "Albumina",
+      "symbol": "ALB",
+      "category": "proteína",
+      "valence": 0,
+      "molecular_weight": 66500,
+      "canonical_conversions": [
+        {
+          "from": "g/dL",
+          "to": "g/L",
+          "factor": 10,
+          "note": "Conversão simples de decilitro para litro"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 3.5, "max": 5.0, "unit": "g/dL" },
+          "si": { "min": 35, "max": 50, "unit": "g/L" }
+        }
+      }
+    },
+    "total_protein": {
+      "name": "Proteína Total",
+      "symbol": "TP",
+      "category": "proteína",
+      "valence": 0,
+      "canonical_conversions": [
+        {
+          "from": "g/dL",
+          "to": "g/L",
+          "factor": 10,
+          "note": "Conversão simples de decilitro para litro"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 6.0, "max": 8.3, "unit": "g/dL" },
+          "si": { "min": 60, "max": 83, "unit": "g/L" }
+        }
+      }
+    },
+    "bilirubin_total": {
+      "name": "Bilirrubina Total",
+      "symbol": "TBIL",
+      "category": "função_hepática",
+      "valence": 0,
+      "molecular_weight": 584.66,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "μmol/L",
+          "factor": 17.1,
+          "note": "Conversão padrão para bilirrubina"
+        }
+      ],
+      "reference_ranges": {
+        "adult": {
+          "conventional": { "min": 0.2, "max": 1.2, "unit": "mg/dL" },
+          "si": { "min": 3.4, "max": 20.5, "unit": "μmol/L" }
+        }
+      }
+    },
+    "cholesterol_total": {
+      "name": "Colesterol Total",
+      "symbol": "CHOL",
+      "category": "lipídeo",
+      "valence": 0,
+      "molecular_weight": 386.65,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.0259,
+          "note": "Conversão padrão para colesterol"
+        }
+      ],
+      "reference_ranges": {
+        "adult_desirable": {
+          "conventional": { "min": 0, "max": 200, "unit": "mg/dL" },
+          "si": { "min": 0, "max": 5.18, "unit": "mmol/L" }
+        }
+      }
+    },
+    "triglycerides": {
+      "name": "Triglicerídeos",
+      "symbol": "TG",
+      "category": "lipídeo",
+      "valence": 0,
+      "molecular_weight": 885.43,
+      "canonical_conversions": [
+        {
+          "from": "mg/dL",
+          "to": "mmol/L",
+          "factor": 0.0113,
+          "note": "Conversão padrão para triglicerídeos"
+        }
+      ],
+      "reference_ranges": {
+        "adult_normal": {
+          "conventional": { "min": 0, "max": 150, "unit": "mg/dL" },
+          "si": { "min": 0, "max": 1.70, "unit": "mmol/L" }
+        }
+      }
+    },
+    "hemoglobin": {
+      "name": "Hemoglobina",
+      "symbol": "Hb",
+      "category": "hematologia",
+      "valence": 0,
+      "molecular_weight": 64500,
+      "canonical_conversions": [
+        {
+          "from": "g/dL",
+          "to": "g/L",
+          "factor": 10,
+          "note": "Conversão simples de decilitro para litro"
+        },
+        {
+          "from": "g/dL",
+          "to": "mmol/L",
+          "factor": 0.6206,
+          "note": "Conversão molar para hemoglobina"
+        }
+      ],
+      "reference_ranges": {
+        "adult_male": {
+          "conventional": { "min": 14.0, "max": 18.0, "unit": "g/dL" },
+          "si": { "min": 140, "max": 180, "unit": "g/L" }
+        },
+        "adult_female": {
+          "conventional": { "min": 12.0, "max": 16.0, "unit": "g/dL" },
+          "si": { "min": 120, "max": 160, "unit": "g/L" }
+        }
+      }
+    },
+    "iron": {
+      "name": "Ferro",
+      "symbol": "Fe",
+      "category": "hematologia",
+      "valence": 2,
+      "molecular_weight": 55.85,
+      "canonical_conversions": [
+        {
+          "from": "μg/dL",
+          "to": "μmol/L",
+          "factor": 0.179,
+          "note": "Conversão padrão para ferro sérico"
+        }
+      ],
+      "reference_ranges": {
+        "adult_male": {
+          "conventional": { "min": 65, "max": 175, "unit": "μg/dL" },
+          "si": { "min": 11.6, "max": 31.3, "unit": "μmol/L" }
+        },
+        "adult_female": {
+          "conventional": { "min": 50, "max": 170, "unit": "μg/dL" },
+          "si": { "min": 9.0, "max": 30.4, "unit": "μmol/L" }
+        }
+      }
+    }
+  }
+}

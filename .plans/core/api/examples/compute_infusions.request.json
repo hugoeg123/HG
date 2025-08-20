@@ -1,0 +1,12 @@
+{
+  "inputs": {
+    "weight_kg": 70,
+    "rate_mcgkgmin": 0.1,
+    "concentration_mg_ml": 0.08
+  },
+  "options": {
+    "output_units": {
+      "ml_per_h": "mL/h"
+    }
+  }
+}

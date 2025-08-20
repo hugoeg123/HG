@@ -1,0 +1,16 @@
+{
+  "name": "Fração de excreção de ureia",
+  "domain": "nefrologia",
+  "description": "Calcula a fração de excreção de ureia (FeUrea) para avaliar causa de oligúria em pacientes, especialmente em uso de diuréticos.",
+  "inputs": [
+    {"name": "ureia_urina", "symbol": "U_urea", "unit": "mg/dL", "description": "Concentração de ureia na urina"},
+    {"name": "ureia_sérica", "symbol": "P_urea", "unit": "mg/dL", "description": "Concentração de ureia no plasma"},
+    {"name": "creatinina_urina", "symbol": "U_Cr", "unit": "mg/dL", "description": "Concentração de creatinina na urina"},
+    {"name": "creatinina_sérica", "symbol": "P_Cr", "unit": "mg/dL", "description": "Concentração de creatinina no plasma"}
+  ],
+  "output": {"name": "FeUrea", "unit": "%", "description": "Fração de excreção de ureia"},
+  "formula": "FeUrea (%) = [(U_urea × P_Cr)/(P_urea × U_Cr)] × 100",
+  "references": [
+    {"citation": "Fórmula de fração de excreção de ureia utilizada em injúria renal", "url": "https://www.mdcalc.com/calc/550/feurea-fractional-excretion-urea"}
+  ]
+}

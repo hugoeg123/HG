@@ -1,0 +1,14 @@
+{
+  "name": "Relação PaO2/FiO2",
+  "domain": "terapia intensiva",
+  "description": "Calcula a relação entre a pressão arterial de oxigênio (PaO2) e a fração inspirada de oxigênio (FiO2), utilizada para classificar a gravidade da síndrome da angústia respiratória aguda (SARA/ARDS).",
+  "inputs": [
+    {"name": "PaO2", "symbol": "PaO2", "unit": "mmHg", "description": "Pressão arterial de oxigênio"},
+    {"name": "FiO2", "symbol": "FiO2", "unit": "fração", "description": "Fração inspirada de oxigênio (0–1)"}
+  ],
+  "output": {"name": "PaO2/FiO2", "unit": "mmHg", "description": "Relação PaO2/FiO2"},
+  "formula": "PaO2/FiO2 = PaO2 (mmHg) / FiO2 (fração)",
+  "references": [
+    {"citation": "ARDS severity classification uses the PaO2/FiO2 ratio", "url": "https://www.ncbi.nlm.nih.gov/books/NBK536967/"}
+  ]
+}

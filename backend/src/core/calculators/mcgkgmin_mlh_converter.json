@@ -1,0 +1,377 @@
+{
+  "name": "Conversor μg/kg/min ↔ mL/h",
+  "description": "Converte entre dose em microgramas por quilograma por minuto e taxa de infusão em mL/h",
+  "category": "infusion",
+  "version": "1.0.0",
+  "inputs": [
+    {
+      "name": "dose_mcgkgmin",
+      "label": "Dose (μg/kg/min)",
+      "description": "Dose desejada em microgramas por quilograma por minuto",
+      "type": "number",
+      "unit": "μg/kg/min",
+      "min": 0.001,
+      "max": 1000,
+      "step": 0.001,
+      "decimals": 3,
+      "required": false
+    },
+    {
+      "name": "rate_mlh",
+      "label": "Taxa (mL/h)",
+      "description": "Taxa de infusão em mililitros por hora",
+      "type": "number",
+      "unit": "mL/h",
+      "min": 0.1,
+      "max": 1000,
+      "step": 0.1,
+      "decimals": 1,
+      "required": false
+    },
+    {
+      "name": "weight",
+      "label": "Peso do paciente (kg)",
+      "description": "Peso corporal do paciente em quilogramas",
+      "type": "number",
+      "unit": "kg",
+      "min": 0.5,
+      "max": 300,
+      "step": 0.1,
+      "decimals": 1,
+      "required": true
+    },
+    {
+      "name": "concentration",
+      "label": "Concentração (μg/mL)",
+      "description": "Concentração da solução em microgramas por mililitro",
+      "type": "number",
+      "unit": "μg/mL",
+      "min": 0.1,
+      "max": 10000,
+      "step": 0.1,
+      "decimals": 1,
+      "required": true
+    },
+    {
+      "name": "drug_amount",
+      "label": "Quantidade do fármaco (mg)",
+      "description": "Quantidade total do fármaco na solução",
+      "type": "number",
+      "unit": "mg",
+      "min": 0.1,
+      "max": 1000,
+      "step": 0.1,
+      "decimals": 1,
+      "required": false
+    },
+    {
+      "name": "solution_volume",
+      "label": "Volume da solução (mL)",
+      "description": "Volume total da solução preparada",
+      "type": "number",
+      "unit": "mL",
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "decimals": 0,
+      "required": false
+    }
+  ],
+  "expressions": {
+    "concentration_from_preparation": "drug_amount * 1000 / solution_volume",
+    "rate_mlh_calculated": "dose_mcgkgmin * weight * 60 / concentration",
+    "dose_mcgkgmin_calculated": "rate_mlh * concentration / (weight * 60)",
+    "dose_per_hour_from_input": "dose_mcgkgmin * weight * 60",
+    "dose_per_day_from_input": "dose_mcgkgmin * weight * 60 * 24",
+    "dose_per_hour_from_calculated": "dose_mcgkgmin_calculated * weight * 60",
+    "dose_per_day_from_calculated": "dose_mcgkgmin_calculated * weight * 60 * 24",
+    "total_drug_per_hour": "rate_mlh_calculated * concentration / 1000",
+    "total_drug_per_day": "rate_mlh_calculated * concentration * 24 / 1000",
+    "infusion_duration_hours": "solution_volume / rate_mlh_calculated",
+    "drug_consumed_per_hour_mg": "rate_mlh_calculated * concentration / 1000"
+  },
+  "outputs": [
+    {
+      "name": "rate_mlh_calculated",
+      "label": "Taxa calculada (mL/h)",
+      "description": "Taxa de infusão calculada em mL/h",
+      "type": "number",
+      "unit": "mL/h",
+      "decimals": 1
+    },
+    {
+      "name": "dose_mcgkgmin_calculated",
+      "label": "Dose calculada (μg/kg/min)",
+      "description": "Dose calculada em μg/kg/min",
+      "type": "number",
+      "unit": "μg/kg/min",
+      "decimals": 3
+    },
+    {
+      "name": "concentration_from_preparation",
+      "label": "Concentração calculada (μg/mL)",
+      "description": "Concentração calculada a partir da preparação",
+      "type": "number",
+      "unit": "μg/mL",
+      "decimals": 1
+    },
+    {
+      "name": "dose_per_hour",
+      "label": "Dose por hora (μg/h)",
+      "description": "Dose total por hora em microgramas",
+      "type": "number",
+      "unit": "μg/h",
+      "decimals": 1
+    },
+    {
+      "name": "dose_per_day",
+      "label": "Dose por dia (μg/dia)",
+      "description": "Dose total por dia em microgramas",
+      "type": "number",
+      "unit": "μg/dia",
+      "decimals": 0
+    },
+    {
+      "name": "total_drug_per_hour",
+      "label": "Fármaco por hora (mg/h)",
+      "description": "Quantidade total de fármaco infundida por hora",
+      "type": "number",
+      "unit": "mg/h",
+      "decimals": 2
+    },
+    {
+      "name": "total_drug_per_day",
+      "label": "Fármaco por dia (mg/dia)",
+      "description": "Quantidade total de fármaco infundida por dia",
+      "type": "number",
+      "unit": "mg/dia",
+      "decimals": 1
+    },
+    {
+      "name": "infusion_duration_hours",
+      "label": "Duração da infusão (h)",
+      "description": "Tempo total de infusão em horas",
+      "type": "number",
+      "unit": "h",
+      "decimals": 1
+    }
+  ],
+  "modes": {
+    "dose_to_rate": {
+      "name": "Dose → Taxa",
+      "description": "Calcular taxa de infusão a partir da dose desejada",
+      "required_inputs": ["dose_mcgkgmin", "weight", "concentration"],
+      "outputs": [
+        {
+          "name": "rate_mlh_calculated",
+          "label": "Taxa de infusão (mL/h)",
+          "description": "Taxa calculada para atingir a dose desejada",
+          "type": "number",
+          "unit": "mL/h",
+          "decimals": 1
+        },
+        {
+          "name": "dose_per_hour_from_input",
+          "label": "Dose por hora (μg/h)",
+          "description": "Dose total por hora",
+          "type": "number",
+          "unit": "μg/h",
+          "decimals": 1
+        },
+        {
+          "name": "total_drug_per_hour",
+          "label": "Fármaco por hora (mg/h)",
+          "description": "Quantidade de fármaco por hora",
+          "type": "number",
+          "unit": "mg/h",
+          "decimals": 2
+        }
+        ]
+    },
+    "rate_to_dose": {
+      "name": "Taxa → Dose",
+      "description": "Calcular dose resultante a partir da taxa de infusão",
+      "required_inputs": ["rate_mlh", "weight", "concentration"],
+      "outputs": [
+        {
+          "name": "dose_mcgkgmin_calculated",
+          "label": "Dose resultante (μg/kg/min)",
+          "description": "Dose resultante da taxa de infusão",
+          "type": "number",
+          "unit": "μg/kg/min",
+          "decimals": 3
+        },
+        {
+          "name": "dose_per_hour_from_calculated",
+          "label": "Dose por hora (μg/h)",
+          "description": "Dose total por hora",
+          "type": "number",
+          "unit": "μg/h",
+          "decimals": 1
+        },
+        {
+          "name": "dose_per_day_from_calculated",
+          "label": "Dose por dia (μg/dia)",
+          "description": "Dose total por dia",
+          "type": "number",
+          "unit": "μg/dia",
+          "decimals": 0
+        },
+        {
+          "name": "total_drug_per_day",
+          "label": "Fármaco por dia (mg/dia)",
+          "description": "Quantidade total de fármaco por dia",
+          "type": "number",
+          "unit": "mg/dia",
+          "decimals": 1
+        }
+      ]
+    },
+    "preparation": {
+      "name": "Preparação da Solução",
+      "description": "Calcular concentração a partir da preparação",
+      "required_inputs": ["drug_amount", "solution_volume"],
+      "outputs": [
+        {
+          "name": "concentration_from_preparation",
+          "label": "Concentração (μg/mL)",
+          "description": "Concentração da solução preparada",
+          "type": "number",
+          "unit": "μg/mL",
+          "decimals": 1
+        }
+      ],
+      "expressions": {
+        "concentration": "drug_amount * 1000 / solution_volume"
+      }
+    }
+  },
+  "drug_presets": {
+    "dopamine": {
+      "name": "Dopamina",
+      "typical_dose_range": "2-20 μg/kg/min",
+      "standard_concentrations": [200, 400, 800],
+      "preparation_examples": [
+        {
+          "drug_amount": 200,
+          "solution_volume": 250,
+          "concentration": 800
+        }
+      ]
+    },
+    "dobutamine": {
+      "name": "Dobutamina",
+      "typical_dose_range": "2.5-15 μg/kg/min",
+      "standard_concentrations": [250, 500, 1000],
+      "preparation_examples": [
+        {
+          "drug_amount": 250,
+          "solution_volume": 250,
+          "concentration": 1000
+        }
+      ]
+    },
+    "norepinephrine": {
+      "name": "Norepinefrina",
+      "typical_dose_range": "0.01-3 μg/kg/min",
+      "standard_concentrations": [4, 8, 16],
+      "preparation_examples": [
+        {
+          "drug_amount": 4,
+          "solution_volume": 250,
+          "concentration": 16
+        }
+      ]
+    },
+    "epinephrine": {
+      "name": "Epinefrina",
+      "typical_dose_range": "0.01-1 μg/kg/min",
+      "standard_concentrations": [4, 8, 16],
+      "preparation_examples": [
+        {
+          "drug_amount": 2,
+          "solution_volume": 250,
+          "concentration": 8
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "name": "Dopamina - Dose para Taxa",
+      "description": "Paciente de 70kg, dopamina 5 μg/kg/min, concentração 800 μg/mL",
+      "inputs": {
+        "dose_mcgkgmin": 5,
+        "weight": 70,
+        "concentration": 800
+      },
+      "mode": "dose_to_rate",
+      "expected_outputs": {
+        "rate_mlh_calculated": 26.3
+      }
+    },
+    {
+      "name": "Norepinefrina - Taxa para Dose",
+      "description": "Paciente de 80kg, infusão 10 mL/h, concentração 16 μg/mL",
+      "inputs": {
+        "rate_mlh": 10,
+        "weight": 80,
+        "concentration": 16
+      },
+      "mode": "rate_to_dose",
+      "expected_outputs": {
+        "dose_mcgkgmin_calculated": 0.033
+      }
+    },
+    {
+      "name": "Preparação - Dobutamina",
+      "description": "250mg de dobutamina em 250mL de solução",
+      "inputs": {
+        "drug_amount": 250,
+        "solution_volume": 250
+      },
+      "mode": "preparation",
+      "expected_outputs": {
+        "concentration_from_preparation": 1000
+      }
+    }
+  ],
+  "safety_alerts": [
+    {
+      "condition": "dose_mcgkgmin > 20 && drug_preset == 'dopamine'",
+      "level": "warning",
+      "message": "Dose de dopamina acima de 20 μg/kg/min pode causar vasoconstrição excessiva"
+    },
+    {
+      "condition": "dose_mcgkgmin > 3 && drug_preset == 'norepinephrine'",
+      "level": "warning",
+      "message": "Dose de norepinefrina acima de 3 μg/kg/min requer monitorização intensiva"
+    },
+    {
+      "condition": "rate_mlh > 100",
+      "level": "caution",
+      "message": "Taxa de infusão elevada - verificar cálculos e concentração"
+    }
+  ],
+  "references": [
+    {
+      "title": "Intensive Care Medicine - Vasoactive Drugs",
+      "author": "Vincent JL, De Backer D",
+      "year": 2021,
+      "description": "Dosagem e administração de drogas vasoativas"
+    },
+    {
+      "title": "Critical Care Drug Calculations",
+      "author": "American Association of Critical-Care Nurses",
+      "year": 2020,
+      "description": "Cálculos de medicamentos em terapia intensiva"
+    }
+  ],
+  "metadata": {
+    "created_at": "2024-01-16",
+    "updated_at": "2024-01-16",
+    "version": "1.0.0",
+    "author": "Health Guardian System",
+    "tags": ["infusion", "vasoactive", "dose_calculation", "critical_care", "pharmacology"]
+  }
+}
