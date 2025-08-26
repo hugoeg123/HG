@@ -16,7 +16,7 @@ import { Label } from '../../../ui/label';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
-import { Copy, Calculator, Kidney, Info, AlertTriangle } from 'lucide-react';
+import { Copy, Calculator, Activity, Info, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -225,7 +225,7 @@ Calculado em: ${new Date().toLocaleString('pt-BR')}`;
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Kidney className="h-5 w-5" />
+            <Activity className="h-5 w-5" />
             Clearance de Creatinina (Cockcroft-Gault)
           </DialogTitle>
         </DialogHeader>

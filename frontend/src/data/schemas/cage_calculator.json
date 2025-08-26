@@ -1,0 +1,164 @@
+{
+  "name": "Escala CAGE",
+  "description": "Questionário de triagem para uso de álcool em pacientes ≥16 anos",
+  "category": "Psiquiatria/Dependência Química",
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-22",
+  "clinicalContext": {
+    "indication": "Triagem de consumo excessivo de álcool e alcoolismo em pacientes maiores de 16 anos, incluindo populações em risco como mulheres grávidas, estudantes universitários e presidiários",
+    "contraindications": "Menores de 16 anos",
+    "limitations": "Menos eficaz no reconhecimento de distúrbios de consumo menos graves. É uma ferramenta de triagem, não fornece diagnóstico definitivo. Pode haver subnotificação devido à natureza sensível das perguntas",
+    "clinicalSignificance": "Ferramenta de rastreio amplamente validada para identificação precoce de problemas relacionados ao álcool, permitindo intervenção e encaminhamento adequados"
+  },
+  "inputs": [
+    {
+      "id": "cutDown",
+      "label": "Você já pensou em largar a bebida?",
+      "type": "boolean",
+      "required": true,
+      "validation": {
+        "required": true
+      },
+      "clinicalValidation": {
+        "description": "Pergunta sobre tentativas de redução do consumo (Cut down)"
+      }
+    },
+    {
+      "id": "annoyed",
+      "label": "Ficou aborrecido quando outras pessoas criticaram o seu hábito de beber?",
+      "type": "boolean",
+      "required": true,
+      "validation": {
+        "required": true
+      },
+      "clinicalValidation": {
+        "description": "Pergunta sobre irritação com críticas ao consumo (Annoyed)"
+      }
+    },
+    {
+      "id": "guilty",
+      "label": "Se sentiu mal ou culpado pelo fato de beber?",
+      "type": "boolean",
+      "required": true,
+      "validation": {
+        "required": true
+      },
+      "clinicalValidation": {
+        "description": "Pergunta sobre sentimentos de culpa relacionados ao consumo (Guilty)"
+      }
+    },
+    {
+      "id": "eyeOpener",
+      "label": "Bebeu pela manhã para ficar mais calmo ou se livrar de uma ressaca (abrir os olhos)?",
+      "type": "boolean",
+      "required": true,
+      "validation": {
+        "required": true
+      },
+      "clinicalValidation": {
+        "description": "Pergunta sobre consumo matinal para alívio de sintomas (Eye-opener) - altamente preocupante"
+      }
+    }
+  ],
+  "formula": {
+    "description": "Soma das respostas positivas (Sim = 1 ponto cada)",
+    "calculation": "Score CAGE = cutDown + annoyed + guilty + eyeOpener",
+    "unit": "pontos",
+    "range": "0-4 pontos"
+  },
+  "interpretation": {
+    "ranges": [
+      {
+        "min": 0,
+        "max": 1,
+        "risk": "Baixo",
+        "classification": "Triagem negativa",
+        "clinicalSignificance": "Baixa probabilidade de problema relacionado ao uso de álcool",
+        "recommendations": "Reavaliar periodicamente conforme fatores de risco. Manter orientações sobre consumo responsável",
+        "nextSteps": "Seguimento de rotina. Considerar reavaliação anual ou se surgirem novos fatores de risco",
+        "color": "green"
+      },
+      {
+        "min": 2,
+        "max": 4,
+        "risk": "Alto",
+        "classification": "Triagem positiva",
+        "clinicalSignificance": "Suspeita de problema de uso de álcool. Necessária avaliação adicional",
+        "recommendations": "Encaminhar para avaliação especializada. Considerar intervenção breve (SBIRT). Orientar sobre redução de danos",
+        "nextSteps": "Avaliação psiquiátrica ou de dependência química. Investigar padrão de consumo, consequências e comorbidades",
+        "associatedFindings": "Pode estar associado a problemas sociais, familiares, profissionais ou de saúde relacionados ao álcool",
+        "additionalTests": "Considerar: GGT, AST, ALT, VCM, CDT (transferrina deficiente em carboidrato)",
+        "color": "red",
+        "alerts": [
+          "Ferramenta de triagem - não substitui avaliação clínica completa",
+          "Investigar quantidade, frequência e padrão de consumo",
+          "Avaliar risco de síndrome de abstinência se indicada interrupção"
+        ]
+      }
+    ],
+    "specialAlerts": {
+      "eyeOpenerPositive": {
+        "condition": "eyeOpener === true",
+        "message": "ALERTA: Consumo matinal ('eye-opener') é altamente preocupante mesmo com score total baixo",
+        "clinicalSignificance": "Indica possível dependência física e risco de síndrome de abstinência",
+        "recommendations": "Avaliação especializada urgente. Considerar risco de abstinência e necessidade de manejo médico",
+        "color": "orange"
+      }
+    }
+  },
+  "references": [
+    {
+      "title": "Detecting alcoholism. The CAGE questionnaire",
+      "authors": "Ewing JA",
+      "journal": "JAMA",
+      "year": "1984",
+      "volume": "252",
+      "issue": "14",
+      "pages": "1905-7",
+      "pmid": "6471323",
+      "type": "original"
+    },
+    {
+      "title": "Comparison of questionnaire and laboratory tests in the detection of excessive drinking and alcoholism",
+      "authors": "Bernadt MW, Mumford J, Taylor C, Smith B, Murray RM",
+      "journal": "Lancet",
+      "year": "1982",
+      "volume": "1",
+      "issue": "8267",
+      "pages": "325-8",
+      "pmid": "6120346",
+      "type": "validation"
+    }
+  ],
+  "normalRanges": {
+    "cage_score": {
+      "negative_screening": "0-1 pontos",
+      "positive_screening": "≥2 pontos"
+    }
+  },
+  "performanceCharacteristics": {
+    "cutoff_2_points": {
+      "excessive_drinking": {
+        "sensitivity": "93%",
+        "specificity": "76%"
+      },
+      "alcoholism": {
+        "sensitivity": "91%",
+        "specificity": "77%"
+      }
+    }
+  },
+  "warnings": [
+    "Ferramenta de triagem - não substitui diagnóstico clínico",
+    "Menos eficaz para distúrbios de consumo menos graves",
+    "Pode haver subnotificação devido à natureza sensível das perguntas",
+    "Resposta positiva para 'eye-opener' é altamente preocupante independente do score total"
+  ],
+  "additionalInfo": {
+    "acronym": "CAGE (Cut down, Annoyed, Guilty, Eye-opener)",
+    "targetPopulation": "Pacientes ≥16 anos que consomem álcool",
+    "administrationTime": "1-2 minutos",
+    "scoringMethod": "Cada resposta 'Sim' = 1 ponto (máximo 4 pontos)",
+    "clinicalUtility": "Triagem inicial em atenção primária, emergência e internação hospitalar"
+  }
+}

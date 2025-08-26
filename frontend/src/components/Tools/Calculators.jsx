@@ -3,35 +3,46 @@ import { calculatorService, dynamicCalculatorService } from '../../services/api'
 import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
 import DynamicCalculator from './DynamicCalculator';
-import ConversaoGotejamentoDialog from './prebuilt/ConversaoGotejamento';
-import ConversaoMcgKgMinDialog from './prebuilt/ConversaoMcgKgMin';
-import ConversaoMcgKgMinGttMinDialog from './prebuilt/ConversaoMcgKgMinGttMin';
-import BMI from './prebuilt/BMI';
-import BSAMosteller from './prebuilt/BSAMosteller';
-import BSADuBois from './prebuilt/BSADuBois';
-import IdealBodyWeight from './prebuilt/IdealBodyWeight';
-import LeanBodyWeight from './prebuilt/LeanBodyWeight';
-import AdjustedBodyWeight from './prebuilt/AdjustedBodyWeight';
-import CockcroftGault from './prebuilt/CockcroftGault';
-import CKDEPI2021 from './prebuilt/CKDEPI2021';
-import FeNa from './prebuilt/FeNa';
-import FeUrea from './prebuilt/FeUrea';
-import CorrectedCalcium from './prebuilt/CorrectedCalcium';
-import Osmolarity from './prebuilt/Osmolarity';
-import IronDeficit from './prebuilt/IronDeficit';
-import FriedewaldLDL from './prebuilt/FriedewaldLDL';
-import PaO2FiO2 from './prebuilt/PaO2FiO2';
-import QTcCalculation from './prebuilt/QTcCalculation';
-import AnionGap from './prebuilt/AnionGap';
-import SpO2FiO2Ratio from './prebuilt/SpO2FiO2Ratio';
-import ChildPugh from './prebuilt/ChildPugh';
-import MELD from './prebuilt/MELD';
+import ConversaoGotejamentoDialog from './Calculators/prebuilt/ConversaoGotejamento';
+import ConversaoMcgKgMinDialog from './Calculators/prebuilt/ConversaoMcgKgMin';
+import ConversaoMcgKgMinGttMinDialog from './Calculators/prebuilt/ConversaoMcgKgMinGttMin';
+import BMI from './Calculators/prebuilt/BMI';
+import BSAMosteller from './Calculators/prebuilt/BSAMosteller';
+import BSADuBois from './Calculators/prebuilt/BSADuBois';
+import IdealBodyWeight from './Calculators/prebuilt/IdealBodyWeight';
+import LeanBodyWeight from './Calculators/prebuilt/LeanBodyWeight';
+import AdjustedBodyWeight from './Calculators/prebuilt/AdjustedBodyWeight';
+import CockcroftGault from './Calculators/prebuilt/CockcroftGault';
+import CKDEPI2021 from './Calculators/prebuilt/CKDEPI2021';
+import FeNa from './Calculators/prebuilt/FeNa';
+import FeUrea from './Calculators/prebuilt/FeUrea';
+import CorrectedCalcium from './Calculators/prebuilt/CorrectedCalcium';
+import Osmolarity from './Calculators/prebuilt/Osmolarity';
+import IronDeficit from './Calculators/prebuilt/IronDeficit';
+import FriedewaldLDL from './Calculators/prebuilt/FriedewaldLDL';
+import PaO2FiO2 from './Calculators/prebuilt/PaO2FiO2';
+import QTcCalculation from './Calculators/prebuilt/QTcCalculation';
+import AnionGap from './Calculators/prebuilt/AnionGap';
+import SpO2FiO2Ratio from './Calculators/prebuilt/SpO2FiO2Ratio';
+import ChildPugh from './Calculators/prebuilt/ChildPugh';
+import MELD from './Calculators/prebuilt/MELD';
 // import ParklandFormula from './prebuilt/ParklandFormula';
 import qSOFA from './Calculators/prebuilt/qSOFA';
 import APACHE2 from './Calculators/prebuilt/APACHE2';
 import SOFA from './Calculators/prebuilt/SOFA';
 import CHA2DS2VASc from './Calculators/prebuilt/CHA2DS2VASc';
 import HASBLED from './Calculators/prebuilt/HASBLED';
+// Cardiology Risk Calculators
+import HEART from './Calculators/prebuilt/HEART';
+import GRACE from './Calculators/prebuilt/GRACE';
+import TIMISTEMI from './Calculators/prebuilt/TIMISTEMI';
+import TIMINSTE from './Calculators/prebuilt/TIMINSTE';
+// New Architecture Calculators
+import CAGECalculator from './Calculators/CAGECalculator';
+import MAPCalculator from './Calculators/MAPCalculator';
+import GASACalculator from './Calculators/GASACalculator';
+import HbA1cEAGCalculator from './Calculators/HbA1cEAGCalculator';
+import ISTCalculator from './Calculators/ISTCalculator';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -289,6 +300,46 @@ const Calculators = ({ patientId = null }) => {
        return;
      }
      if (calculator.isHardcoded && calculator.id === 'has-bled') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     
+     // New Architecture Calculators
+     if (calculator.id === 'cage-calculator') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'map-calculator') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'gasa-calculator') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'hba1c-eag-calculator') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'ist-calculator') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     
+     // Cardiology Risk Calculators
+     if (calculator.id === 'heart-score') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'grace-score') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'timi-stemi') {
+       setShowHardcodedCalculator(calculator.id);
+       return;
+     }
+     if (calculator.id === 'timi-nste') {
        setShowHardcodedCalculator(calculator.id);
        return;
      }
@@ -782,6 +833,71 @@ const Calculators = ({ patientId = null }) => {
          
          {showHardcodedCalculator === 'has-bled' && (
            <HASBLED 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {/* New Architecture Calculators - Phase 2 */}
+         {showHardcodedCalculator === 'cage-calculator' && (
+           <CAGECalculator 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'map-calculator' && (
+           <MAPCalculator 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'gasa-calculator' && (
+           <GASACalculator 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'hba1c-eag-calculator' && (
+           <HbA1cEAGCalculator 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'ist-calculator' && (
+           <ISTCalculator 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {/* Cardiology Risk Calculators */}
+         {showHardcodedCalculator === 'heart-score' && (
+           <HEART 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'grace-score' && (
+           <GRACE 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'timi-stemi' && (
+           <TIMISTEMI 
+             open={true} 
+             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           />
+         )}
+         
+         {showHardcodedCalculator === 'timi-nste' && (
+           <TIMINSTE 
              open={true} 
              onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
            />

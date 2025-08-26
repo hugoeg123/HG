@@ -4,18 +4,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+} from '../../../ui/card';
+import { Input } from '../../../ui/input';
+import { Label } from '../../../ui/label';
+import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
+import { Checkbox } from '../../../ui/checkbox';
 import { Copy, Calculator, AlertTriangle, Droplets } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -421,7 +421,7 @@ function HASBLED({ open, onOpenChange }) {
                   />
                   <Label htmlFor="drugs">Medicamentos/álcool (1 ponto)</Label>
                 </div>
-                <p className="text-xs text-muted-foreground ml-6">Antiplaquetários, AINEs, álcool ≥ 8 doses/semana</p>
+                <p className="text-xs text-muted-foreground ml-6">Antiplaquetários, AINEs, álcool &gt;= 8 doses/semana</p>
               </div>
               
               <div className="bg-red-900/30 p-3 rounded-lg border border-red-700/50">
@@ -622,7 +622,7 @@ function HASBLED({ open, onOpenChange }) {
                   <li>• <strong>A:</strong> Abnormal renal/liver function (função renal/hepática anormal)</li>
                   <li>• <strong>S:</strong> Stroke (AVC prévio)</li>
                   <li>• <strong>B:</strong> Bleeding (história de sangramento)</li>
-                  <li>• <strong>L:</strong> Labile INR (INR lábil)</li>
+                  <li>• <strong>L:</strong> Labile INR (INR lábil, TTR &lt;60%)</li>
                   <li>• <strong>E:</strong> Elderly (idade &gt; 65 anos)</li>
                   <li>• <strong>D:</strong> Drugs/alcohol (medicamentos/álcool)</li>
                 </ul>

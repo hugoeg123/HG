@@ -7,25 +7,25 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '../../../ui/card';
+import { Badge } from '../../../ui/badge';
+import { Button } from '../../../ui/button';
+import { Input } from '../../../ui/input';
+import { Label } from '../../../ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '../../../ui/select';
 
 /**
  * Drops to mL/h Converter
@@ -411,10 +411,10 @@ const DropsToMLConverter = ({ open, onOpenChange }) => {
                   <div className="text-xs text-gray-300">
                     <p className="font-medium mb-2">Referências de Velocidade:</p>
                     <ul className="space-y-1">
-                      <li>• <strong>Manutenção:</strong> &lt; 50 mL/h</li>
+                      <li>• <strong>Manutenção:</strong> < 50 mL/h</li>
                       <li>• <strong>Moderada:</strong> 50-125 mL/h</li>
                       <li>• <strong>Rápida:</strong> 125-250 mL/h</li>
-                      <li>• <strong>Muito Rápida:</strong> &gt; 250 mL/h</li>
+                      <li>• <strong>Muito Rápida:</strong> > 250 mL/h</li>
                     </ul>
                     <p className="mt-3 text-xs font-medium text-blue-200">
                       📚 Referência: Diretrizes de Terapia IV - Enfermagem

@@ -4,18 +4,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from '../../../ui/card';
+import { Input } from '../../../ui/input';
+import { Label } from '../../../ui/label';
+import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
+import { RadioGroup, RadioGroupItem } from '../../../ui/radio-group';
 import { Copy, Calculator, Droplets, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -168,7 +168,7 @@ function EstimatedBloodVolume({ open, onOpenChange }) {
         specificConsiderations = [
           'Volume sanguíneo proporcionalmente maior que adultos',
           'Menor tolerância à perda sanguínea',
-          'Considerar transfusão com perdas > 10%',
+          'Considerar transfusão com perdas &gt; 10%',
           'Monitorar sinais vitais continuamente',
           'Usar produtos sanguíneos irradiados se < 4 meses'
         ];
@@ -177,7 +177,7 @@ function EstimatedBloodVolume({ open, onOpenChange }) {
         specificConsiderations = [
           'Compensação cardiovascular eficiente inicialmente',
           'Descompensação pode ser súbita',
-          'Considerar transfusão com perdas > 15%',
+          'Considerar transfusão com perdas &gt; 15%',
           'Calcular doses de hemoderivados por peso',
           'Monitorar temperatura corporal'
         ];
@@ -207,7 +207,7 @@ function EstimatedBloodVolume({ open, onOpenChange }) {
           'Tipagem sanguínea e prova cruzada pré-operatória',
           'Considerar autotransfusão se cirurgia eletiva',
           'Monitorar perdas intraoperatórias',
-          'Ter hemoderivados disponíveis se perda esperada > 15%',
+          'Ter hemoderivados disponíveis se perda esperada &gt; 15%',
           'Considerar agentes hemostáticos'
         ];
       } else if (inputs.clinicalScenario === 'trauma') {

@@ -1,0 +1,237 @@
+{
+  "name": "Glicemia Média Estimada (eAG) a partir da HbA1c",
+  "description": "Converte a hemoglobina glicada (HbA1c) em glicemia média estimada usando a fórmula do estudo ADAG: eAG = 28.7 × HbA1c - 46.7",
+  "category": "metabolism",
+  "version": "1.0.0",
+  "clinicalContext": {
+    "indication": "Pacientes diabéticos para correlação entre HbA1c e glicemia média",
+    "contraindications": [
+      "Hemoglobinopatias (HbS, HbC)",
+      "Anemia ferropriva severa",
+      "Uremia"
+    ],
+    "limitations": [
+      "Não válido em hemoglobinopatias",
+      "Pode ser impreciso em anemia severa",
+      "Variabilidade individual na glicação"
+    ],
+    "clinicalSignificance": "Facilita a compreensão do controle glicêmico pelo paciente"
+  },
+  "inputs": [
+    {
+      "key": "hba1c_percent",
+      "label": "Hemoglobina Glicada (HbA1c)",
+      "type": "number",
+      "unit": "%",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "HbA1c é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 4.0,
+          "max": 20.0,
+          "message": "HbA1c deve estar entre 4.0% e 20.0%"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "diabetes_control",
+          "criticalValues": [
+            {
+              "min": 4.0,
+              "max": 5.6,
+              "message": "HbA1c normal - sem diabetes",
+              "action": "Manter estilo de vida saudável"
+            },
+            {
+              "min": 5.7,
+              "max": 6.4,
+              "message": "Pré-diabetes - risco aumentado",
+              "action": "Intervenção no estilo de vida"
+            },
+            {
+              "min": 6.5,
+              "max": 7.0,
+              "message": "Diabetes com bom controle",
+              "action": "Manter tratamento atual"
+            },
+            {
+              "min": 7.1,
+              "max": 8.0,
+              "message": "Diabetes com controle inadequado",
+              "action": "Intensificar tratamento"
+            },
+            {
+              "min": 8.1,
+              "max": 10.0,
+              "message": "Diabetes com controle ruim",
+              "action": "Revisão urgente do tratamento"
+            },
+            {
+              "min": 10.1,
+              "max": 20.0,
+              "message": "Diabetes descompensado",
+              "action": "Intervenção imediata necessária"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Valor obtido preferencialmente por método HPLC ou imunoensaio"
+    }
+  ],
+  "formulas": {
+    "eag_mgdl": "28.7 * hba1c_percent - 46.7",
+    "eag_mmol": "(28.7 * hba1c_percent - 46.7) / 18.0"
+  },
+  "interpretations": [
+    {
+      "condition": "hba1c_percent < 5.7",
+      "riskLevel": "normal",
+      "result": "Normal - Sem diabetes",
+      "clinicalSignificance": "HbA1c <5.7% indica metabolismo normal da glicose",
+      "recommendation": "Manter estilo de vida saudável",
+      "nextSteps": [
+        "Rastreamento anual se fatores de risco",
+        "Manter dieta equilibrada e atividade física",
+        "Controle de peso"
+      ],
+      "color": "green"
+    },
+    {
+      "condition": "hba1c_percent >= 5.7 && hba1c_percent <= 6.4",
+      "riskLevel": "warning",
+      "result": "Pré-diabetes",
+      "clinicalSignificance": "HbA1c 5.7-6.4% indica pré-diabetes com risco aumentado de desenvolver diabetes tipo 2",
+      "recommendation": "Intervenção intensiva no estilo de vida",
+      "nextSteps": [
+        "Programa de prevenção de diabetes",
+        "Perda de peso (5-10% do peso corporal)",
+        "Atividade física regular (150 min/semana)",
+        "Reavaliação em 6 meses",
+        "Considerar metformina se alto risco"
+      ],
+      "color": "yellow"
+    },
+    {
+      "condition": "hba1c_percent >= 6.5 && hba1c_percent < 7.0",
+      "riskLevel": "controlled",
+      "result": "Diabetes com bom controle",
+      "clinicalSignificance": "HbA1c <7.0% é a meta para a maioria dos adultos diabéticos",
+      "recommendation": "Manter tratamento atual e monitorização",
+      "nextSteps": [
+        "Manter medicações atuais",
+        "Reavaliação da HbA1c em 3-6 meses",
+        "Rastreamento de complicações",
+        "Educação continuada em diabetes"
+      ],
+      "color": "green"
+    },
+    {
+      "condition": "hba1c_percent >= 7.0 && hba1c_percent < 8.0",
+      "riskLevel": "suboptimal",
+      "result": "Diabetes com controle inadequado",
+      "clinicalSignificance": "HbA1c 7.0-8.0% indica necessidade de intensificação do tratamento",
+      "recommendation": "Intensificar tratamento antidiabético",
+      "nextSteps": [
+        "Revisar adesão ao tratamento",
+        "Intensificar medicações",
+        "Considerar insulina se não em uso",
+        "Educação em diabetes",
+        "Reavaliação em 3 meses"
+      ],
+      "color": "yellow"
+    },
+    {
+      "condition": "hba1c_percent >= 8.0 && hba1c_percent < 10.0",
+      "riskLevel": "poor",
+      "result": "Diabetes com controle ruim",
+      "clinicalSignificance": "HbA1c 8.0-10.0% indica controle inadequado com risco aumentado de complicações",
+      "recommendation": "Revisão urgente e intensificação do tratamento",
+      "nextSteps": [
+        "Avaliação de adesão e barreiras ao tratamento",
+        "Intensificação medicamentosa",
+        "Início ou ajuste de insulina",
+        "Encaminhamento ao endocrinologista",
+        "Rastreamento de complicações",
+        "Reavaliação em 1-2 meses"
+      ],
+      "color": "red"
+    },
+    {
+      "condition": "hba1c_percent >= 10.0",
+      "riskLevel": "critical",
+      "result": "Diabetes severamente descompensado",
+      "clinicalSignificance": "HbA1c ≥10.0% indica descompensação severa com alto risco de complicações agudas e crônicas",
+      "recommendation": "Intervenção imediata e acompanhamento especializado",
+      "nextSteps": [
+        "Avaliação de emergência para cetoacidose",
+        "Início imediato de insulina",
+        "Encaminhamento urgente ao endocrinologista",
+        "Hospitalização se sintomas severos",
+        "Educação intensiva em diabetes",
+        "Reavaliação semanal inicial"
+      ],
+      "color": "red"
+    }
+  ],
+  "references": [
+    {
+      "citation": "Nathan DM, Kuenen J, Borg R, et al. Translating the A1C assay into estimated average glucose values. Diabetes Care. 2008;31(8):1473-8.",
+      "pmid": "18540046",
+      "type": "primary"
+    },
+    {
+      "citation": "American Diabetes Association. Standards of Medical Care in Diabetes-2023. Diabetes Care. 2023;46(Suppl 1):S1-S291.",
+      "type": "guideline"
+    },
+    {
+      "citation": "International Expert Committee. International Expert Committee report on the role of the A1C assay in the diagnosis of diabetes. Diabetes Care. 2009;32(7):1327-34.",
+      "pmid": "19502545",
+      "type": "consensus"
+    }
+  ],
+  "normalRanges": {
+    "hba1c": {
+      "normal": "<5.7%",
+      "prediabetes": "5.7-6.4%",
+      "diabetes": "≥6.5%",
+      "target_general": "<7.0%",
+      "target_elderly": "<8.0%",
+      "target_pregnancy": "<6.0%"
+    },
+    "eag": {
+      "normal": "<117 mg/dL (<6.5 mmol/L)",
+      "prediabetes": "117-137 mg/dL (6.5-7.6 mmol/L)",
+      "diabetes_target": "<154 mg/dL (<8.6 mmol/L)"
+    }
+  },
+  "warnings": [
+    "Esta calculadora não substitui a avaliação clínica completa",
+    "Não válida em hemoglobinopatias (HbS, HbC, talassemia)",
+    "Pode ser imprecisa em anemia severa, uremia ou gravidez",
+    "Variabilidade individual na taxa de glicação pode afetar a correlação",
+    "Sempre correlacionar com glicemias capilares e sintomas clínicos"
+  ],
+  "additionalInfo": {
+    "conversionFactors": {
+      "mgdl_to_mmol": "Dividir por 18.0",
+      "mmol_to_mgdl": "Multiplicar por 18.0"
+    },
+    "clinicalPearls": [
+      "eAG representa a glicemia média dos últimos 2-3 meses",
+      "Útil para educação do paciente sobre controle glicêmico",
+      "Pode haver discrepância entre eAG e glicemias capilares",
+      "Considerar variabilidade glicêmica além da média"
+    ],
+    "targetsByPopulation": {
+      "general_adults": "<7.0%",
+      "elderly_healthy": "<7.5%",
+      "elderly_frail": "<8.0%",
+      "pregnancy": "<6.0%",
+      "children": "<7.0%",
+      "adolescents": "<7.0%"
+    }
+  }
+}

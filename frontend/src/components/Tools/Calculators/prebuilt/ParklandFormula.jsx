@@ -527,7 +527,7 @@ function ParklandFormula({ open, onOpenChange }) {
                 <h4 className="font-semibold mb-2">Indicações:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Queimaduras de 2º e 3º grau &gt; 15% SCQ (adulto)</li>
-                  <li>• Queimaduras de 2º e 3º grau &gt; 10% SCQ (pediátrico)</li>
+                <li>• Queimaduras de 2º e 3º grau &gt; 10% SCQ (pediátrico)</li>
                   <li>• Queimaduras elétricas significativas</li>
                   <li>• Queimaduras inalatórias com lesão sistêmica</li>
                 </ul>

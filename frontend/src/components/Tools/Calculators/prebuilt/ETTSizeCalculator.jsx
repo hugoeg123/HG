@@ -4,18 +4,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from '../../../ui/card';
+import { Input } from '../../../ui/input';
+import { Label } from '../../../ui/label';
+import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
+import { RadioGroup, RadioGroupItem } from '../../../ui/radio-group';
 import { Copy, Calculator, Stethoscope, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -414,11 +414,11 @@ function ETTSizeCalculator({ open, onOpenChange }) {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="uncuffed" id="uncuffed" />
-                    <Label htmlFor="uncuffed">Sem cuff (padrão pediátrico &lt;8a)</Label>
+                    <Label htmlFor="uncuffed">Sem cuff (padrão pediátrico <8a)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cuffed" id="cuffed" />
-                    <Label htmlFor="cuffed">Com cuff (&gt;8a ou indicação específica)</Label>
+                    <Label htmlFor="cuffed">Com cuff (>8a ou indicação específica)</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -601,8 +601,8 @@ function ETTSizeCalculator({ open, onOpenChange }) {
                 <h4 className="font-semibold mb-2">Interpretação:</h4>
                 <p className="text-sm text-muted-foreground">
                   As fórmulas pediátricas são baseadas no crescimento proporcional das vias aéreas com a idade. 
-                  Tubos sem cuff são tradicionalmente preferidos em crianças &lt;8 anos devido ao formato cônico 
-                  da laringe pediátrica. Tubos com cuff podem ser usados com pressões baixas (&lt;20 cmH2O) 
+                  Tubos sem cuff são tradicionalmente preferidos em crianças <8 anos devido ao formato cônico
+              da laringe pediátrica. Tubos com cuff podem ser usados com pressões baixas (<20 cmH2O) 
                   quando indicado clinicamente.
                 </p>
               </div>

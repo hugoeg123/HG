@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Calculator, Copy, RotateCcw, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../ui/card';
+import { Badge } from '../../../ui/badge';
 
 /**
  * Serum Osmolarity Calculator

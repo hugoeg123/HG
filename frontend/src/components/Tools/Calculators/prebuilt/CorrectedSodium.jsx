@@ -4,17 +4,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from '../../../ui/card';
+import { Input } from '../../../ui/input';
+import { Label } from '../../../ui/label';
+import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
 import { Copy, Calculator, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -490,7 +490,7 @@ function CorrectedSodium({ open, onOpenChange }) {
               <div>
                 <h4 className="font-semibold mb-2">Quando Usar:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Hiperglicemia &gt; 200 mg/dL (11,1 mmol/L)</li>
+                  <li>• Hiperglicemia > 200 mg/dL (11,1 mmol/L)</li>
                   <li>• Hiponatremia em paciente diabético</li>
                   <li>• Cetoacidose diabética</li>
                   <li>• Estado hiperosmolar hiperglicêmico</li>
