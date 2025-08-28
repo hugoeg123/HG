@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { calculatorService, dynamicCalculatorService } from '../../services/api';
 import CalculatorModal from './CalculatorModal';
 import CalculatorCard from './CalculatorCard';
@@ -46,6 +47,7 @@ import ISTCalculator from './Calculators/ISTCalculator';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { ExternalLink } from 'lucide-react';
 import { useCalculatorStore } from '../../store/calculatorStore';
 import { useTagCatalogStore } from '../../store/tagCatalogStore';
 import { eventUtils, EVENT_TYPES } from '../../lib/events';
@@ -389,6 +391,21 @@ const Calculators = ({ patientId = null }) => {
     <div className="calculator-container h-full flex flex-col">
         {/* Header with search and filters */}
         <div className="mb-6">
+        {/* Header with navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-white">Calculadoras Médicas</h2>
+          <Link to="/calculators">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 border-emerald-500/30"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Ver Todas
+            </Button>
+          </Link>
+        </div>
+        
         {/* Search field */}
         <div className="relative mb-4">
           <Input

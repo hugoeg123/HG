@@ -1,0 +1,120 @@
+{
+  "id": "infusion.mcgkgmin_gttmin",
+  "version": "1.0.1",
+  "title": "Conversão: mcg/kg/min ↔ gtt/min",
+  "description": "Conversão bidirecional entre dose em mcg/kg/min e gotas por minuto",
+  "category": "Infusões",
+  "ui": {
+    "tabs": [
+      {
+        "id": "dose_to_gtt",
+        "label": "mcg/kg/min → gtt/min",
+        "inputs": ["weightKg", "concValue", "concUnit", "dropFactor", "doseMcgKgMin"],
+        "outputs": ["gttPerMin", "mlPerHour"],
+        "howto": [
+          "Informe o peso do paciente em kg",
+          "Digite a concentração da solução",
+          "Selecione a unidade (mg/mL ou mcg/mL)",
+          "Informe o fator de gotejamento do equipo",
+          "Digite a dose prescrita em mcg/kg/min"
+        ],
+        "formulaNote": "gtt/min = (dose × peso × fator) / concentração_(mcg/mL); mL/h = gtt/min × (60/fator)"
+      },
+      {
+        "id": "gtt_to_dose",
+        "label": "gtt/min → mcg/kg/min",
+        "inputs": ["weightKg", "concValue", "concUnit", "dropFactor", "gttPerMin"],
+        "outputs": ["doseMcgKgMin", "mlPerHour"],
+        "howto": [
+          "Informe o peso do paciente em kg",
+          "Digite a concentração da solução",
+          "Selecione a unidade (mg/mL ou mcg/mL)",
+          "Informe o fator de gotejamento do equipo",
+          "Digite as gotas/min ou use o contador TAP"
+        ],
+        "formulaNote": "mcg/kg/min = (gtt/min × concentração_(mcg/mL)) / (peso × fator); mL/h = gtt/min × (60/fator)"
+      }
+    ],
+    "placeholders": {
+      "weightKg": "Peso em kg (ex: 70)",
+      "concValue": "Valor numérico (ex: 4)",
+      "dropFactor": "Selecione o fator",
+      "doseMcgKgMin": "Dose (ex: 0,1)",
+      "gttPerMin": "Gotas por minuto"
+    },
+    "highlightStyle": "emerald-focus",
+    "tap": {
+      "targetField": "gttPerMin",
+      "minTime": 10
+    }
+  },
+  "fields": {
+    "weightKg": {
+      "type": "number",
+      "label": "Peso",
+      "min": 0.5,
+      "max": 300,
+      "decimals": 1,
+      "unit": "kg"
+    },
+    "concValue": {
+      "type": "number",
+      "label": "Concentração",
+      "min": 0.0001,
+      "decimals": 4
+    },
+    "concUnit": {
+      "type": "select",
+      "label": "Unidade",
+      "options": ["mg/mL", "mcg/mL"],
+      "default": "mg/mL"
+    },
+    "dropFactor": {
+      "type": "select",
+      "label": "Fator de Gotejamento",
+      "options": ["10", "15", "20", "60"],
+      "default": "20",
+      "unit": "gtt/mL"
+    },
+    "doseMcgKgMin": {
+      "type": "number",
+      "label": "Dose",
+      "min": 0,
+      "decimals": 3,
+      "unit": "mcg/kg/min"
+    },
+    "gttPerMin": {
+      "type": "number",
+      "label": "Gotas por Minuto",
+      "min": 0,
+      "decimals": 1,
+      "unit": "gtt/min"
+    },
+    "mlPerHour": {
+      "type": "result",
+      "label": "Velocidade de Infusão",
+      "decimals": 2,
+      "unit": "mL/h"
+    }
+  },
+  "expressions": {
+    "concMcgPerMl": "concUnit == 'mg/mL' ? concValue * 1000 : concValue",
+    "gttPerMin": "(doseMcgKgMin * weightKg * dropFactor) / concMcgPerMl",
+    "doseMcgKgMin": "(gttPerMin * concMcgPerMl) / (weightKg * dropFactor)",
+    "mlPerHour": "gttPerMin * (60 / dropFactor)"
+  },
+  "disclaimer": "Esta ferramenta não substitui o julgamento clínico. Sempre verifique os cálculos, consulte protocolos institucionais e confirme as prescrições médicas.",
+  "references": [
+    "Protocolo institucional de infusões de drogas vasoativas",
+    "Manual de cálculos de medicamentos - Enfermagem",
+    "Guia de diluições e concentrações padronizadas",
+    "Literatura especializada em terapia intensiva"
+  ],
+  "metadata": {
+    "createdAt": "2025-01-28",
+    "author": "Health Guardian System",
+    "tags": ["infusão", "dose", "mcg/kg/min", "gotejamento", "UTI", "drogas vasoativas"],
+    "clinicalArea": "Terapia Intensiva",
+    "complexity": "intermediate"
+  }
+}

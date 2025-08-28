@@ -30,6 +30,11 @@ import NewPatient from './components/PatientView/NewPatient';
 import NotFound from './components/NotFound';
 import TestLayout from './components/TestLayout';
 
+// Páginas de Calculadoras
+import CalculatorsIndex from './pages/calculators/CalculatorsIndex';
+import GotejamentoPage from './pages/calculators/GotejamentoPage';
+import McgKgMinGttMinPage from './pages/calculators/McgKgMinGttMinPage';
+
 // Componente de rota protegida
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuthStore();
@@ -99,6 +104,23 @@ function App() {
             <Route path="/patients/:id" element={
               <ErrorBoundary fallbackTitle="Erro no Dashboard do Paciente" showDetails={true}>
                 <PatientView />
+              </ErrorBoundary>
+            } />
+            
+            {/* Rotas de Calculadoras */}
+            <Route path="/calculators" element={
+              <ErrorBoundary fallbackTitle="Erro nas Calculadoras" showDetails={true}>
+                <CalculatorsIndex />
+              </ErrorBoundary>
+            } />
+            <Route path="/calculators/gotejamento" element={
+              <ErrorBoundary fallbackTitle="Erro na Calculadora de Gotejamento" showDetails={true}>
+                <GotejamentoPage />
+              </ErrorBoundary>
+            } />
+            <Route path="/calculators/mcg-kg-min-gtt" element={
+              <ErrorBoundary fallbackTitle="Erro na Calculadora mcg/kg/min" showDetails={true}>
+                <McgKgMinGttMinPage />
               </ErrorBoundary>
             } />
           </Route>

@@ -1,0 +1,85 @@
+{
+  "id": "infusion.drops_mlh",
+  "version": "1.0.0",
+  "title": "Conversão: Gotas/min ↔ mL/h",
+  "description": "Conversão bidirecional entre gotas por minuto e mililitros por hora",
+  "category": "Infusões",
+  "ui": {
+    "tabs": [
+      {
+        "id": "gtt_to_mlh",
+        "label": "gtt/min → mL/h",
+        "inputs": ["dropFactor", "gttPerMin"],
+        "outputs": ["mlPerHour"],
+        "howto": [
+          "Selecione o fator de gotejamento do equipo",
+          "Digite as gotas por minuto ou use o contador TAP",
+          "O resultado em mL/h será calculado automaticamente"
+        ],
+        "formulaNote": "mL/h = (gtt/min × 60) / fator de gotejamento"
+      },
+      {
+        "id": "mlh_to_gtt",
+        "label": "mL/h → gtt/min",
+        "inputs": ["dropFactor", "mlPerHour"],
+        "outputs": ["gttPerMin"],
+        "howto": [
+          "Selecione o fator de gotejamento do equipo",
+          "Digite a velocidade em mL/h",
+          "O resultado em gotas/min será calculado automaticamente"
+        ],
+        "formulaNote": "gtt/min = (mL/h × fator de gotejamento) / 60"
+      }
+    ],
+    "placeholders": {
+      "dropFactor": "Selecione o fator",
+      "gttPerMin": "Ex: 30",
+      "mlPerHour": "Ex: 90"
+    },
+    "highlightStyle": "emerald-focus",
+    "tap": {
+      "targetField": "gttPerMin",
+      "minTime": 10
+    }
+  },
+  "fields": {
+    "dropFactor": {
+      "type": "select",
+      "label": "Fator de Gotejamento",
+      "options": ["10", "15", "20", "60"],
+      "default": "20",
+      "unit": "gtt/mL"
+    },
+    "gttPerMin": {
+      "type": "number",
+      "label": "Gotas por Minuto",
+      "min": 0,
+      "decimals": 1,
+      "unit": "gtt/min"
+    },
+    "mlPerHour": {
+      "type": "number",
+      "label": "Mililitros por Hora",
+      "min": 0,
+      "decimals": 1,
+      "unit": "mL/h"
+    }
+  },
+  "expressions": {
+    "mlPerHour": "(gttPerMin * 60) / dropFactor",
+    "gttPerMin": "(mlPerHour * dropFactor) / 60"
+  },
+  "disclaimer": "Esta ferramenta não substitui o julgamento clínico. Sempre verifique os cálculos e consulte protocolos institucionais.",
+  "references": [
+    "Protocolo institucional de infusões endovenosas",
+    "Manual de enfermagem - Administração de medicamentos",
+    "Guia de equipos: macro e microgotas"
+  ],
+  "metadata": {
+    "createdAt": "2025-01-28",
+    "author": "Health Guardian System",
+    "tags": ["infusão", "gotejamento", "conversão", "enfermagem"],
+    "clinicalArea": "Enfermagem",
+    "complexity": "basic"
+  }
+}
