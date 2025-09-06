@@ -1,0 +1,275 @@
+{
+  "name": "Índice de Saturação de Transferrina (IST)",
+  "description": "Calcula o IST dividindo o ferro sérico pela capacidade total de ligação de ferro (CTLF) e multiplicando por 100 para avaliar o status do ferro",
+  "category": "hematology",
+  "version": "1.0.0",
+  "clinicalContext": {
+    "indication": "Avaliação do metabolismo do ferro e diagnóstico de deficiência de ferro",
+    "contraindications": [],
+    "limitations": [
+      "Pode ser alterado por inflamação aguda",
+      "Não válido após transfusão sanguínea recente",
+      "Pode ser normal na anemia de doença crônica"
+    ],
+    "clinicalSignificance": "IST <20% sugere deficiência de ferro; >45% pode indicar sobrecarga"
+  },
+  "inputs": [
+    {
+      "key": "serum_iron",
+      "label": "Ferro Sérico",
+      "type": "number",
+      "unit": "μg/dL",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "Ferro sérico é obrigatório"
+        },
+        {
+          "type": "range",
+          "min": 10,
+          "max": 500,
+          "message": "Ferro sérico deve estar entre 10 e 500 μg/dL"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "iron_deficiency",
+          "criticalValues": [
+            {
+              "min": 10,
+              "max": 50,
+              "message": "Ferro sérico muito baixo - deficiência severa",
+              "action": "Investigar causa da deficiência de ferro"
+            },
+            {
+              "min": 200,
+              "max": 500,
+              "message": "Ferro sérico muito elevado - investigar sobrecarga",
+              "action": "Avaliar hemocromatose ou hemossiderose"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Coleta preferencialmente pela manhã, em jejum"
+    },
+    {
+      "key": "tibc",
+      "label": "Capacidade Total de Ligação de Ferro (CTLF/TIBC)",
+      "type": "number",
+      "unit": "μg/dL",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "CTLF/TIBC é obrigatório"
+        },
+        {
+          "type": "range",
+          "min": 200,
+          "max": 600,
+          "message": "CTLF deve estar entre 200 e 600 μg/dL"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "iron_binding_capacity",
+          "criticalValues": [
+            {
+              "min": 400,
+              "max": 600,
+              "message": "CTLF elevada - possível deficiência de ferro",
+              "action": "Correlacionar com ferro sérico e ferritina"
+            },
+            {
+              "min": 200,
+              "max": 250,
+              "message": "CTLF baixa - possível sobrecarga de ferro",
+              "action": "Investigar hemocromatose"
+            }
+          ]
+        },
+        {
+          "type": "custom",
+          "message": "CTLF deve ser maior que o ferro sérico",
+          "customValidator": "tibc_greater_than_iron"
+        }
+      ],
+      "clinicalNote": "Também conhecida como TIBC (Total Iron Binding Capacity)"
+    }
+  ],
+  "formulas": {
+    "ist_percent": "(serum_iron / tibc) * 100"
+  },
+  "interpretations": [
+    {
+      "condition": "ist_percent < 16",
+      "riskLevel": "critical",
+      "result": "Deficiência de Ferro Severa",
+      "clinicalSignificance": "IST <16% indica deficiência de ferro severa com depleção dos estoques",
+      "recommendation": "Reposição de ferro e investigação da causa",
+      "nextSteps": [
+        "Iniciar reposição de ferro oral ou parenteral",
+        "Investigar causa da deficiência (sangramento, má absorção)",
+        "Dosagem de ferritina sérica",
+        "Hemograma completo com índices",
+        "Pesquisa de sangue oculto nas fezes",
+        "Considerar endoscopia digestiva se apropriado"
+      ],
+      "color": "red",
+      "associatedFindings": [
+        "Anemia ferropriva",
+        "Microcitose e hipocromia",
+        "Ferritina baixa (<15 ng/mL)",
+        "CTLF elevada"
+      ]
+    },
+    {
+      "condition": "ist_percent >= 16 && ist_percent < 20",
+      "riskLevel": "warning",
+      "result": "Deficiência de Ferro Leve a Moderada",
+      "clinicalSignificance": "IST 16-20% sugere deficiência de ferro inicial ou depleção dos estoques",
+      "recommendation": "Avaliar necessidade de reposição de ferro",
+      "nextSteps": [
+        "Dosagem de ferritina sérica",
+        "Hemograma com índices eritrocitários",
+        "Considerar reposição de ferro se sintomático",
+        "Investigar possíveis causas de perda",
+        "Reavaliação em 4-6 semanas"
+      ],
+      "color": "yellow",
+      "associatedFindings": [
+        "Ferritina pode estar normal ou baixa",
+        "Hemoglobina pode estar normal",
+        "CTLF pode estar elevada"
+      ]
+    },
+    {
+      "condition": "ist_percent >= 20 && ist_percent <= 45",
+      "riskLevel": "normal",
+      "result": "Status de Ferro Normal",
+      "clinicalSignificance": "IST 20-45% indica status de ferro adequado",
+      "recommendation": "Manter monitorização de rotina",
+      "nextSteps": [
+        "Seguimento conforme indicação clínica",
+        "Reavaliação anual se fatores de risco"
+      ],
+      "color": "green",
+      "associatedFindings": [
+        "Ferritina normal (15-300 ng/mL)",
+        "Hemoglobina normal",
+        "CTLF normal (250-400 μg/dL)"
+      ]
+    },
+    {
+      "condition": "ist_percent > 45 && ist_percent <= 60",
+      "riskLevel": "warning",
+      "result": "Sobrecarga de Ferro Leve",
+      "clinicalSignificance": "IST 45-60% pode indicar sobrecarga de ferro inicial",
+      "recommendation": "Investigar causa da sobrecarga",
+      "nextSteps": [
+        "Dosagem de ferritina sérica",
+        "Investigar hemocromatose hereditária",
+        "Avaliar história de transfusões",
+        "Considerar genotipagem para hemocromatose",
+        "Avaliar função hepática"
+      ],
+      "color": "yellow",
+      "associatedFindings": [
+        "Ferritina pode estar elevada",
+        "CTLF pode estar baixa",
+        "Possível hepatomegalia"
+      ]
+    },
+    {
+      "condition": "ist_percent > 60",
+      "riskLevel": "critical",
+      "result": "Sobrecarga de Ferro Severa",
+      "clinicalSignificance": "IST >60% indica sobrecarga de ferro significativa com risco de lesão orgânica",
+      "recommendation": "Investigação urgente e tratamento da sobrecarga",
+      "nextSteps": [
+        "Dosagem urgente de ferritina",
+        "Genotipagem para hemocromatose hereditária",
+        "Avaliação cardiológica (cardiomiopatia)",
+        "Avaliação hepática (cirrose)",
+        "Avaliação endócrina (diabetes, hipogonadismo)",
+        "Considerar flebotomia terapêutica",
+        "RM de fígado e coração (T2*)"
+      ],
+      "color": "red",
+      "associatedFindings": [
+        "Ferritina muito elevada (>1000 ng/mL)",
+        "CTLF baixa",
+        "Possível diabetes mellitus",
+        "Possível cardiomiopatia",
+        "Possível cirrose hepática"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "citation": "Camaschella C. Iron deficiency. Blood. 2019;133(1):30-39.",
+      "pmid": "30401705",
+      "type": "review"
+    },
+    {
+      "citation": "Bacon BR, Adams PC, Kowdley KV, et al. Diagnosis and management of hemochromatosis: 2011 practice guideline by the American Association for the Study of Liver Diseases. Hepatology. 2011;54(1):328-43.",
+      "pmid": "21452290",
+      "type": "guideline"
+    },
+    {
+      "citation": "World Health Organization. Serum transferrin receptor levels for the assessment of iron status and iron deficiency in populations. Geneva: WHO; 2014.",
+      "type": "guideline"
+    }
+  ],
+  "normalRanges": {
+    "ist": {
+      "normal": "20-45%",
+      "iron_deficiency": "<20%",
+      "iron_overload": ">45%"
+    },
+    "serum_iron": {
+      "men": "65-175 μg/dL",
+      "women": "50-170 μg/dL",
+      "children": "50-120 μg/dL"
+    },
+    "tibc": {
+      "normal": "250-400 μg/dL",
+      "iron_deficiency": ">400 μg/dL",
+      "iron_overload": "<250 μg/dL"
+    }
+  },
+  "warnings": [
+    "Esta calculadora não substitui a avaliação clínica completa",
+    "Valores podem ser alterados por inflamação aguda ou crônica",
+    "Não válido após transfusão sanguínea recente (aguardar 3 meses)",
+    "Correlacionar sempre com ferritina sérica e hemograma",
+    "Variação circadiana do ferro pode afetar o resultado"
+  ],
+  "additionalTests": {
+    "recommended": [
+      "Ferritina sérica",
+      "Hemograma completo com índices",
+      "Proteína C reativa (descartar inflamação)",
+      "Receptor solúvel de transferrina (se disponível)"
+    ],
+    "ifIronDeficiency": [
+      "Pesquisa de sangue oculto nas fezes",
+      "Endoscopia digestiva alta e baixa",
+      "Avaliação ginecológica (mulheres)",
+      "Dosagem de vitamina B12 e folato"
+    ],
+    "ifIronOverload": [
+      "Genotipagem para hemocromatose (HFE)",
+      "Função hepática completa",
+      "Glicemia e HbA1c",
+      "Ecocardiograma",
+      "RM de fígado (quantificação de ferro)"
+    ]
+  },
+  "clinicalPearls": [
+    "IST é mais sensível que ferritina para detectar deficiência de ferro funcional",
+    "Na anemia de doença crônica, IST pode estar normal apesar da deficiência funcional",
+    "Ferro sérico tem variação circadiana (maior pela manhã)",
+    "CTLF aumenta na deficiência de ferro e diminui na sobrecarga",
+    "Correlação com receptor solúvel de transferrina melhora a acurácia diagnóstica"
+  ]
+}

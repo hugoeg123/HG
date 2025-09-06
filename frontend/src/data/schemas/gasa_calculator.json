@@ -1,0 +1,181 @@
+{
+  "name": "Gradiente Albumina Soro-Ascite (GASA/SAAG)",
+  "description": "Calcula o gradiente de albumina entre soro e líquido ascítico para distinguir ascite por hipertensão portal de outras causas",
+  "category": "hepatology",
+  "version": "1.0.0",
+  "clinicalContext": {
+    "indication": "Pacientes com ascite para determinar etiologia",
+    "contraindications": [],
+    "limitations": [
+      "Não válido se paracentese não for realizada adequadamente",
+      "Pode ser alterado por infusão de albumina recente"
+    ],
+    "clinicalSignificance": "GASA ≥1.1 g/dL indica hipertensão portal com 97% de acurácia"
+  },
+  "inputs": [
+    {
+      "key": "serum_albumin",
+      "label": "Albumina Sérica",
+      "type": "number",
+      "unit": "g/dL",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "Albumina sérica é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 1.0,
+          "max": 6.0,
+          "message": "Albumina sérica deve estar entre 1.0 e 6.0 g/dL"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "hypoalbuminemia",
+          "criticalValues": [
+            {
+              "min": 1.0,
+              "max": 2.5,
+              "message": "Hipoalbuminemia severa",
+              "action": "Investigar causa da hipoalbuminemia"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Coleta preferencialmente no mesmo dia da paracentese"
+    },
+    {
+      "key": "ascites_albumin",
+      "label": "Albumina do Líquido Ascítico",
+      "type": "number",
+      "unit": "g/dL",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "Albumina do líquido ascítico é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 0.1,
+          "max": 5.0,
+          "message": "Albumina ascítica deve estar entre 0.1 e 5.0 g/dL"
+        },
+        {
+          "type": "custom",
+          "message": "Albumina ascítica deve ser menor que a sérica",
+          "customValidator": "ascites_less_than_serum"
+        }
+      ],
+      "clinicalNote": "Obtida por paracentese diagnóstica"
+    }
+  ],
+  "formulas": {
+    "gasa": "serum_albumin - ascites_albumin"
+  },
+  "interpretations": [
+    {
+      "condition": "gasa >= 1.1",
+      "riskLevel": "high",
+      "result": "GASA ≥1.1 g/dL - Hipertensão Portal",
+      "clinicalSignificance": "Indica ascite secundária à hipertensão portal com 97% de acurácia",
+      "recommendation": "Investigar causas de hipertensão portal",
+      "nextSteps": [
+        "Avaliar função hepática (Child-Pugh, MELD)",
+        "Investigar cirrose hepática",
+        "Considerar ultrassom com Doppler portal",
+        "Avaliar varizes esofágicas (endoscopia)",
+        "Considerar causas não-cirróticas (trombose portal, esquistossomose)"
+      ],
+      "color": "red",
+      "etiologies": [
+        "Cirrose hepática (mais comum)",
+        "Hepatite alcoólica",
+        "Insuficiência cardíaca congestiva",
+        "Trombose da veia porta",
+        "Síndrome de Budd-Chiari",
+        "Esquistossomose mansônica"
+      ]
+    },
+    {
+      "condition": "gasa < 1.1",
+      "riskLevel": "normal",
+      "result": "GASA <1.1 g/dL - Sem Hipertensão Portal",
+      "clinicalSignificance": "Indica ascite não relacionada à hipertensão portal",
+      "recommendation": "Investigar outras causas de ascite",
+      "nextSteps": [
+        "Avaliar função renal (síndrome nefrótica)",
+        "Investigar neoplasias (carcinomatose peritoneal)",
+        "Avaliar função cardíaca",
+        "Considerar causas infecciosas (tuberculose)",
+        "Avaliar doenças autoimunes",
+        "Análise citológica do líquido ascítico"
+      ],
+      "color": "green",
+      "etiologies": [
+        "Carcinomatose peritoneal",
+        "Síndrome nefrótica",
+        "Tuberculose peritoneal",
+        "Pancreatite",
+        "Hipotireoidismo severo",
+        "Síndrome de Meigs",
+        "Ascite quilosa"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "citation": "Runyon BA, Montano AA, Akriviadis EA, et al. The serum-ascites albumin gradient is superior to the exudate-transudate concept in the differential diagnosis of ascites. Ann Intern Med. 1992;117(3):215-20.",
+      "pmid": "1616215",
+      "type": "primary"
+    },
+    {
+      "citation": "Runyon BA. Management of adult patients with ascites due to cirrhosis: an update. Hepatology. 2009;49(6):2087-107.",
+      "pmid": "19475696",
+      "type": "guideline"
+    },
+    {
+      "citation": "European Association for the Study of the Liver. EASL clinical practice guidelines on the management of ascites, spontaneous bacterial peritonitis, and hepatorenal syndrome in cirrhosis. J Hepatol. 2010;53(3):397-417.",
+      "pmid": "20633946",
+      "type": "guideline"
+    }
+  ],
+  "normalRanges": {
+    "gasa": {
+      "portal_hypertension": "≥1.1 g/dL",
+      "non_portal": "<1.1 g/dL"
+    },
+    "serum_albumin": {
+      "normal": "3.5-5.0 g/dL",
+      "hypoalbuminemia": "<3.5 g/dL"
+    }
+  },
+  "warnings": [
+    "Esta calculadora não substitui a avaliação clínica completa",
+    "Paracentese deve ser realizada com técnica adequada",
+    "Considerar análise completa do líquido ascítico (citologia, cultura, contagem celular)",
+    "Infusão recente de albumina pode alterar o resultado"
+  ],
+  "additionalTests": {
+    "recommended": [
+      "Contagem de células no líquido ascítico",
+      "Cultura do líquido ascítico",
+      "Citologia oncótica",
+      "Proteína total do líquido ascítico",
+      "LDH do líquido ascítico"
+    ],
+    "ifPortalHypertension": [
+      "Child-Pugh Score",
+      "MELD Score",
+      "Ultrassom com Doppler portal",
+      "Endoscopia digestiva alta (varizes)"
+    ],
+    "ifNonPortal": [
+      "TC/RM de abdome",
+      "Marcadores tumorais",
+      "Função renal completa",
+      "Ecocardiograma"
+    ]
+  }
+}

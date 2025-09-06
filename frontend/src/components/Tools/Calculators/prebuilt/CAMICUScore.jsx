@@ -4,17 +4,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from '../../../ui/card';
+import { Label } from '../../../ui/label';
+import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
+import { RadioGroup, RadioGroupItem } from '../../../ui/radio-group';
 import { Copy, Calculator, Brain, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 

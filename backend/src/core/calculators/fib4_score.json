@@ -1,0 +1,304 @@
+{
+  "name": "FIB-4 Score",
+  "description": "Avaliação não-invasiva de fibrose hepática usando idade, AST, ALT e contagem de plaquetas",
+  "category": "hepatology",
+  "version": "1.0.0",
+  "clinicalContext": {
+    "indication": "Pacientes com suspeita de fibrose hepática, especialmente hepatite C, NASH ou hepatite B",
+    "contraindications": [
+      "Idade < 18 anos",
+      "Hepatite aguda ativa",
+      "Insuficiência hepática aguda"
+    ],
+    "limitations": [
+      "Performance reduzida em pacientes > 65 anos (especificidade < 30%)",
+      "Não válido durante episódios de hepatite aguda",
+      "Pode superestimar fibrose em pacientes com consumo de álcool",
+      "Valores de corte diferentes para HCV vs NASH/HBV"
+    ]
+  },
+  "inputs": [
+    {
+      "key": "age",
+      "label": "Idade",
+      "description": "Idade do paciente em anos",
+      "type": "number",
+      "unit": "anos",
+      "required": true,
+      "min": 18,
+      "max": 120,
+      "step": 1,
+      "placeholder": "Ex: 45",
+      "validations": [
+        {
+          "type": "required",
+          "message": "Idade é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 18,
+          "max": 120,
+          "message": "Idade deve estar entre 18 e 120 anos"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "elderly",
+          "criticalValues": [
+            {
+              "min": 65,
+              "max": 120,
+              "message": "FIB-4 tem especificidade reduzida em pacientes > 65 anos",
+              "action": "Considerar elastografia hepática para confirmação"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Idade é componente direto da fórmula - valores mais altos aumentam o score"
+    },
+    {
+      "key": "ast",
+      "label": "AST (Aspartato Aminotransferase)",
+      "description": "Nível sérico de AST em unidades por litro",
+      "type": "number",
+      "unit": "U/L",
+      "required": true,
+      "min": 1,
+      "max": 5000,
+      "step": 1,
+      "placeholder": "Ex: 45",
+      "validations": [
+        {
+          "type": "required",
+          "message": "AST é obrigatório"
+        },
+        {
+          "type": "range",
+          "min": 1,
+          "max": 5000,
+          "message": "AST deve estar entre 1 e 5000 U/L"
+        },
+        {
+          "type": "clinical",
+          "criticalValues": [
+            {
+              "min": 1000,
+              "max": 5000,
+              "message": "AST muito elevado - hepatite fulminante?",
+              "action": "Avaliação hepatológica urgente"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Valores elevados podem indicar lesão hepatocelular ativa"
+    },
+    {
+      "key": "alt",
+      "label": "ALT (Alanina Aminotransferase)",
+      "description": "Nível sérico de ALT em unidades por litro",
+      "type": "number",
+      "unit": "U/L",
+      "required": true,
+      "min": 1,
+      "max": 5000,
+      "step": 1,
+      "placeholder": "Ex: 38",
+      "validations": [
+        {
+          "type": "required",
+          "message": "ALT é obrigatório"
+        },
+        {
+          "type": "range",
+          "min": 1,
+          "max": 5000,
+          "message": "ALT deve estar entre 1 e 5000 U/L"
+        },
+        {
+          "type": "clinical",
+          "criticalValues": [
+            {
+              "min": 1000,
+              "max": 5000,
+              "message": "ALT muito elevado - hepatotoxicidade?",
+              "action": "Investigar causa e considerar suspensão de hepatotóxicos"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "ALT é mais específico para lesão hepática que AST"
+    },
+    {
+      "key": "platelets",
+      "label": "Plaquetas",
+      "description": "Contagem de plaquetas em milhares por microlitro",
+      "type": "number",
+      "unit": "×10³/μL",
+      "required": true,
+      "min": 1,
+      "max": 2000,
+      "step": 1,
+      "placeholder": "Ex: 250",
+      "validations": [
+        {
+          "type": "required",
+          "message": "Contagem de plaquetas é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 1,
+          "max": 2000,
+          "message": "Plaquetas devem estar entre 1 e 2000 ×10³/μL"
+        },
+        {
+          "type": "clinical",
+          "criticalValues": [
+            {
+              "min": 1,
+              "max": 50,
+              "message": "Plaquetopenia severa - risco de sangramento",
+              "action": "Considerar transfusão de plaquetas se procedimento invasivo"
+            },
+            {
+              "min": 50,
+              "max": 100,
+              "message": "Plaquetopenia moderada - pode indicar hipertensão portal",
+              "action": "Investigar sinais de cirrose"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Plaquetopenia pode indicar hipertensão portal e cirrose avançada"
+    }
+  ],
+  "expressions": {
+    "fib4_score": "(age * ast) / (platelets * sqrt(alt))"
+  },
+  "outputs": [
+    {
+      "key": "fib4_score",
+      "label": "FIB-4 Score",
+      "description": "Índice FIB-4 calculado",
+      "type": "number",
+      "decimals": 2,
+      "unit": ""
+    },
+    {
+      "key": "risk_category",
+      "label": "Categoria de Risco",
+      "description": "Classificação do risco de fibrose avançada",
+      "type": "string"
+    },
+    {
+      "key": "probability",
+      "label": "Probabilidade de Fibrose Avançada",
+      "description": "Estimativa de probabilidade baseada no score",
+      "type": "string"
+    }
+  ],
+  "interpretations": [
+    {
+      "condition": "fib4_score < 1.3 && age < 65",
+      "riskLevel": "low",
+      "result": "Baixo risco de fibrose avançada",
+      "clinicalSignificance": "VPN de 90% para fibrose avançada (Ishak 4-6). Probabilidade muito baixa de cirrose.",
+      "recommendation": "Seguimento de rotina. Repetir FIB-4 em 2-3 anos se fatores de risco persistirem.",
+      "nextSteps": [
+        "Controlar fatores de risco (álcool, diabetes, obesidade)",
+        "Seguimento clínico de rotina",
+        "Repetir avaliação em 2-3 anos"
+      ],
+      "probability": "< 10%",
+      "normalRange": "< 1.3 (< 65 anos)"
+    },
+    {
+      "condition": "fib4_score < 2.0 && age >= 65",
+      "riskLevel": "low",
+      "result": "Baixo risco de fibrose avançada (ajustado para idade)",
+      "clinicalSignificance": "Cutoff ajustado para idade ≥65 anos devido à redução da especificidade.",
+      "recommendation": "Seguimento de rotina com monitorização mais frequente devido à idade.",
+      "nextSteps": [
+        "Controlar comorbidades",
+        "Seguimento clínico a cada 1-2 anos",
+        "Considerar elastografia se outros fatores de risco"
+      ],
+      "probability": "< 15%",
+      "normalRange": "< 2.0 (≥ 65 anos)",
+      "warnings": [
+        {
+          "level": "warning",
+          "message": "Cutoff ajustado para idade - especificidade reduzida em idosos",
+          "action": "Considerar métodos complementares se dúvida clínica"
+        }
+      ]
+    },
+    {
+      "condition": "(fib4_score >= 1.3 && fib4_score <= 3.25 && age < 65) || (fib4_score >= 2.0 && fib4_score <= 3.25 && age >= 65)",
+      "riskLevel": "indeterminate",
+      "result": "Risco intermediário - zona indeterminada",
+      "clinicalSignificance": "Score na zona cinzenta. Necessária avaliação adicional para estratificação adequada do risco.",
+      "recommendation": "Avaliação complementar com elastografia hepática (FibroScan) ou outros métodos não-invasivos.",
+      "nextSteps": [
+        "Elastografia hepática (FibroScan)",
+        "Considerar outros scores (APRI, NFS)",
+        "Avaliação hepatológica",
+        "Investigar etiologia da hepatopatia"
+      ],
+      "probability": "15-65%",
+      "normalRange": "1.3-3.25 (zona indeterminada)",
+      "warnings": [
+        {
+          "level": "warning",
+          "message": "Score na zona indeterminada - necessária avaliação adicional",
+          "action": "Realizar elastografia hepática ou outros métodos não-invasivos"
+        }
+      ]
+    },
+    {
+      "condition": "fib4_score > 3.25",
+      "riskLevel": "high",
+      "result": "Alto risco de fibrose avançada",
+      "clinicalSignificance": "VPP de 65% para fibrose avançada. Alta probabilidade de cirrose ou fibrose significativa.",
+      "recommendation": "Encaminhamento para hepatologista. Investigação de complicações da cirrose e rastreamento de carcinoma hepatocelular.",
+      "nextSteps": [
+        "Encaminhamento urgente para hepatologista",
+        "Ultrassom abdominal + AFP (rastreamento CHC)",
+        "Endoscopia digestiva alta (rastreamento varizes)",
+        "Avaliação de descompensação hepática",
+        "Considerar biópsia hepática se indicada"
+      ],
+      "probability": "> 65%",
+      "normalRange": "> 3.25 (alto risco)",
+      "warnings": [
+        {
+          "level": "critical",
+          "message": "Alto risco de fibrose avançada - necessário seguimento especializado",
+          "action": "Encaminhamento para hepatologista e rastreamento de complicações"
+        }
+      ]
+    }
+  ],
+  "crossValidations": [
+    {
+      "fields": ["ast", "alt"],
+      "validator": "(inputs) => inputs.ast > 0 && inputs.alt > 0",
+      "message": "AST e ALT devem ser valores positivos"
+    }
+  ],
+  "references": [
+    "Sterling RK, Lissen E, Clumeck N, et al. Development of a simple noninvasive index to predict significant fibrosis patients with HIV/HCV co-infection. Hepatology 2006;43:1317-1325.",
+    "https://www.hepatitisc.uw.edu/page/clinical-calculators/fib-4",
+    "McPherson S, Hardy T, Dufour JF, et al. Age as a confounding factor for the accurate non-invasive diagnosis of advanced fibrosis in NAFLD. Am J Gastroenterol 2017;112:740-751.",
+    "PMID: 16317692 - Original FIB-4 validation study",
+    "AASLD Practice Guidelines - Use of FIB-4 in clinical practice"
+  ],
+  "metadata": {
+    "created": "2024-01-15",
+    "lastValidated": "2024-01-15",
+    "validationSource": "Sterling RK et al. Hepatology 2006",
+    "confidenceLevel": "high",
+    "clinicalEvidence": "Level A - Multiple validation studies",
+    "specialty": "Hepatology",
+    "complexity": "simple",
+    "calculationType": "risk_score"
+  }
+}

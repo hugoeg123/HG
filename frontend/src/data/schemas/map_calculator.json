@@ -1,0 +1,195 @@
+{
+  "name": "Pressão Arterial Média (MAP)",
+  "description": "Calcula a pressão arterial média usando a fórmula: MAP = PAD + (PAS - PAD)/3",
+  "category": "cardiology",
+  "version": "1.0.0",
+  "clinicalContext": {
+    "indication": "Avaliação hemodinâmica e perfusão tecidual",
+    "contraindications": [],
+    "limitations": [
+      "Não válido em arritmias graves",
+      "Pode ser impreciso em extremos de idade"
+    ],
+    "clinicalSignificance": "MAP é um indicador importante da perfusão de órgãos vitais"
+  },
+  "inputs": [
+    {
+      "key": "systolic_bp",
+      "label": "Pressão Arterial Sistólica (PAS)",
+      "type": "number",
+      "unit": "mmHg",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "Pressão sistólica é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 50,
+          "max": 300,
+          "message": "Pressão sistólica deve estar entre 50 e 300 mmHg"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "hypertension_emergency",
+          "criticalValues": [
+            {
+              "min": 180,
+              "max": 300,
+              "message": "Hipertensão severa - risco de emergência hipertensiva",
+              "action": "Monitorização intensiva necessária"
+            },
+            {
+              "min": 50,
+              "max": 90,
+              "message": "Hipotensão severa - risco de choque",
+              "action": "Avaliação urgente necessária"
+            }
+          ]
+        }
+      ],
+      "clinicalNote": "Valor obtido preferencialmente com manguito adequado ao braço do paciente"
+    },
+    {
+      "key": "diastolic_bp",
+      "label": "Pressão Arterial Diastólica (PAD)",
+      "type": "number",
+      "unit": "mmHg",
+      "required": true,
+      "validations": [
+        {
+          "type": "required",
+          "message": "Pressão diastólica é obrigatória"
+        },
+        {
+          "type": "range",
+          "min": 20,
+          "max": 200,
+          "message": "Pressão diastólica deve estar entre 20 e 200 mmHg"
+        },
+        {
+          "type": "clinical",
+          "clinicalContext": "diastolic_hypertension",
+          "criticalValues": [
+            {
+              "min": 120,
+              "max": 200,
+              "message": "Hipertensão diastólica severa",
+              "action": "Tratamento anti-hipertensivo urgente"
+            },
+            {
+              "min": 20,
+              "max": 40,
+              "message": "Hipotensão diastólica severa",
+              "action": "Investigar causa subjacente"
+            }
+          ]
+        },
+        {
+          "type": "custom",
+          "message": "Pressão diastólica deve ser menor que a sistólica",
+          "customValidator": "diastolic_less_than_systolic"
+        }
+      ],
+      "clinicalNote": "Deve ser sempre menor que a pressão sistólica"
+    }
+  ],
+  "formulas": {
+    "map": "diastolic_bp + (systolic_bp - diastolic_bp) / 3"
+  },
+  "interpretations": [
+    {
+      "condition": "map < 60",
+      "riskLevel": "critical",
+      "result": "MAP baixa - risco de hipoperfusão",
+      "clinicalSignificance": "MAP < 60 mmHg pode comprometer a perfusão de órgãos vitais",
+      "recommendation": "Avaliação hemodinâmica urgente",
+      "nextSteps": [
+        "Verificar volemia",
+        "Avaliar função cardíaca",
+        "Considerar suporte vasopressor se necessário"
+      ],
+      "color": "red"
+    },
+    {
+      "condition": "map >= 60 && map <= 70",
+      "riskLevel": "warning",
+      "result": "MAP limítrofe",
+      "clinicalSignificance": "MAP entre 60-70 mmHg requer monitorização",
+      "recommendation": "Monitorização contínua",
+      "nextSteps": [
+        "Avaliar sinais de hipoperfusão",
+        "Monitorizar débito urinário",
+        "Considerar otimização hemodinâmica"
+      ],
+      "color": "yellow"
+    },
+    {
+      "condition": "map > 70 && map <= 100",
+      "riskLevel": "normal",
+      "result": "MAP normal",
+      "clinicalSignificance": "MAP adequada para perfusão de órgãos vitais",
+      "recommendation": "Manter monitorização de rotina",
+      "nextSteps": [
+        "Seguimento conforme protocolo"
+      ],
+      "color": "green"
+    },
+    {
+      "condition": "map > 100 && map <= 110",
+      "riskLevel": "warning",
+      "result": "MAP elevada",
+      "clinicalSignificance": "MAP elevada pode indicar hipertensão",
+      "recommendation": "Avaliar necessidade de tratamento anti-hipertensivo",
+      "nextSteps": [
+        "Confirmar medidas em momentos diferentes",
+        "Avaliar lesão de órgão-alvo",
+        "Considerar tratamento se persistente"
+      ],
+      "color": "yellow"
+    },
+    {
+      "condition": "map > 110",
+      "riskLevel": "critical",
+      "result": "MAP muito elevada - risco de emergência hipertensiva",
+      "clinicalSignificance": "MAP > 110 mmHg pode indicar crise hipertensiva",
+      "recommendation": "Avaliação urgente para emergência hipertensiva",
+      "nextSteps": [
+        "Avaliar sintomas neurológicos",
+        "Investigar lesão de órgão-alvo",
+        "Considerar redução controlada da PA"
+      ],
+      "color": "red"
+    }
+  ],
+  "references": [
+    {
+      "citation": "Magder SA. The highs and lows of blood pressure: toward meaningful clinical targets in patients with shock. Crit Care Med. 2014;42(5):1241-51.",
+      "pmid": "24736333",
+      "type": "primary"
+    },
+    {
+      "citation": "Vincent JL, De Backer D. Circulatory shock. N Engl J Med. 2013;369(18):1726-34.",
+      "pmid": "24171518",
+      "type": "review"
+    },
+    {
+      "citation": "Whelton PK, et al. 2017 ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults. Hypertension. 2018;71(6):e13-e115.",
+      "pmid": "29133356",
+      "type": "guideline"
+    }
+  ],
+  "normalRanges": {
+    "map": {
+      "normal": "70-100 mmHg",
+      "target_icu": "≥65 mmHg",
+      "target_sepsis": "≥65 mmHg"
+    }
+  },
+  "warnings": [
+    "Esta calculadora não substitui a avaliação clínica completa",
+    "Valores extremos requerem confirmação e avaliação médica",
+    "Em arritmias, considerar múltiplas medidas para maior precisão"
+  ]
+}

@@ -40,8 +40,9 @@ Patient.hasMany(Record, { foreignKey: 'patientId', as: 'records' });
 
 // Associações de Record
 Record.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
-Record.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
-Record.belongsTo(User, { foreignKey: 'updatedBy', as: 'updater' });
+// ✅ Novo: criador/atualizador apontando para MEDICO
+Record.belongsTo(Medico, { foreignKey: 'createdBy', as: 'medicoCriador' });
+Record.belongsTo(Medico, { foreignKey: 'updatedBy', as: 'medicoAtualizador' });
 
 // Associações de Tag
 Tag.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });

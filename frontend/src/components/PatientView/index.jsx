@@ -24,7 +24,7 @@ import RecordViewer from './RecordViewer';
  * IA prompt: Adicionar visualização de histórico de consultas com timeline
  */
 const PatientView = () => {
-  const { id } = useParams();
+  const { id, recordId } = useParams();
   const navigate = useNavigate();
   const { 
     currentPatient, 
@@ -40,7 +40,8 @@ const PatientView = () => {
     setCurrentRecord,
     setChatContext,
     viewMode,
-    setViewMode
+    setViewMode,
+    fetchRecordById
   } = usePatientStore();
   
   const [isEditingName, setIsEditingName] = useState(false);
@@ -114,6 +115,25 @@ const PatientView = () => {
     }
   }, [currentRecord, setViewMode]);
 
+  // React to recordId in URL: fetch and show the record viewer when present
+  useEffect(() => {
+    if (!recordId) return;
+
+    if (!currentRecord || String(currentRecord.id) !== String(recordId)) {
+      fetchRecordById(recordId)
+        .then(() => {
+          setViewMode('viewer');
+          setShowEditor(false);
+        })
+        .catch((e) => {
+          console.error('Erro ao carregar registro pela URL:', e);
+        });
+    } else {
+      setViewMode('viewer');
+      setShowEditor(false);
+    }
+  }, [recordId]);
+
   // Handle new record creation
   const handleNewRecord = (recordType = 'anamnese') => {
     setActiveTab(recordType);
@@ -127,6 +147,9 @@ const PatientView = () => {
     setViewMode('dashboard');
     setShowEditor(false);
     setCurrentRecord(null);
+    // Ensure URL reflects dashboard (remove recordId from route)
+    // Connector: Navigates back to /patients/:id so useEffect with recordId does not re-open viewer
+    navigate(`/patients/${id}`, { replace: true });
   };
 
   // Handle sending content to chat

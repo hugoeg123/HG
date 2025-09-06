@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Copy, CheckCheck, ToggleLeft, ToggleRight, Calendar, User, Tag } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
+import { normalizeTags, formatTagForDisplay } from '../../utils/tagUtils';
 
 /**
  * RecordViewer component - Displays a medical record in read-only mode
@@ -255,14 +256,18 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
                 Tags:
               </h3>
               <div className="flex flex-wrap gap-2">
-                {record.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-teal-900/30 text-teal-300 border border-teal-500/30 rounded-md text-sm"
-                  >
-                    #{typeof tag === 'string' ? tag : tag.name || tag.value}
-                  </span>
-                ))}
+                {normalizeTags(record.tags).map((tag, index) => {
+                  const tagDisplay = formatTagForDisplay(tag, 'viewer');
+                  return (
+                    <span
+                      key={index}
+                      className={tagDisplay.className}
+                      title={tagDisplay.label}
+                    >
+                      #{tagDisplay.code}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}

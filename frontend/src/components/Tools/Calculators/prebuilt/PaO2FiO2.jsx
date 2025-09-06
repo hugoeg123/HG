@@ -4,17 +4,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Copy, Calculator, Lung, AlertTriangle, Info } from 'lucide-react';
+} from '../../../ui/card';
+import { Label } from '../../../ui/label';
+import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
+import { Copy, Calculator, Activity, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -368,7 +368,7 @@ function PaO2FiO2({ open, onOpenChange }) {
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lung className="h-5 w-5" />
+            <Activity className="h-5 w-5" />
             Relação PaO2/FiO2 (P/F Ratio)
           </DialogTitle>
         </DialogHeader>

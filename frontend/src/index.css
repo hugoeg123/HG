@@ -198,6 +198,45 @@ body {
   @apply flex border-b border-gray-700;
 }
 
+/* Emerald Focus Styles - Realce esverdeado translúcido para calculadoras */
+.emerald-focus {
+  @apply transition-all duration-200;
+}
+
+.emerald-focus:focus {
+  @apply ring-2 ring-emerald-600/50 border-emerald-600/50 outline-none;
+}
+
+.emerald-focus:focus-within {
+  @apply ring-2 ring-emerald-600/50 border-emerald-600/50;
+}
+
+/* Emerald focus background for active inputs */
+.emerald-focus:focus,
+.emerald-focus:focus-within {
+  @apply bg-emerald-500/10;
+}
+
+/* Emerald focus for select components */
+.emerald-focus[data-state="open"] {
+  @apply ring-2 ring-emerald-600/50 border-emerald-600/50 bg-emerald-500/10;
+}
+
+/* Calculator specific styles */
+.calculator-input-group:focus-within {
+  @apply ring-1 ring-emerald-600/30 rounded-lg;
+}
+
+/* Emerald hover states for calculator buttons */
+.calc-button-emerald {
+  @apply bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 hover:text-emerald-100 border border-emerald-500/30 hover:border-emerald-400/50 transition-all duration-200;
+}
+
+/* Calculator result highlight */
+.calc-result-highlight {
+  @apply bg-emerald-500/5 border-emerald-600/20;
+}
+
 /* Calculator Styles - Consistent theme for medical calculators */
 .calculator-card {
   @apply bg-theme-card border-gray-700 text-white;
@@ -478,3 +517,28 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Emerald Focus Styles - Calculator Input Highlighting */
+.emerald-focus {
+  @apply focus:ring-emerald-600/50 focus:border-emerald-600/50 transition-all duration-200;
+}
+
+.emerald-focus:focus-within {
+  @apply bg-emerald-500/10;
+}
+
+/* Calculator-specific emerald focus variants */
+.emerald-focus input:focus,
+.emerald-focus select:focus,
+.emerald-focus textarea:focus {
+  @apply ring-emerald-600/50 border-emerald-600/50;
+}
+
+.emerald-focus:focus-within input,
+.emerald-focus:focus-within select,
+.emerald-focus:focus-within textarea {
+  @apply bg-emerald-500/5;
+}
+
+/* Connector: Estilos emerald-focus integram com CalcInput.tsx e DynamicCalculator.tsx */
+/* Hook: Classes aplicadas automaticamente em todos os inputs de calculadoras */

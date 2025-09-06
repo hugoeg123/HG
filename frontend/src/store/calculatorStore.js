@@ -476,6 +476,97 @@ const useCalculatorStore = create(
             immutable: true,
             tags: ['hasbled', 'sangramento', 'anticoagulacao', 'risco', 'hemorragia'],
             summary: 'HAS-BLED - risco de sangramento em anticoagulação'
+          },
+          {
+            id: 'heart-score',
+            name: 'HEART Score',
+            category: 'Cardiologia',
+            description: 'Avaliação de risco para dor torácica - MACE em 6 semanas',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['heart', 'dor', 'toracica', 'mace', 'risco', 'cardiologia'],
+            summary: 'HEART Score - risco de MACE em dor torácica'
+          },
+          {
+            id: 'grace-score',
+            name: 'GRACE Score',
+            category: 'Cardiologia',
+            description: 'Avaliação de risco em síndrome coronariana aguda',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['grace', 'acs', 'coronariana', 'aguda', 'mortalidade', 'risco'],
+            summary: 'GRACE - risco em síndrome coronariana aguda'
+          },
+          {
+            id: 'timi-stemi',
+            name: 'TIMI STEMI',
+            category: 'Cardiologia',
+            description: 'Avaliação de risco de mortalidade em STEMI',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['timi', 'stemi', 'iam', 'mortalidade', 'risco', 'cardiologia'],
+            summary: 'TIMI STEMI - risco de mortalidade em 30 dias'
+          },
+          {
+            id: 'timi-nste',
+            name: 'TIMI UA/NSTEMI',
+            category: 'Cardiologia',
+            description: 'Avaliação de risco em angina instável e NSTEMI',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['timi', 'nstemi', 'angina', 'instavel', 'risco', 'cardiologia'],
+            summary: 'TIMI UA/NSTEMI - risco de eventos em 14 dias'
+          },
+          // New Architecture Calculators - Phase 2
+          {
+            id: 'cage-calculator',
+            name: 'Escala CAGE',
+            category: 'Psiquiatria/Dependência Química',
+            description: 'Questionário de triagem para uso de álcool em pacientes ≥16 anos',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['cage', 'alcool', 'triagem', 'dependencia', 'psiquiatria'],
+            summary: 'CAGE - triagem para uso de álcool'
+          },
+          {
+            id: 'map-calculator',
+            name: 'MAP (Pressão Arterial Média)',
+            category: 'Cardiologia',
+            description: 'Cálculo da pressão arterial média para monitorização hemodinâmica',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['map', 'pressao', 'arterial', 'media', 'hemodinamica'],
+            summary: 'MAP - pressão arterial média'
+          },
+          {
+            id: 'gasa-calculator',
+            name: 'GASA (Gradiente Albumina Soro-Ascite)',
+            category: 'Hepatologia',
+            description: 'Diferenciação entre ascite por hipertensão portal e outras causas',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['gasa', 'ascite', 'albumina', 'portal', 'hepatologia'],
+            summary: 'GASA - gradiente albumina soro-ascite'
+          },
+          {
+            id: 'hba1c-eag-calculator',
+            name: 'Glicemia Média Estimada (HbA1c)',
+            category: 'Endocrinologia',
+            description: 'Conversão de HbA1c para glicemia média estimada',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['hba1c', 'glicemia', 'diabetes', 'hemoglobina', 'glicada'],
+            summary: 'HbA1c - glicemia média estimada'
+          },
+          {
+            id: 'ist-calculator',
+            name: 'IST (Índice de Saturação de Transferrina)',
+            category: 'Hematologia',
+            description: 'Avaliação do status de ferro e diagnóstico de deficiência',
+            isHardcoded: true,
+            immutable: true,
+            tags: ['ist', 'ferro', 'transferrina', 'anemia', 'hematologia'],
+            summary: 'IST - índice de saturação de transferrina'
           }
         ];
 

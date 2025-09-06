@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from '../../../ui/dialog';
 import { toast } from 'sonner';
 
 const ConversaoMcgKgMinGttMin = ({ open, onOpenChange }) => {
