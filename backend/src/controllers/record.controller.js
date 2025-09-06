@@ -7,7 +7,7 @@
  */
 
 const { validationResult } = require('express-validator');
-const { Record, Patient, Tag } = require('../models');
+const { Record, Patient, Tag, Medico } = require('../models');
 const { Op } = require('sequelize');
 
 // Obter todos os registros de um paciente
@@ -59,12 +59,25 @@ exports.getPatientRecords = async (req, res) => {
       ];
     }
     
-    // Executar consulta
-    const { count, rows: records } = await Record.findAndCountAll({
+    // Executar consulta com include do médico criador
+    const { count, rows } = await Record.findAndCountAll({
       where,
       order: [[sortField, sortOrder]],
       limit,
-      offset
+      offset,
+      include: [{ model: Medico, as: 'medicoCriador', attributes: ['id', 'nome', 'professional_id'] }]
+    });
+    
+    // Formatar dados com informações do médico
+    const records = rows.map(r => {
+      const json = r.toJSON();
+      
+      return {
+        ...json,
+        // 🔁 Padrão: doctorName = só o nome; CRM separado.
+        doctorName: json.medicoCriador?.nome || null,
+        doctorCRM: json.medicoCriador?.professional_id || null
+      };
     });
     
     res.json({
@@ -89,14 +102,24 @@ exports.getRecordById = async (req, res) => {
       where: {
         id: req.params.id,
         isDeleted: false
-      }
+      },
+      include: [{ model: Medico, as: 'medicoCriador', attributes: ['id', 'nome', 'professional_id'] }]
     });
     
     if (!record) {
       return res.status(404).json({ message: 'Registro não encontrado' });
     }
     
-    res.json(record);
+    // Formatar dados com informações do médico separadas
+    const json = record.toJSON();
+    const formattedRecord = {
+      ...json,
+      // 🔁 Padrão: doctorName = só o nome; CRM separado.
+      doctorName: json.medicoCriador?.nome || null,
+      doctorCRM: json.medicoCriador?.professional_id || null
+    };
+    
+    res.json(formattedRecord);
   } catch (error) {
     console.error('Erro ao buscar registro:', error);
     res.status(500).json({ message: 'Erro ao buscar registro' });
@@ -185,10 +208,24 @@ exports.createRecord = async (req, res) => {
     
     console.log('Registro criado com sucesso:', record.id);
     
+    // Buscar o registro criado com informações do médico
+    const recordWithDoctor = await Record.findByPk(record.id, {
+      include: [{ model: Medico, as: 'medicoCriador', attributes: ['id', 'nome', 'professional_id'] }]
+    });
+    
+    // Formatar dados com informações do médico separadas
+    const json = recordWithDoctor.toJSON();
+    const formattedRecord = {
+      ...json,
+      // 🔁 Padrão: doctorName = só o nome; CRM separado.
+      doctorName: json.medicoCriador?.nome || null,
+      doctorCRM: json.medicoCriador?.professional_id || null
+    };
+    
     res.status(201).json({
       success: true,
       message: 'Registro criado com sucesso',
-      data: record
+      data: formattedRecord
     });
   } catch (error) {
     console.error('Erro ao criar registro:', error);

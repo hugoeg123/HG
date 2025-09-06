@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useMultipleAbortControllers } from '../../hooks/useAbortController';
 import { useToast } from '../ui/Toast';
+// Card components removed - using simple divs for better styling control
 import { parseSections } from '../../shared/parser.js';
+import { normalizeTags, getTagLabel, formatTagForDisplay } from '../../utils/tagUtils';
 import { 
   PlusCircle, 
   UserCircle, 
@@ -42,6 +45,7 @@ const InfoCard = ({ title, children }) => (
 
 // Componente para itens da timeline
 const TimelineItem = ({ item }) => {
+  const navigate = useNavigate();
   const iconMap = {
     'Consulta': <FileText size={18}/>,
     'Pedido de Exame': <Beaker size={18}/>,
@@ -71,18 +75,43 @@ const TimelineItem = ({ item }) => {
     );
   }
 
-  // Handle click to navigate to record section
+  // 🔁 Padrão: Navegação correta usando useNavigate
   const handleItemClick = () => {
-    if (item.recordLink) {
-      // Navigate to the record with section anchor
-      window.location.href = item.recordLink;
-    } else if (item.recordId) {
-      // Fallback to record without section
-      window.location.href = `/records/${item.recordId}`;
+    if (item.recordId) {
+      // Get patientId from the current URL or context
+      const currentPath = window.location.pathname;
+      // Allow UUIDs and other IDs with hyphens: capture until next slash
+      const patientIdMatch = currentPath.match(/\/patients\/([^/]+)/);
+      const patientId = patientIdMatch ? patientIdMatch[1] : item.patientId;
+      
+      if (patientId) {
+        navigate(`/patients/${patientId}/records/${item.recordId}`);
+      } else {
+        console.warn('PatientId not found for navigation');
+      }
+    } else if (item.recordLink) {
+      // Remove leading slash if present to avoid double slash
+      const cleanLink = item.recordLink.startsWith('/') ? item.recordLink.slice(1) : item.recordLink;
+      navigate(`/${cleanLink}`);
     }
   };
 
   const isClickable = item.recordLink || item.recordId;
+
+  // Get tag colors based on category
+  const getTagColor = (tagCode) => {
+    const code = tagCode?.toUpperCase() || '';
+    if (code.includes('DIAGNOSTICO') || code.includes('DX')) {
+      return 'bg-red-600/20 text-red-300 border-red-500/30';
+    } else if (code.includes('MEDICAMENTO') || code.includes('PRESCRICAO')) {
+      return 'bg-blue-600/20 text-blue-300 border-blue-500/30';
+    } else if (code.includes('EXAME') || code.includes('LABORATORIO')) {
+      return 'bg-purple-600/20 text-purple-300 border-purple-500/30';
+    } else if (code.includes('PLANO') || code.includes('CONDUTA')) {
+      return 'bg-green-600/20 text-green-300 border-green-500/30';
+    }
+    return 'bg-teal-600/20 text-teal-300 border-teal-500/30';
+  };
 
   return (
     <div className="relative pl-8 py-2 group">
@@ -93,6 +122,9 @@ const TimelineItem = ({ item }) => {
           isClickable ? 'cursor-pointer' : ''
         }`}
         onClick={isClickable ? handleItemClick : undefined}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleItemClick(); } : undefined}
       >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
           <div className="flex-1">
@@ -102,19 +134,60 @@ const TimelineItem = ({ item }) => {
                 {safeText(item.title || item.descricao)}
               </h3>
               {isClickable && (
-                <ArrowRight size={14} className="text-teal-400 mt-1 flex-shrink-0" />
+                <ArrowRight size={14} className="text-teal-400 mt-1 flex-shrink-0" aria-hidden="true" />
               )}
             </div>
             {item.content && item.content !== item.descricao && (
               <p className="text-xs text-gray-300 mt-2 line-clamp-2">
-                {item.content.substring(0, 150)}{item.content.length > 150 ? '...' : ''}
+                {item.content.substring(0, 200)}{item.content.length > 200 ? '...' : ''}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">Registrado por: {safeText(item.medico)}</p>
-            {item.tag && (
-              <span className="inline-block mt-2 px-2 py-1 text-xs bg-teal-600/20 text-teal-300 rounded border border-teal-500/30">
-                {item.tag.name || item.tag.code}
-              </span>
+            <p className="text-xs text-gray-500 mt-1">
+            Registrado por: {safeText(item.doctorName) || 'Médico não identificado'}
+            {item.doctorCRM && ` (CRM: ${item.doctorCRM})`}
+          </p>
+            
+            {/* Display all tags as spans */}
+            {item.allTags && item.allTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {item.allTags
+                  .filter((tag) => {
+                    const label = (tag?.name || tag?.code || '').toString().trim();
+                    return Boolean(label);
+                  })
+                  .map((tag, index) => {
+                    const tagDisplay = formatTagForDisplay(tag, 'default');
+                    const tagCode = (tagDisplay?.code || '').toString().trim();
+                    const tagLabel = getTagLabel(tag);
+                    if (!tagCode) return null;
+                    return (
+                      <span 
+                        key={`${item.recordId || item.id || 'item'}-tag-${index}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 text-[11px] sm:text-xs leading-4 font-semibold uppercase tracking-wide rounded whitespace-nowrap ${
+                          ['HDA','QP'].includes(tagCode)
+                            ? 'bg-teal-600/25 text-teal-200 border border-teal-400/50'
+                            : 'bg-teal-600/20 text-teal-300 border border-teal-500/40'
+                        }`}
+                        title={tagLabel}
+                      >
+                        {tagCode}
+                      </span>
+                    );
+                  })}
+              </div>
+            )}
+            
+            {/* Fallback for single tag (backward compatibility) */}
+            {!item.allTags && item.tag && (
+              (() => {
+                const label = (item.tag?.name || item.tag?.code || '').toString().trim();
+                if (!label) return null;
+                return (
+                  <span className={`inline-block mt-2 px-2 py-1 text-[11px] sm:text-xs font-medium uppercase rounded border whitespace-nowrap ${getTagColor(item.tag?.code)}`}>
+                    {label}
+                  </span>
+                );
+              })()
             )}
           </div>
           <div className="text-teal-400 flex-shrink-0 mt-1 self-start sm:self-auto" title={safeText(item.tipo)}>
@@ -134,7 +207,8 @@ const TimelineItem = ({ item }) => {
  */
 const PatientDashboard = ({ patientId, onNewRecord }) => {
   // Validate props to prevent rendering objects as text
-  const safePatientId = typeof patientId === 'string' ? patientId : '';
+  // Accept both string and number, normalize to string for routing
+  const safePatientId = (typeof patientId === 'string' || typeof patientId === 'number') ? String(patientId) : '';
   const safeOnNewRecord = typeof onNewRecord === 'function' ? onNewRecord : () => {};
   
   const { 
@@ -297,7 +371,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
     }
   }, [safePatientId, createSignal, fetchPatientDashboard, toast]);
   
-  // Parse records by category using shared/parser.js
+  // Parse records by category - 1 card per complete record
   const parsedRecordsByCategory = useMemo(() => {
     if (!safeCurrentPatient?.records || !Array.isArray(safeCurrentPatient.records)) {
       return {
@@ -313,71 +387,76 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
       planos: []
     };
 
-    // Process each record and extract sections by category
+    // Process each record as a complete unit
     safeCurrentPatient.records.forEach(record => {
       if (!record.content) return;
 
       try {
+        // Extract all tags from the record content
+        const allTags = [];
         const sections = parseSections(record.content);
         
+        // Collect all tags from all sections
         sections.forEach(section => {
-          // Extract tag code from content for categorization
-          const tagMatch = section.content?.match(/^(#[A-Z_]+|>>[A-Z_]+):/m);
-          const tagCode = tagMatch ? tagMatch[1].toUpperCase() : null;
-          
-          const sectionData = {
-            id: `${record.id}_${section.id}`,
-            recordId: record.id,
-            sectionId: section.id,
-            title: section.tag?.name || section.tag?.code || 'Seção',
-            content: section.content,
-            tag: section.tag,
-            data: record.createdAt ? new Date(record.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível',
-            hora: record.createdAt ? new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
-            contexto: record.context || 'Registro Médico',
-            medico: record.doctorName || 'Médico não identificado',
-            tipo: 'Registro Médico',
-            descricao: section.content.substring(0, 100) + (section.content.length > 100 ? '...' : ''),
-            recordLink: `/records/${record.id}#${section.id}`
-          };
-
-          // Categorize based on tag codes
-          if (tagCode && (
-            tagCode.includes('INVESTIGACAO') || 
-            tagCode.includes('EXAME') || 
-            tagCode.includes('LABORATORIO') ||
-            tagCode.includes('IMAGEM') ||
-            tagCode.includes('DIAGNOSTICO') ||
-            tagCode.includes('DX')
-          )) {
-            categorizedData.investigacao.push(sectionData);
-          } else if (tagCode && (
-            tagCode.includes('PLANO') || 
-            tagCode.includes('CONDUTA') || 
-            tagCode.includes('TRATAMENTO') ||
-            tagCode.includes('MEDICAMENTO') ||
-            tagCode.includes('PRESCRICAO')
-          )) {
-            categorizedData.planos.push(sectionData);
-          } else {
-            // Default to timeline for general content
-            categorizedData.timeline.push(sectionData);
+          if (section.tag) {
+            allTags.push(section.tag);
           }
         });
+
+        // Determine primary category based on tags
+        let primaryCategory = 'timeline';
+        const tagCodes = allTags.map(tag => tag.code?.toUpperCase() || '').join(' ');
+        
+        if (tagCodes.includes('INVESTIGACAO') || tagCodes.includes('EXAME') || 
+            tagCodes.includes('LABORATORIO') || tagCodes.includes('IMAGEM') ||
+            tagCodes.includes('DIAGNOSTICO') || tagCodes.includes('DX')) {
+          primaryCategory = 'investigacao';
+        } else if (tagCodes.includes('PLANO') || tagCodes.includes('CONDUTA') || 
+                   tagCodes.includes('TRATAMENTO') || tagCodes.includes('MEDICAMENTO') ||
+                   tagCodes.includes('PRESCRICAO')) {
+          primaryCategory = 'planos';
+        }
+        
+        const recordData = {
+          id: record.id,
+          recordId: record.id,
+          title: `Registro Médico - ${new Date(record.createdAt || record.date).toLocaleDateString('pt-BR')}`,
+          content: record.content,
+          allTags: allTags,
+          tags: allTags,
+          createdAt: record.createdAt || record.date || null,
+          data: record.createdAt ? new Date(record.createdAt).toLocaleDateString('pt-BR') : (record.date ? new Date(record.date).toLocaleDateString('pt-BR') : 'Data não disponível'),
+          hora: record.createdAt ? new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : (record.date ? new Date(record.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'),
+          contexto: record.context || 'Registro Médico',
+          doctorName: record.doctorName || null,
+          doctorCRM: record.doctorCRM || null,
+          medico: record.doctorName 
+            ? `${record.doctorName}${record.doctorCRM ? ` (CRM: ${record.doctorCRM})` : ''}`
+            : 'Médico',
+          tipo: 'Registro Médico',
+          descricao: record.content.substring(0, 150) + (record.content.length > 150 ? '...' : ''),
+          recordLink: `/records/${record.id}`
+        };
+
+        categorizedData[primaryCategory].push(recordData);
+        
       } catch (error) {
-        console.warn('Error parsing record sections:', error);
+        console.warn('Error parsing record:', error);
         // Fallback: add entire record to timeline
         categorizedData.timeline.push({
           id: record.id,
           recordId: record.id,
           title: 'Registro Médico',
           content: record.content,
+          allTags: [],
           data: record.createdAt ? new Date(record.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível',
           hora: record.createdAt ? new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
           contexto: record.context || 'Registro Médico',
-          medico: record.doctorName || 'Médico não identificado',
+          medico: record.doctorName 
+            ? `${record.doctorName}${record.doctorCRM ? ` (CRM: ${record.doctorCRM})` : ''}`
+            : 'Médico não identificado',
           tipo: 'Registro Médico',
-          descricao: record.content.substring(0, 100) + (record.content.length > 100 ? '...' : ''),
+          descricao: record.content.substring(0, 150) + (record.content.length > 150 ? '...' : ''),
           recordLink: `/records/${record.id}`
         });
       }
@@ -673,12 +752,35 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
             </div>
 
             <div className="space-y-0 min-h-[400px]">
-              {filteredData.map((item) => <TimelineItem key={item.id} item={item} />)}
-              {filteredData.length === 0 && (
-                <div className="text-center py-16 text-gray-500">
-                  <p>Nenhum item encontrado.</p>
-                  <p className="text-sm">Tente ajustar sua busca ou o filtro de abas.</p>
-                </div>
+              {activeTab === 'historico' && (
+                filteredData.length === 0 ? (
+                  <div className="text-center py-16 text-gray-500">
+                    <p>Nenhum item encontrado.</p>
+                    <p className="text-sm">Tente ajustar sua busca ou o filtro de abas.</p>
+                  </div>
+                ) : (
+                  <HistoryList data={filteredData} patientId={safePatientId} />
+                )
+              )}
+              {activeTab === 'investigacao' && (
+                filteredData.length === 0 ? (
+                  <div className="text-center py-16 text-gray-500">
+                    <p>Nenhum item encontrado.</p>
+                    <p className="text-sm">Tente ajustar sua busca ou o filtro de abas.</p>
+                  </div>
+                ) : (
+                  <InvestigationList data={filteredData} patientId={safePatientId} />
+                )
+              )}
+              {activeTab === 'planos' && (
+                filteredData.length === 0 ? (
+                  <div className="text-center py-16 text-gray-500">
+                    <p>Nenhum item encontrado.</p>
+                    <p className="text-sm">Tente ajustar sua busca ou o filtro de abas.</p>
+                  </div>
+                ) : (
+                  <PlansList data={filteredData} patientId={safePatientId} />
+                )
               )}
             </div>
           </div>
@@ -885,7 +987,8 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
  * 
  * Connector: Renders historical records from dashboard API
  */
-const HistoryList = ({ data }) => {
+const HistoryList = ({ data, patientId }) => {
+  const navigate = useNavigate();
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -898,10 +1001,30 @@ const HistoryList = ({ data }) => {
   }
   
   return (
-    <div className="space-y-4">
-      {data.map((record) => (
-        <RecordCard key={record.id} record={record} type="historico" />
-      ))}
+    <div className="relative">
+      {/* Vertical timeline line */}
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-teal-800/50 pointer-events-none" aria-hidden="true"></div>
+      <ul className="space-y-4">
+        {data.map((record) => (
+          <li
+            key={record.id}
+            className="relative pl-8 cursor-pointer"
+            onClick={() => navigate(`/patients/${patientId}/records/${record.id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(`/patients/${patientId}/records/${record.id}`);
+              }
+            }}
+          >
+            {/* Timeline bullet */}
+            <div className="absolute left-[14px] top-5 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-teal-900 pointer-events-none" aria-hidden="true"></div>
+            <RecordCard record={record} type="historico" patientId={patientId} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
@@ -911,12 +1034,13 @@ const HistoryList = ({ data }) => {
  * 
  * Connector: Renders investigation records from dashboard API
  */
-const InvestigationList = ({ data }) => {
+const InvestigationList = ({ data, patientId }) => {
+  const navigate = useNavigate();
   if (!data || data.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center text-gray-500">
-          <Stethoscope className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <Microscope className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p>Nenhuma investigação encontrada</p>
         </CardContent>
       </Card>
@@ -924,36 +1048,73 @@ const InvestigationList = ({ data }) => {
   }
   
   return (
-    <div className="space-y-4">
-      {data.map((record) => (
-        <RecordCard key={record.id} record={record} type="investigacao" />
-      ))}
+    <div className="relative">
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-teal-800/50 pointer-events-none" aria-hidden="true"></div>
+      <ul className="space-y-4">
+        {data.map((record) => (
+          <li
+            key={record.id}
+            className="relative pl-8 cursor-pointer"
+            onClick={() => navigate(`/patients/${patientId}/records/${record.id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(`/patients/${patientId}/records/${record.id}`);
+              }
+            }}
+          >
+            <div className="absolute left-[14px] top-5 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-teal-900" aria-hidden="true"></div>
+            <RecordCard record={record} type="investigacao" patientId={patientId} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
 
 /**
- * PlansList Component - Lista de planos e condutas
+ * PlansList Component - Lista de planos terapêuticos
  * 
- * Connector: Renders treatment plans from dashboard API
+ * Connector: Renders therapeutic plans from dashboard API
  */
-const PlansList = ({ data }) => {
+const PlansList = ({ data, patientId }) => {
+  const navigate = useNavigate();
   if (!data || data.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center text-gray-500">
-          <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p>Nenhum plano ou conduta encontrado</p>
+          <NotebookPen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p>Nenhum plano terapêutico encontrado</p>
         </CardContent>
       </Card>
     );
   }
   
   return (
-    <div className="space-y-4">
-      {data.map((record) => (
-        <RecordCard key={record.id} record={record} type="planos" />
-      ))}
+    <div className="relative">
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-teal-800/50 pointer-events-none" aria-hidden="true"></div>
+      <ul className="space-y-4">
+        {data.map((record) => (
+          <li
+            key={record.id}
+            className="relative pl-8 cursor-pointer"
+            onClick={() => navigate(`/patients/${patientId}/records/${record.id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate(`/patients/${patientId}/records/${record.id}`);
+              }
+            }}
+          >
+            <div className="absolute left-[14px] top-5 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-teal-900 pointer-events-none" aria-hidden="true"></div>
+            <RecordCard record={record} type="plano" patientId={patientId} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
@@ -963,15 +1124,8 @@ const PlansList = ({ data }) => {
  * 
  * Connector: Reusable component for displaying record data
  */
-const RecordCard = ({ record, type }) => {
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'historico': return 'bg-theme-card border-teal-500/30';
-        case 'investigacao': return 'bg-theme-card border-teal-500/30';
-        case 'planos': return 'bg-theme-card border-teal-500/30';
-        default: return 'bg-theme-card border-gray-800';
-    }
-  };
+const RecordCard = ({ record, type, patientId }) => {
+  const navigate = useNavigate();
   
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não informada';
@@ -984,41 +1138,82 @@ const RecordCard = ({ record, type }) => {
     });
   };
   
+  const handleCardClick = () => {
+    if (!record?.id || !patientId) return;
+    navigate(`/patients/${patientId}/records/${record.id}`);
+  };
+  
+  // Prefer createdAt, fallback to date/data fields (from backend service)
+  const createdAtValue = record?.created_at || record?.createdAt || record?.date || record?.data;
+  // Tags source: prefer `tags`, fallback to `allTags`
+  const tagsToRender = (Array.isArray(record?.tags) && record.tags.length > 0)
+    ? record.tags
+    : (Array.isArray(record?.allTags) ? record.allTags : []);
+  
   return (
-    <Card className={getTypeColor(type)}>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">
-            {record.title || `Registro ${type}`}
-          </CardTitle>
-          <span className="text-sm text-gray-500">
-            {formatDate(record.created_at || record.createdAt)}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {record.content && (
-            <div className="text-gray-700 whitespace-pre-wrap">
-              {record.content.length > 300 
-                ? `${record.content.substring(0, 300)}...` 
-                : record.content
-              }
-            </div>
-          )}
+    <div 
+      className="bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer"
+      onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCardClick();
+        }
+      }}
+    >
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
+        <div className="flex-1">
+          <p className="text-xs sm:text-sm text-gray-400">
+            {formatDate(createdAtValue)} • Registro Médico
+          </p>
+          <div className="flex items-start gap-2 mt-1">
+            <h3 className="font-semibold text-sm sm:text-base text-white flex-1">
+              {record.title || `Registro Médico - ${formatDate(createdAtValue)}`}
+            </h3>
+            <ArrowRight size={14} className="text-teal-400 mt-1 flex-shrink-0" aria-hidden="true" />
+          </div>
           
-          {record.tags && record.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {record.tags.map((tag) => (
-                <Badge key={tag.id || tag.name} variant="secondary">
-                  {tag.name}
-                </Badge>
-              ))}
+          {(record.doctorName || record.doctorCRM) && (
+            <p className="text-xs text-gray-500 mt-1">
+              {(() => {
+                const name = (record.doctorName || '').toString().trim();
+                const crm = (record.doctorCRM ?? '').toString().trim();
+                if (name) return `Registrado por: ${crm ? `${name} (CRM ${crm})` : name}`;
+                return `Registrado por: ${crm ? `CRM ${crm}` : 'Médico não identificado'}`;
+              })()}
+            </p>
+          )}
+
+          {tagsToRender && tagsToRender.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {normalizeTags(tagsToRender).map((tag, index) => {
+                const tagCode = formatTagForDisplay(tag, 'default').code;
+                const tagLabel = getTagLabel(tag);
+                return (
+                  <span
+                        key={`${record.id}-tag-${index}`}
+                    className={`inline-flex items-center px-2.5 py-0.5 text-[11px] sm:text-xs leading-4 font-semibold uppercase tracking-wide rounded whitespace-nowrap ${
+                      ['HDA','QP'].includes(tagCode)
+                        ? 'bg-teal-600/25 text-teal-200 border border-teal-400/50'
+                        : 'bg-teal-600/20 text-teal-300 border border-teal-500/40'
+                    }`}
+                    title={tagLabel}
+                  >
+                    {tagCode}
+                  </span>
+                );
+              })}
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+        <div className="text-teal-400 flex-shrink-0 mt-1 self-start sm:self-auto" title="Registro Médico">
+          <FileText size={18} aria-hidden="true" />
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -106,6 +106,11 @@ function App() {
                 <PatientView />
               </ErrorBoundary>
             } />
+            <Route path="/patients/:id/records/:recordId" element={
+              <ErrorBoundary fallbackTitle="Erro na Visualização do Registro" showDetails={true}>
+                <PatientView />
+              </ErrorBoundary>
+            } />
             
             {/* Rotas de Calculadoras */}
             <Route path="/calculators" element={

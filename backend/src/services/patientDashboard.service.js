@@ -7,7 +7,7 @@
  * Hook: Usado por controllers/patient.controller.js no endpoint /dashboard
  */
 
-const { Record, Tag } = require('../models');
+const { Record, Tag, Medico } = require('../models');
 const { parseSections, calculateStats } = require('../../../shared/parser');
 const { Op } = require('sequelize');
 
@@ -24,13 +24,18 @@ async function getPatientDashboardData(patientId) {
   console.time('📊 Database Queries');
   
   try {
-    // Buscar todos os registros do paciente (não deletados)
+    // Buscar todos os registros do paciente (não deletados) com médico criador
     console.time('📋 Records Query');
     const records = await Record.findAll({
       where: {
         patientId,
         isDeleted: false
       },
+      include: [{
+        model: Medico,
+        as: 'medicoCriador',
+        attributes: ['id', 'nome', 'professional_id']
+      }],
       order: [['date', 'DESC']],
       limit: 20 // Limitar para performance otimizada
     });
@@ -121,12 +126,18 @@ async function extractDashboardInfo(sections, tagMap, record, dashboardData) {
     const tag = tagMap.get(section.tag_id);
     if (!tag) continue;
 
+    // Formatar informações do médico criador
+    // 🔁 Padrão: doctorName = só o nome; CRM separado.
+    const medicoCriador = record.medicoCriador?.nome || 'Médico não identificado';
+
     const info = {
       data: record.date,
       fonte: record.title,
       registroId: record.id,
       valor: section.valor_raw,
-      valorParseado: section.parsed_value
+      valorParseado: section.parsed_value,
+      doctorName: medicoCriador,
+      doctorCRM: record.medicoCriador?.professional_id || null
     };
 
     // Categorizar baseado no código da tag

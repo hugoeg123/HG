@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePatientStore } from '../../store/patientStore';
+import { normalizeTags, formatTagForDisplay } from '../../utils/tagUtils';
 
 const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
   const { currentPatient, fetchRecordById, loading } = usePatientStore();
@@ -91,16 +92,15 @@ const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
               </div>
               {recordTags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {recordTags.map((tag, index) => {
-                    const tagId = tag?.id || index;
-                    const tagName = tag?.name || 'Tag';
-                    
+                  {normalizeTags(recordTags).map((tag, index) => {
+                    const tagDisplay = formatTagForDisplay(tag, 'compact');
                     return (
                       <span
-                        key={tagId}
-                        className="px-1.5 py-0.5 bg-teal-900 text-teal-200 text-xs rounded-full"
+                        key={index}
+                        className={tagDisplay.className}
+                        title={tagDisplay.label}
                       >
-                        {tagName}
+                        {tagDisplay.code}
                       </span>
                     );
                   })}
