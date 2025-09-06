@@ -1,1 +1,0 @@
-"""Calculadoras específicas de cardiologia."""
