@@ -68,15 +68,37 @@ function App() {
     }
   }, []);
   
-  // Aplicar classe de tema ao elemento html
+  // Aplicar classe de tema ao elemento html e body
   useEffect(() => {
-    const htmlElement = document.documentElement;
+    /**
+     * Theme toggling effect
+     *
+     * - Preserves legacy classes: .dark-mode /.light-mode
+     * - Adds Tailwind dark variant: .dark (required for dark: utilities)
+     * - Adds semantic theme classes: .theme-dark-teal / .theme-light-ice
+     *
+     * Connector: Integrates with index.css variables and Tailwind theme-* utilities
+     * IA prompt: "Ensure dark mode remains identical; apply blue-ice mapping on light"
+     */
+    const html = document.documentElement;
+    const body = document.body;
+
+    /** Small helpers to manage multiple classes cleanly */
+    const add = (el, ...cls) => cls.forEach((c) => el.classList.add(c));
+    const remove = (el, ...cls) => cls.forEach((c) => el.classList.remove(c));
+
     if (isDarkMode) {
-      htmlElement.classList.add('dark-mode');
-      htmlElement.classList.remove('light-mode');
+      // Dark mode: keep legacy + enable Tailwind dark variant + semantic theme
+      add(html, 'dark', 'dark-mode', 'theme-dark-teal');
+      remove(html, 'light-mode', 'theme-light-ice');
+      add(body, 'dark', 'dark-mode', 'theme-dark-teal');
+      remove(body, 'light-mode', 'theme-light-ice');
     } else {
-      htmlElement.classList.add('light-mode');
-      htmlElement.classList.remove('dark-mode');
+      // Light ice theme: remove dark classes and apply blue-ice semantic theme
+      add(html, 'light-mode', 'theme-light-ice');
+      remove(html, 'dark', 'dark-mode', 'theme-dark-teal');
+      add(body, 'light-mode', 'theme-light-ice');
+      remove(body, 'dark', 'dark-mode', 'theme-dark-teal');
     }
   }, [isDarkMode]);
   

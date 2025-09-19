@@ -1,0 +1,77 @@
+/* UI overrides: theme-consistent colors and subtle focus outlines
+ *
+ * Connector: Imported after index.css in main.jsx to ensure higher cascade precedence
+ * IA prompt: "Normalize warning/yellow tints to theme accent and soften focus outlines"
+ */
+
+/* 1) Remove yellow/amber usage in favor of theme accent (blue on light, green/teal on dark) */
+/* Buttons */
+.light-mode .btn-warning {
+  @apply bg-blue-600/10 hover:bg-blue-600/20 border-blue-600/20 hover:border-blue-500 text-blue-600 focus:ring-blue-500/30;
+}
+.dark-mode .btn-warning {
+  @apply bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-600/30 hover:border-emerald-500 text-emerald-400 focus:ring-emerald-500/40;
+}
+
+/* Common yellow/amber utility remaps used across calculators/badges */
+/* Text */
+.light-mode .text-yellow-800, .light-mode .text-amber-700 { @apply text-blue-700; }
+.light-mode .text-yellow-600, .light-mode .text-amber-600 { @apply text-blue-600; }
+.light-mode .text-yellow-500, .light-mode .text-amber-500 { @apply text-blue-600; }
+.dark-mode .text-yellow-400, .dark-mode .text-amber-400 { @apply text-emerald-400; }
+.dark-mode .text-yellow-300, .dark-mode .text-amber-300 { @apply text-emerald-300; }
+.dark-mode .text-yellow-200, .dark-mode .text-amber-200 { @apply text-emerald-300; }
+
+/* Backgrounds */
+.light-mode .bg-yellow-50, .light-mode .bg-amber-50 { @apply bg-blue-50; }
+.light-mode .bg-amber-100, .light-mode .bg-amber-100\/80 { @apply bg-blue-100/80; }
+.light-mode .bg-yellow-100, .light-mode .bg-yellow-100\/80 { @apply bg-blue-100/80; }
+.light-mode .bg-yellow-600\/20, .light-mode .bg-amber-600\/20 { @apply bg-blue-600/20; }
+.dark-mode .bg-yellow-900\/20, .dark-mode .bg-amber-900\/20 { @apply bg-emerald-900/20; }
+.dark-mode .bg-yellow-600\/20, .dark-mode .bg-amber-600\/20 { @apply bg-emerald-600/20; }
+
+/* Borders */
+.light-mode .border-yellow-400, .light-mode .border-amber-300 { @apply border-blue-300; }
+.light-mode .border-yellow-400\/50, .light-mode .border-amber-300\/50 { @apply border-blue-300/50; }
+.light-mode .border-yellow-600\/30, .light-mode .border-amber-600\/30 { @apply border-blue-600/30; }
+.dark-mode .border-yellow-400, .dark-mode .border-amber-400 { @apply border-emerald-400; }
+.dark-mode .border-yellow-700\/50, .dark-mode .border-amber-700\/50 { @apply border-emerald-700/50; }
+.dark-mode .border-yellow-600\/30, .dark-mode .border-amber-600\/30 { @apply border-emerald-600/30; }
+
+/* Rings (focus) */
+.light-mode .focus\:ring-yellow-500\/50:focus, .light-mode .focus\:ring-amber-500\/50:focus { @apply ring-blue-500/40; }
+.dark-mode .focus\:ring-yellow-500\/50:focus, .dark-mode .focus\:ring-amber-500\/50:focus { @apply ring-emerald-500/40; }
+
+/* 2) Subtle, theme-colored focus outlines for generic div and anchor elements */
+/* Goal: replace thick/white outlines with a thin, accent-tinted halo */
+.dark-mode a:focus, .dark-mode a:focus-visible, .dark-mode div:focus, .dark-mode div:focus-visible {
+  outline: none !important;
+  /* Use accent-rgb defined in themes.css: teal in dark mode */
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.25) !important;
+  border-color: rgb(var(--accent-rgb) / 0.20) !important;
+}
+.light-mode a:focus, .light-mode a:focus-visible, .light-mode div:focus, .light-mode div:focus-visible {
+  outline: none !important;
+  /* Use accent-rgb defined in themes.css: blue in light mode */
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.22) !important;
+  border-color: rgb(var(--accent-rgb) / 0.18) !important;
+}
+
+/* Ensure anchor and div don't get oversized ring widths from defaults */
+.dark-mode a:focus-visible, .dark-mode div:focus-visible,
+.light-mode a:focus-visible, .light-mode div:focus-visible {
+  --tw-ring-offset-width: 0 !important;
+  --tw-ring-color: rgb(var(--accent-rgb) / 0.25) !important;
+  --tw-ring-offset-color: transparent !important;
+}
+
+/* 3) Theme border utility: subtle, accent-tinted borders per mode
+ * Connector: Consumed by Dashboard cards and patient list where class `theme-border` is used.
+ * Rationale: Avoid default white borders; make 1px delicate, greenish (dark) and bluish (light)
+ */
+.dark-mode .theme-border {
+  border-color: rgb(var(--accent-rgb) / 0.22) !important; /* teal tint */
+}
+.light-mode .theme-border {
+  border-color: rgb(var(--accent-rgb) / 0.18) !important; /* blue tint */
+}

@@ -6,6 +6,7 @@ import Calculators from '../Tools/Calculators';
 import Alerts from '../Tools/Alerts';
 import KnowledgeBase from '../Tools/KnowledgeBase';
 import TabContentPanel from './TabContentPanel';
+import { useThemeStore } from '../../store/themeStore';
 
 /**
  * RightSidebar component - Displays AI assistant, calculators, alerts and knowledge base
@@ -25,6 +26,7 @@ import TabContentPanel from './TabContentPanel';
 const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
   const [activeTab, setActiveTab] = useState('chat');
   const { id: patientId } = useParams(); // Get current patient ID from URL
+  const { isDarkMode } = useThemeStore();
 
   const tabConfig = {
     chat: { title: 'Chat', component: <AIAssistant />, icon: <MessageSquare size={16} /> },
@@ -37,13 +39,13 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
   const activeTitle = tabConfig[activeTab].title;
 
   return (
-    <div className={`h-full bg-theme-background border-l border-theme-border flex flex-col p-4 space-y-4 ${collapsed ? 'hidden' : ''}`}>
+    <div className={`right-pane h-full bg-theme-background flex flex-col p-4 space-y-4 ${collapsed ? 'hidden' : ''}`}>
       {/* Botão de Expansão */}
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-white">Ferramentas</h2>
+        <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Ferramentas</h2>
         <button
           onClick={onToggleExpansion}
-          className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-lg transition-all duration-200"
+          className={`p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent ${isDarkMode ? 'hover:border-teal-500/30' : 'hover:border-blue-500/30'} rounded-lg transition-all duration-200`}
           title={expanded ? 'Reduzir barra lateral' : 'Expandir barra lateral'}
         >
           {expanded ? <ChevronRight size={16} className="text-gray-400" /> : <ChevronLeft size={16} className="text-gray-400" />}
@@ -55,12 +57,13 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`px-2 py-2 text-xs lg:text-sm font-semibold rounded-md transition-all duration-200 flex items-center justify-center gap-1 lg:gap-2 min-w-0 border
-              ${activeTab === key
-                ? 'border-teal-500 bg-teal-600/20 text-teal-300'
-                : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent hover:border-teal-500/30'
-              }`
-            }
+            className={`px-2 py-2 text-xs lg:text-sm font-semibold rounded-md transition-all duration-200 flex items-center justify-center gap-1 lg:gap-2 min-w-0 border ${
+              activeTab === key
+                ? (isDarkMode
+                    ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                    : 'border-blue-500 bg-blue-600/10 text-blue-700')
+                : `bg-theme-card ${isDarkMode ? 'text-gray-300 hover:bg-theme-surface hover:text-white hover:border-teal-500/30' : 'text-gray-700 hover:bg-theme-surface hover:text-gray-900 hover:border-blue-500/30'} border-transparent`
+            }`}
             aria-current={activeTab === key ? 'page' : undefined}
             title={title}
           >

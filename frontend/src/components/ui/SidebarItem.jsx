@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { useThemeStore } from '../../store/themeStore';
 
 /**
  * SidebarItem component - Componente reutilizável para itens de barras laterais
@@ -41,24 +42,34 @@ const SidebarItem = ({
   disabled = false,
   ...props
 }) => {
-  // Classes de base com cor do texto para evitar problemas
-  const baseClasses = "bg-theme-card text-gray-300 border border-theme-border rounded-lg p-3 transition-all duration-200 cursor-pointer";
+  const { isDarkMode } = useThemeStore();
+
+  // Base container + theme-aware text color
+  const baseClasses = "bg-theme-card border border-theme-border rounded-lg p-3 transition-all duration-200 cursor-pointer";
+  const textClasses = isDarkMode ? "text-gray-300" : "text-gray-700";
   
-  // O hover deve clarear o fundo E o texto
-  const hoverClasses = "hover:bg-theme-surface hover:text-white";
+  // Hover should lighten bg and adjust text per theme
+  const hoverClasses = isDarkMode 
+    ? "hover:bg-theme-surface hover:text-white"
+    : "hover:bg-theme-surface hover:text-gray-900";
   
-  // O estado ativo deve definir a cor do texto também
-  const activeClasses = isActive ? "border-teal-500 bg-teal-600/20 text-teal-300" : "border-theme-border";
+  // Active state must define border, bg and text per theme
+  const activeClasses = isActive 
+    ? (isDarkMode
+        ? "border-teal-500 bg-teal-600/20 text-teal-300"
+        : "border-blue-500 bg-blue-600/10 text-blue-700")
+    : "";
   
   return (
     <div
       onClick={disabled ? undefined : onClick}
       className={cn(
         baseClasses,
+        textClasses,
         hoverClasses,
         activeClasses,
         // Disabled state
-        disabled && "opacity-50 cursor-not-allowed hover:bg-theme-card hover:text-gray-300",
+        disabled && "opacity-50 cursor-not-allowed hover:bg-theme-card",
         className
       )}
       {...props}
@@ -68,7 +79,9 @@ const SidebarItem = ({
         {icon && (
           <div className={cn(
             "flex-shrink-0 transition-colors duration-200",
-            isActive ? "text-teal-300" : "text-gray-400"
+            isActive 
+              ? (isDarkMode ? "text-teal-300" : "text-blue-600")
+              : (isDarkMode ? "text-gray-400" : "text-gray-500")
           )}>
             {icon}
           </div>
@@ -83,7 +96,10 @@ const SidebarItem = ({
           
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-gray-300 text-sm mt-1 leading-relaxed truncate">
+            <p className={cn(
+              "text-sm mt-1 leading-relaxed truncate",
+              isDarkMode ? "text-gray-300" : "text-gray-600"
+            )}>
               {subtitle}
             </p>
           )}

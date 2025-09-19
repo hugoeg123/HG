@@ -1,3 +1,4 @@
+@import './themes.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,13 +7,13 @@
 
 :root {
   /* Variáveis de tema compartilhadas */
-  /* Primary colors - Green */
-  --color-primary: #10b981;
-  --color-primary-hover: #059669;
-  --color-primary-light: #34d399;
-  --color-primary-dark: #047857;
+  /* Primary colors - Blue (changed from Green) */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #1d4ed8;
   
-  /* Secondary colors - Teal */
+  /* Secondary colors - Light Blue (changed from Teal) */
   --color-secondary: #0ea5e9;
   --color-secondary-hover: #0284c7;
   --color-secondary-light: #38bdf8;
@@ -25,9 +26,9 @@
   --color-accent-dark: #b45309;
   
   /* Status colors */
-  --color-success: #10b981;
-  --color-success-light: #34d399;
-  --color-success-dark: #059669;
+  --color-success: #3b82f6;
+  --color-success-light: #60a5fa;
+  --color-success-dark: #2563eb;
   
   --color-warning: #f59e0b;
   --color-warning-light: #fbbf24;
@@ -55,21 +56,89 @@
   --color-border: #374151; /* theme-border */
   --color-border-light: #4b5563; /* gray-600 */
   
+  /* Dynamic theme variables for dark mode */
+  --theme-background: #1a1e23;
+  /* Adds RGB channel variables to support Tailwind opacity syntax */
+  --theme-background-rgb: 26 30 35; /* rgb(#1a1e23) */
+  --theme-surface: #1C1C1F;
+  --theme-surface-rgb: 28 28 31;  /* rgb(#1C1C1F) */
+  --theme-card: #22262b;
+  --theme-card-rgb: 34 38 43;     /* rgb(#22262b) */
+  --theme-border: #374151;
+  --theme-border-rgb: 55 65 81;   /* rgb(#374151) */
+  
+  /* Accent colors for dark mode (teal) */
+  --accent: 172 66% 40%;              /* teal-500 HSL, used by hsl(var(--accent)) */
+  --accent-foreground: 0 0% 100%;     /* white text on accent backgrounds */
+  --accent-rgb: 20 184 166;           /* legacy: rgb(#14b8a6) */
+  /* Global radius for shadcn/ui components */
+  --radius: 0.75rem;
   color-scheme: dark;
 }
 
-/* Light theme */
+/* Light theme - Complete bright mode implementation */
 .light-mode {
-  /* Light theme colors */
-  --color-bg-dark: #f8fafc;
-  --color-bg-light: #f1f5f9;
-  --color-bg-lighter: #e2e8f0;
-  --color-text-primary: #1e293b;
-  --color-text-secondary: #475569;
+  /* Background colors - Updated per user specs */
+  --color-bg-dark: #DDDDDD;        /* Main background - light gray per spec */
+  --color-bg-light: #F3F3F3;       /* Secondary background - lighter gray per spec */
+  --color-bg-lighter: #f1f5f9;     /* Tertiary background - light gray */
   
-  /* Border colors */
-  --color-border: #cbd5e1;
-  --color-border-light: #94a3b8;
+  /* Text colors - Dark tones for contrast */
+  --color-text-primary: #1e293b;   /* Primary text - dark slate */
+  --color-text-secondary: #475569; /* Secondary text - medium slate */
+  --color-text-muted: #64748b;     /* Muted text - light slate */
+  
+  /* Border colors - Light gray variations */
+  --color-border: #e2e8f0;         /* Standard borders - light gray */
+  --color-border-light: #cbd5e1;   /* Lighter borders */
+  --color-border-hover: #94a3b8;   /* Hover state borders */
+  
+  /* Dynamic theme variables for light mode - Updated per user specs */
+  --theme-background: #DDDDDD;     /* Main app background - per user spec */
+  /* Adds RGB channel variables to support Tailwind opacity syntax */
+  --theme-background-rgb: 221 221 221; /* rgb(#DDDDDD) */
+  --theme-surface: #F3F3F3;        /* Panels and surfaces - per user spec */
+  --theme-surface-rgb: 243 243 243;    /* rgb(#F3F3F3) */
+  --theme-card: #F3F3F3;           /* Cards and inputs - per user spec */
+  --theme-card-rgb: 243 243 243;       /* rgb(#F3F3F3) */
+  --theme-border: #e2e8f0;         /* Standard borders */
+  --theme-border-rgb: 226 232 240;     /* rgb(#e2e8f0) */
+  
+  /* Accent colors for light mode (blue) */
+  --accent: 217 91% 60%;              /* blue-500 HSL, used by hsl(var(--accent)) */
+  --accent-foreground: 0 0% 100%;     /* white text on accent backgrounds */
+  --accent-rgb: 59 130 246;           /* legacy: rgb(#3b82f6) */
+  /* Global radius for shadcn/ui components */
+  --radius: 0.75rem;
+  
+  /* Button colors - Blue theme */
+  --btn-primary-bg: #3b82f6;
+  --btn-primary-hover: #2563eb;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #f1f5f9;
+  --btn-secondary-hover: #e2e8f0;
+  --btn-secondary-text: #475569;
+  
+  /* Input colors */
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-focus: #3b82f6;
+  --input-text: #1f2937;
+  --input-placeholder: #9ca3af;
+  
+  /* Status colors for light theme */
+  --status-success-bg: #ecfdf5;
+  --status-success-border: #10b981;
+  --status-success-text: #065f46;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #f59e0b;
+  --status-warning-text: #92400e;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #ef4444;
+  --status-danger-text: #991b1b;
+  --status-info-bg: #eff6ff;
+  --status-info-border: #3b82f6;
+  --status-info-text: #1e40af;
   
   color-scheme: light;
 }
@@ -87,14 +156,15 @@ body {
   color: var(--color-text-primary);
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden; /* Apenas horizontal para evitar scroll desnecessário */
+  overflow-y: auto;   /* Permitir scroll vertical */
   -webkit-text-size-adjust: 100%; /* Para compatibilidade com WebKit */
   text-size-adjust: 100%; /* Para compatibilidade geral */
 }
 
 /* Estilos para o layout de 3 colunas */
 .app-container {
-  height: 100vh;
+  min-height: 100vh; /* Usar min-height para permitir expansão */
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg-dark);
@@ -102,7 +172,10 @@ body {
 
 .main-content {
   flex: 1;
-  overflow: hidden;
+  overflow-x: hidden; /* Apenas horizontal */
+  overflow-y: auto;   /* Permitir scroll vertical */
+  display: flex;
+  min-height: 0; /* Importante para flexbox */
 }
 
 /* Estilos para os painéis */
@@ -124,22 +197,48 @@ body {
   height: 100%;
 }
 
+/* Light mode overrides for pane backgrounds */
+.light-mode .left-pane,
+.light-mode .right-pane {
+  background-color: #DDDDDD; /* Fundo gelo/cinza levemente azulado conforme solicitado */
+}
+
 /* Estilos para a lista de pacientes */
-.patient-list {
+/* Dark mode */
+.dark-mode .patient-list {
   @apply divide-y divide-gray-700 flex-grow overflow-y-auto;
 }
 
-.patient-item {
+.dark-mode .patient-item {
   @apply p-3 hover:bg-theme-card cursor-pointer transition-colors duration-150 flex items-center;
 }
 
-.patient-item.active {
-  @apply bg-primary-dark bg-opacity-30 border-l-4 border-primary;
+.dark-mode .patient-item.active {
+  @apply bg-teal-600/20 border-l-4 border-teal-500;
+}
+
+/* Light mode */
+.light-mode .patient-list {
+  @apply divide-y divide-gray-200 flex-grow overflow-y-auto;
+}
+
+.light-mode .patient-item {
+  @apply p-3 hover:bg-theme-card cursor-pointer transition-colors duration-150 flex items-center;
+}
+
+.light-mode .patient-item.active {
+  @apply bg-blue-100 border-l-4 border-blue-500;
 }
 
 /* Estilos para os botões fixos na parte inferior */
-.fixed-bottom-buttons {
+/* Dark mode */
+.dark-mode .fixed-bottom-buttons {
   @apply mt-auto p-4 border-t border-gray-700 flex flex-col justify-center space-y-2 bg-theme-background;
+}
+
+/* Light mode */
+.light-mode .fixed-bottom-buttons {
+  @apply mt-auto p-4 border-t border-gray-200 flex flex-col justify-center space-y-2 bg-theme-background;
 }
 
 /* Estilos consistentes para botões da sidebar */
@@ -147,12 +246,22 @@ body {
   @apply w-full p-3 rounded-lg transition-all duration-200 flex items-center justify-center font-medium border;
 }
 
-.sidebar-button-primary {
+/* Dark mode - Verde/Teal para botões da sidebar */
+.dark-mode .sidebar-button-primary {
   @apply bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 border border-teal-500/30 hover:border-teal-400/50 transition-all duration-200;
 }
 
-.sidebar-button-secondary {
+.dark-mode .sidebar-button-secondary {
   @apply bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 border border-teal-500/30 hover:border-teal-400/50 transition-all duration-200;
+}
+
+/* Light mode - Azul para botões da sidebar */
+.light-mode .sidebar-button-primary {
+  @apply bg-blue-600/20 text-blue-600 hover:bg-blue-600/30 hover:text-blue-700 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200;
+}
+
+.light-mode .sidebar-button-secondary {
+  @apply bg-blue-600/20 text-blue-600 hover:bg-blue-600/30 hover:text-blue-700 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200;
 }
 
 /* Estilos para o editor */
@@ -160,8 +269,14 @@ body {
   @apply p-4 h-full flex flex-col;
 }
 
-.editor-header {
+/* Dark mode */
+.dark-mode .editor-header {
   @apply mb-4 pb-3 border-b border-gray-700;
+}
+
+/* Light mode */
+.light-mode .editor-header {
+  @apply mb-4 pb-3 border-b border-gray-200;
 }
 
 .editor-content {
@@ -173,29 +288,57 @@ body {
   @apply inline-flex items-center px-2 py-1 rounded-md text-xs font-medium mr-2 mb-2;
 }
 
-.tag-primary {
+/* Dark mode tags */
+.dark-mode .tag-primary {
   @apply bg-emerald-900 text-emerald-100;
 }
 
-.tag-secondary {
+.dark-mode .tag-secondary {
   @apply bg-teal-900 text-teal-100;
 }
 
-.tag-success {
+.dark-mode .tag-success {
   @apply bg-green-900 text-green-100;
 }
 
-.tag-warning {
+.dark-mode .tag-warning {
   @apply bg-amber-900 text-amber-100;
 }
 
-.tag-danger {
+.dark-mode .tag-danger {
   @apply bg-red-900 text-red-100;
 }
 
+/* Light mode tags */
+.light-mode .tag-primary {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.light-mode .tag-secondary {
+  @apply bg-blue-50 text-blue-700;
+}
+
+.light-mode .tag-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.light-mode .tag-warning {
+  @apply bg-amber-100 text-amber-800;
+}
+
+.light-mode .tag-danger {
+  @apply bg-red-100 text-red-800;
+}
+
 /* Estilos para abas */
-.tabs {
+/* Dark mode */
+.dark-mode .tabs {
   @apply flex border-b border-gray-700;
+}
+
+/* Light mode */
+.light-mode .tabs {
+  @apply flex border-b border-gray-200;
 }
 
 /* Emerald Focus Styles - Realce esverdeado translúcido para calculadoras */
@@ -238,64 +381,131 @@ body {
 }
 
 /* Calculator Styles - Consistent theme for medical calculators */
-.calculator-card {
+/* Dark mode */
+.dark-mode .calculator-card {
   @apply bg-theme-card border-gray-700 text-white;
 }
 
-.calculator-input {
+/* Light mode */
+.light-mode .calculator-card {
+  @apply bg-theme-card border-gray-200 text-gray-800;
+}
+
+/* Dark mode - Verde/Teal para calculadoras */
+.dark-mode .calculator-input {
   @apply bg-theme-card border-gray-700/30 text-white placeholder:text-gray-500;
   @apply focus-visible:ring-teal-500/50 focus-visible:border-teal-500/50;
 }
 
-.calculator-button-primary {
+.dark-mode .calculator-button-primary {
   @apply bg-teal-600 hover:bg-teal-700 text-white;
   @apply border-transparent hover:border-teal-500/30;
 }
 
-.calculator-button-secondary {
+/* Light mode - Azul para calculadoras */
+.light-mode .calculator-input {
+  @apply bg-theme-card border-gray-300/50 text-gray-800 placeholder:text-gray-400;
+  @apply focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50;
+}
+
+.light-mode .calculator-button-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white;
+  @apply border-transparent hover:border-blue-500/30;
+}
+
+/* Dark mode */
+.dark-mode .calculator-button-secondary {
   @apply bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white;
   @apply border-transparent hover:border-gray-600/30;
 }
 
-.calculator-result {
+/* Light mode */
+.light-mode .calculator-button-secondary {
+  @apply bg-theme-card text-gray-600 hover:bg-theme-surface hover:text-gray-800;
+  @apply border-transparent hover:border-gray-400/30;
+}
+
+/* Dark mode calculator results */
+.dark-mode .calculator-result {
   @apply bg-theme-card border-gray-700/30 text-white;
 }
 
-.calculator-result-success {
+.dark-mode .calculator-result-success {
   @apply bg-green-900/20 border-green-700/50 text-green-300;
 }
 
-.calculator-result-warning {
+.dark-mode .calculator-result-warning {
   @apply bg-amber-900/20 border-amber-700/50 text-amber-300;
 }
 
-.calculator-result-danger {
+.dark-mode .calculator-result-danger {
   @apply bg-red-900/20 border-red-700/50 text-red-300;
 }
 
-.calculator-result-info {
+.dark-mode .calculator-result-info {
   @apply bg-blue-900/20 border-blue-700/50 text-blue-300;
 }
 
+/* Light mode calculator results */
+.light-mode .calculator-result {
+  @apply bg-theme-card border-gray-200/50 text-gray-800;
+}
+
+.light-mode .calculator-result-success {
+  @apply bg-green-100/80 border-green-300/50 text-green-700;
+}
+
+.light-mode .calculator-result-warning {
+  @apply bg-amber-100/80 border-amber-300/50 text-amber-700;
+}
+
+.light-mode .calculator-result-danger {
+  @apply bg-red-100/80 border-red-300/50 text-red-700;
+}
+
+.light-mode .calculator-result-info {
+  @apply bg-blue-100/80 border-blue-300/50 text-blue-700;
+}
+
 /* Calculator Dialog Styles */
-.calculator-dialog {
+/* Dark mode */
+.dark-mode .calculator-dialog {
   @apply max-w-4xl max-h-[90vh] overflow-y-auto bg-theme-background border-gray-700;
 }
 
-.calculator-dialog-header {
+.dark-mode .calculator-dialog-header {
   @apply border-b border-gray-700/30 pb-4;
 }
 
-.calculator-dialog-title {
+.dark-mode .calculator-dialog-title {
   @apply flex items-center gap-2 text-white;
+}
+
+/* Light mode */
+.light-mode .calculator-dialog {
+  @apply max-w-4xl max-h-[90vh] overflow-y-auto bg-theme-background border-gray-200;
+}
+
+.light-mode .calculator-dialog-header {
+  @apply border-b border-gray-200/50 pb-4;
+}
+
+.light-mode .calculator-dialog-title {
+  @apply flex items-center gap-2 text-gray-800;
 }
 
 .tab {
   @apply px-4 py-2 text-sm font-medium cursor-pointer;
 }
 
-.tab.active {
+/* Dark mode - Verde para tabs ativas */
+.dark-mode .tab.active {
   @apply text-emerald-400 border-b-2 border-emerald-400;
+}
+
+/* Light mode - Azul para tabs ativas */
+.light-mode .tab.active {
+  @apply text-blue-600 border-b-2 border-blue-600;
 }
 
 /* Estilos para botões */
@@ -303,16 +513,30 @@ body {
   @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-theme-background border;
 }
 
-.btn-primary {
+/* Dark mode - Verde/Teal para botões gerais */
+.dark-mode .btn-primary {
   @apply bg-teal-600/20 hover:bg-teal-600/30 border-teal-600/30 hover:border-teal-500 text-teal-400 focus:ring-teal-500/50;
 }
 
-.btn-secondary {
-  @apply bg-blue-600/20 hover:bg-blue-600/30 border-blue-600/30 hover:border-blue-500 text-blue-400 focus:ring-blue-500/50;
+.dark-mode .btn-secondary {
+  @apply bg-teal-500/20 hover:bg-teal-500/30 border-teal-500/30 hover:border-teal-400 text-teal-300 focus:ring-teal-400/50;
 }
 
-.btn-success {
+.dark-mode .btn-success {
   @apply bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-600/30 hover:border-emerald-500 text-emerald-400 focus:ring-emerald-500/50;
+}
+
+/* Light mode - Azul para botões gerais */
+.light-mode .btn-primary {
+  @apply bg-blue-600/20 hover:bg-blue-600/30 border-blue-600/30 hover:border-blue-500 text-blue-600 focus:ring-blue-500/50;
+}
+
+.light-mode .btn-secondary {
+  @apply bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 hover:border-blue-400 text-blue-600 focus:ring-blue-400/50;
+}
+
+.light-mode .btn-success {
+  @apply bg-blue-600/20 hover:bg-blue-600/30 border-blue-600/30 hover:border-blue-500 text-blue-600 focus:ring-blue-500/50;
 }
 
 .btn-danger {
@@ -323,27 +547,50 @@ body {
   @apply bg-yellow-600/20 hover:bg-yellow-600/30 border-yellow-600/30 hover:border-yellow-500 text-yellow-400 focus:ring-yellow-500/50;
 }
 
-.btn-outline {
+/* Dark mode */
+.dark-mode .btn-outline {
   @apply border-gray-700/30 bg-gray-700/10 hover:bg-theme-surface hover:border-gray-600 text-gray-300 focus:ring-gray-600/50;
 }
 
-/* Estilos para inputs */
-.input {
+/* Light mode */
+.light-mode .btn-outline {
+  @apply border-gray-300/50 bg-gray-100/50 hover:bg-theme-surface hover:border-gray-400 text-gray-600 focus:ring-gray-400/50;
+}
+
+/* Dark mode - Verde/Teal para inputs */
+.dark-mode .input {
   @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
 }
 
-/* Input sem ícone */
-.input-no-icon {
+.dark-mode .input-no-icon {
   @apply bg-theme-card border border-gray-700/30 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
 }
 
-/* Estilos para o campo de busca */
-.search-input {
+.dark-mode .search-input {
   @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 w-full transition-all duration-200;
 }
 
-.search-icon {
+/* Light mode - Azul para inputs */
+.light-mode .input {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
+}
+
+.light-mode .input-no-icon {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
+}
+
+.light-mode .search-input {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 w-full transition-all duration-200;
+}
+
+/* Dark mode */
+.dark-mode .search-icon {
   @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+/* Light mode */
+.light-mode .search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500;
 }
 
 /* Estilos para o chat de IA */
@@ -355,20 +602,36 @@ body {
   @apply flex-1 overflow-y-auto p-4 space-y-4;
 }
 
-.chat-input {
+/* Dark mode */
+.dark-mode .chat-input {
   @apply p-4 border-t border-gray-700;
+}
+
+/* Light mode */
+.light-mode .chat-input {
+  @apply p-4 border-t border-gray-200;
 }
 
 .message {
   @apply p-3 rounded-lg max-w-xs;
 }
 
-.message-user {
+/* Dark mode messages */
+.dark-mode .message-user {
   @apply bg-emerald-600 text-white ml-auto;
 }
 
-.message-ai {
+.dark-mode .message-ai {
   @apply bg-gray-700 text-white;
+}
+
+/* Light mode messages */
+.light-mode .message-user {
+  @apply bg-blue-600 text-white ml-auto;
+}
+
+.light-mode .message-ai {
+  @apply bg-gray-100 text-gray-800;
 }
 
 /* Estilos para calculadoras */
@@ -376,7 +639,13 @@ body {
   @apply p-4;
 }
 
-.calculator-item {
+/* Dark mode */
+.dark-mode .calculator-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Light mode */
+.light-mode .calculator-item {
   @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
 }
 
@@ -385,20 +654,40 @@ body {
   @apply p-4 rounded-lg mb-4;
 }
 
-.alert-info {
+/* Dark mode alerts */
+.dark-mode .alert-info {
   @apply bg-teal-900 bg-opacity-50 text-teal-100 border border-teal-800;
 }
 
-.alert-warning {
+.dark-mode .alert-warning {
   @apply bg-orange-900 bg-opacity-50 text-orange-100 border border-orange-800;
 }
 
-.alert-danger {
+.dark-mode .alert-danger {
   @apply bg-red-900 bg-opacity-50 text-red-100 border border-red-800;
 }
 
+/* Light mode alerts */
+.light-mode .alert-info {
+  @apply bg-blue-100 bg-opacity-80 text-blue-800 border border-blue-300;
+}
+
+.light-mode .alert-warning {
+  @apply bg-orange-100 bg-opacity-80 text-orange-800 border border-orange-300;
+}
+
+.light-mode .alert-danger {
+  @apply bg-red-100 bg-opacity-80 text-red-800 border border-red-300;
+}
+
 /* Estilos para templates */
-.template-item {
+/* Dark mode */
+.dark-mode .template-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Light mode */
+.light-mode .template-item {
   @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
 }
 
@@ -444,101 +733,568 @@ body {
   background-image: image-set(url('img.png') 1x, url('img@2x.png') 2x);
 }
 
-/* Conector: CSS modificado afeta todos os componentes que utilizam estas classes. */
-/* Mapa de Integrações:
-- `index.html` atualizado com meta tags.
-- CSS modificado em `index.css` afeta componentes React que aplicam as classes `.apply-filter`, `.apply-backdrop-filter`, `.no-select`, `.responsive-image`.
-- Fluxo: Alterações CSS -> Recompilação do frontend -> Aplicação nos elementos HTML/React.
+/* Theme semantic classes (contract for future themes)
+ *
+ * These classes define the dynamic theme variables consumed by Tailwind colors
+ * (bg-theme-background, bg-theme-card, border-theme-border, etc.). They are
+ * additive to existing .dark-mode and .light-mode classes to preserve current UI.
+ *
+ * Connector: Used by App.jsx to toggle theme classes on <html> and <body>.
+ * IA prompt: "Add new theme variants and ensure variables override correctly"
+ */
+.theme-dark-teal {
+  /* Mirrors current dark mode values to preserve the existing look */
+  --theme-background: #1a1e23; /* App body and sidebars */
+  --theme-surface: #1C1C1F;    /* Panels and distinct content areas */
+  --theme-card: #22262b;       /* Cards, inputs, modals */
+  --theme-border: #374151;     /* Standard borders */
+}
+
+.theme-light-ice {
+  /* Bright ice/gray variant with blue accents */
+  --theme-background: #ffffff; /* Main app background */
+  --theme-surface: #f8fafc;    /* Panels and surfaces */
+  --theme-card: #ffffff;       /* Cards and inputs */
+  --theme-border: #e2e8f0;     /* Standard borders */
+}
+
+.theme-hover:hover {
+  background-color: var(--theme-surface);
+  color: var(--color-text-primary);
+}
+
+.theme-hover-card:hover {
+  background-color: var(--theme-surface);
+  border-color: var(--color-border-hover, var(--theme-border));
+}
+
+/* Classes para focus states condicionais */
+.theme-focus:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.theme-focus:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Connector: Classes utilitárias integram com todos os componentes React */
+/* Hook: Substituem classes Tailwind fixas por variáveis CSS responsivas ao tema */
+
+/* ========================================
+   Light mode utility remaps (teal/emerald → blue)
+   Purpose: Keep dark mode teal look intact and shift bright mode accents to blue
+   Connector: Affects components using Tailwind teal/emerald utilities without code changes
+   IA prompt: "Map teal/emerald utilities to blue variants when .light-mode is present"
 */
+/* Text colors */
+.light-mode .text-teal-300, .light-mode .text-emerald-300 { @apply text-blue-500; }
+.light-mode .text-teal-400, .light-mode .text-emerald-400 { @apply text-blue-600; }
+.light-mode .text-teal-500, .light-mode .text-emerald-500 { @apply text-blue-600; }
+.light-mode .hover\:text-teal-300:hover, .light-mode .hover\:text-emerald-300:hover { @apply text-blue-500; }
+.light-mode .hover\:text-teal-400:hover, .light-mode .hover\:text-emerald-400:hover { @apply text-blue-600; }
 
-@layer base {
-  :root {
-    /* Light mode (not used but kept for compatibility) */
-    --background: 0 0% 100%;
-    --foreground: 20 14.3% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
-    --primary: 24 9.8% 10%;
-    --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
-    --accent: 60 4.8% 95.9%;
-    --accent-foreground: 24 9.8% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 20 14.3% 4.1%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+/* Background colors (solid and alpha variants) */
+.light-mode .bg-teal-600, .light-mode .bg-emerald-600 { @apply bg-blue-600; }
+.light-mode .hover\:bg-teal-700:hover, .light-mode .hover\:bg-emerald-700:hover { @apply bg-blue-700; }
+.light-mode .bg-teal-600\/20, .light-mode .bg-emerald-600\/20 { @apply bg-blue-600/20; }
+.light-mode .hover\:bg-teal-600\/40:hover, .light-mode .hover\:bg-emerald-600\/40:hover { @apply bg-blue-600/40; }
+.light-mode .bg-teal-500\/20, .light-mode .bg-emerald-500\/20 { @apply bg-blue-500/20; }
+.light-mode .hover\:bg-teal-500\/30:hover, .light-mode .hover\:bg-emerald-500\/30:hover { @apply bg-blue-500/30; }
+.light-mode .bg-teal-900, .light-mode .bg-emerald-900 { @apply bg-blue-900; }
+.light-mode .bg-teal-900\/20, .light-mode .bg-emerald-900\/20 { @apply bg-blue-900/20; }
+.light-mode .bg-teal-800\/30, .light-mode .bg-emerald-800\/30 { @apply bg-blue-800/30; }
+
+/* Border colors (solid and alpha variants) */
+.light-mode .border-teal-500, .light-mode .border-emerald-500 { @apply border-blue-500; }
+.light-mode .border-teal-600, .light-mode .border-emerald-600 { @apply border-blue-600; }
+.light-mode .border-teal-500\/30, .light-mode .border-emerald-500\/30 { @apply border-blue-500/30; }
+.light-mode .border-teal-600\/30, .light-mode .border-emerald-600\/30 { @apply border-blue-600/30; }
+.light-mode .hover\:border-teal-400\/50:hover, .light-mode .hover\:border-emerald-400\/50:hover { @apply border-blue-400/50; }
+
+/* Ring and focus */
+.light-mode .focus\:ring-teal-500:focus, .light-mode .focus\:ring-emerald-500:focus { @apply ring-blue-500; }
+.light-mode .focus\:ring-teal-500\/50:focus, .light-mode .focus\:ring-emerald-500\/50:focus { @apply ring-blue-500/50; }
+.light-mode .focus-visible\:ring-teal-500\/50:focus-visible, .light-mode .focus-visible\:ring-emerald-500\/50:focus-visible { @apply ring-blue-500/50; }
+.light-mode .focus-visible\:border-teal-500\/50:focus-visible, .light-mode .focus-visible\:border-emerald-500\/50:focus-visible { @apply border-blue-500/50; }
+
+/* Inputs with teal/emerald focus (generic) */
+.light-mode .focus\:border-teal-500:focus, .light-mode .focus\:border-emerald-500:focus { @apply border-blue-500; }
+.light-mode .focus\:border-teal-500\/50:focus, .light-mode .focus\:border-emerald-500\/50:focus { @apply border-blue-500/50; }
+
+/* Emerald-focus remap to blue in light mode */
+.light-mode .emerald-focus:focus,
+.light-mode .emerald-focus:focus-within,
+.light-mode .emerald-focus[data-state="open"] {
+  @apply ring-blue-600/50 border-blue-600/50 bg-blue-500/10;
+}
+
+/* Active state variant remaps (limited support) */
+/* Note: Tailwind arbitrary variants generate selectors like [data-state=active].bg-teal-600
+   The following overrides aim for parity on common cases in light mode */
+.light-mode .data-\[state\=active\]\:bg-teal-600[data-state="active"],
+.light-mode .data-\[state\=active\]\:bg-emerald-600[data-state="active"] { @apply bg-blue-600; }
+.light-mode .data-\[state\=active\]\:bg-teal-600\/20[data-state="active"],
+.light-mode .data-\[state\=active\]\:bg-emerald-600\/20[data-state="active"] { @apply bg-blue-600/20; }
+.light-mode .data-\[state\=active\]\:text-white[data-state="active"] { @apply text-white; }
+
+/* Badges and subtle tints */
+.light-mode .bg-teal-600\/25, .light-mode .bg-emerald-600\/25 { @apply bg-blue-600/25; }
+.light-mode .text-teal-200, .light-mode .text-emerald-200 { @apply text-blue-500; }
+.light-mode .text-teal-100, .light-mode .text-emerald-100 { @apply text-blue-400; }
+
+.btn-danger {
+  @apply bg-red-600/20 hover:bg-red-600/30 border-red-600/30 hover:border-red-500 text-red-400 focus:ring-red-500/50;
+}
+
+.btn-warning {
+  @apply bg-yellow-600/20 hover:bg-yellow-600/30 border-yellow-600/30 hover:border-yellow-500 text-yellow-400 focus:ring-yellow-500/50;
+}
+
+/* Dark mode */
+.dark-mode .btn-outline {
+  @apply border-gray-700/30 bg-gray-700/10 hover:bg-theme-surface hover:border-gray-600 text-gray-300 focus:ring-gray-600/50;
+}
+
+/* Light mode */
+.light-mode .btn-outline {
+  @apply border-gray-300/50 bg-gray-100/50 hover:bg-theme-surface hover:border-gray-400 text-gray-600 focus:ring-gray-400/50;
+}
+
+/* Dark mode - Verde/Teal para inputs */
+.dark-mode .input {
+  @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
+}
+
+.dark-mode .input-no-icon {
+  @apply bg-theme-card border border-gray-700/30 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
+}
+
+.dark-mode .search-input {
+  @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 w-full transition-all duration-200;
+}
+
+/* Light mode - Azul para inputs */
+.light-mode .input {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
+}
+
+.light-mode .input-no-icon {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
+}
+
+.light-mode .search-input {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 w-full transition-all duration-200;
+}
+
+/* Dark mode */
+.dark-mode .search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+/* Light mode */
+.light-mode .search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500;
+}
+
+/* Estilos para o chat de IA */
+.chat-container {
+  @apply flex flex-col h-full;
+}
+
+.chat-messages {
+  @apply flex-1 overflow-y-auto p-4 space-y-4;
+}
+
+/* Dark mode */
+.dark-mode .chat-input {
+  @apply p-4 border-t border-gray-700;
+}
+
+/* Light mode */
+.light-mode .chat-input {
+  @apply p-4 border-t border-gray-200;
+}
+
+.message {
+  @apply p-3 rounded-lg max-w-xs;
+}
+
+/* Dark mode messages */
+.dark-mode .message-user {
+  @apply bg-emerald-600 text-white ml-auto;
+}
+
+.dark-mode .message-ai {
+  @apply bg-gray-700 text-white;
+}
+
+/* Light mode messages */
+.light-mode .message-user {
+  @apply bg-blue-600 text-white ml-auto;
+}
+
+.light-mode .message-ai {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Estilos para calculadoras */
+.calculator-container {
+  @apply p-4;
+}
+
+/* Dark mode */
+.dark-mode .calculator-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Light mode */
+.light-mode .calculator-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Estilos para alertas */
+.alert {
+  @apply p-4 rounded-lg mb-4;
+}
+
+/* Dark mode alerts */
+.dark-mode .alert-info {
+  @apply bg-teal-900 bg-opacity-50 text-teal-100 border border-teal-800;
+}
+
+.dark-mode .alert-warning {
+  @apply bg-orange-900 bg-opacity-50 text-orange-100 border border-orange-800;
+}
+
+.dark-mode .alert-danger {
+  @apply bg-red-900 bg-opacity-50 text-red-100 border border-red-800;
+}
+
+/* Light mode alerts */
+.light-mode .alert-info {
+  @apply bg-blue-100 bg-opacity-80 text-blue-800 border border-blue-300;
+}
+
+.light-mode .alert-warning {
+  @apply bg-orange-100 bg-opacity-80 text-orange-800 border border-orange-300;
+}
+
+.light-mode .alert-danger {
+  @apply bg-red-100 bg-opacity-80 text-red-800 border border-red-300;
+}
+
+/* Estilos para templates */
+/* Dark mode */
+.dark-mode .template-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Light mode */
+.light-mode .template-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Cross-browser compatibility and accessibility improvements */
+
+/* Filter properties */
+.apply-filter {
+  -webkit-filter: grayscale(100%); /* IA prompt: Sugestão para extensão: Adicionar mais filtros como blur, sepia */
+  filter: grayscale(100%);
+}
+
+/* Text size adjustment */
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Backdrop filter (for frosted glass effect, etc.) */
+.apply-backdrop-filter {
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+/* User selection */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Image set for responsive images */
+.responsive-image {
+  background-image: -webkit-image-set(url('img.png') 1x, url('img@2x.png') 2x);
+  background-image: image-set(url('img.png') 1x, url('img@2x.png') 2x);
+}
+
+/* ========================================
+   OTIMIZAÇÃO DE TRANSIÇÃO PARA ELEMENTOS QUE MUDAM DE TEMA
+   Restauração do bloco removido inadvertidamente ao inserir os remaps do light mode
+   Connector: Utilizado em componentes com animações de mudança de tema
+   IA prompt: "Ensure smooth theme transitions with minimal layout shift"
+*/
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  will-change: background-color, color, border-color;
+}
+
+/* Otimização para elementos com hover */
+.theme-hover-optimized {
+  transition: all 0.2s ease;
+  will-change: background-color, color, border-color, transform;
+}
+
+.theme-hover-optimized:hover {
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+/* Otimização para o toggle de tema */
+.theme-toggle-optimized {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: background-color, transform;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+/* Otimização para mudanças de tema no body */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  will-change: background-color, color;
+}
+
+/* Otimização para elementos que aparecem/desaparecem com tema */
+.theme-fade {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  will-change: opacity, visibility;
+}
+
+/* Reduzir motion para usuários que preferem */
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-hover-optimized,
+  .theme-toggle-optimized,
+  body,
+  .theme-fade {
+    transition: none;
+    will-change: auto;
   }
-  .dark {
-    /* Dark mode - Unified with theme-* system */
-    --background: 222 22% 11%; /* Corresponds to #1a1e23 (theme-background) */
-    --foreground: 210 40% 98%;
-    --card: 222 14% 15%; /* Corresponds to #22262b (theme-card) */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 14% 15%; /* Same as card */
-    --popover-foreground: 210 40% 98%;
-    --primary: 160 84% 39%; /* Teal primary */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 27%; /* Corresponds to #374151 (theme-border) */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 27%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 27%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 27%; /* Corresponds to #374151 (theme-border) */
-    --input: 217 33% 27%;
-    --ring: 160 84% 39%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Connector: Otimizações aplicadas automaticamente em componentes com transições de tema */
+/* Hook: Melhora performance de renderização durante mudanças de tema */
+.light-mode .data-\[state\=active\]\:bg-teal-600[data-state="active"],
+.light-mode .data-\[state\=active\]\:bg-emerald-600[data-state="active"] { @apply bg-blue-600; }
+.light-mode .data-\[state\=active\]\:bg-teal-600\/20[data-state="active"],
+.light-mode .data-\[state\=active\]\:bg-emerald-600\/20[data-state="active"] { @apply bg-blue-600/20; }
+.light-mode .data-\[state\=active\]\:text-white[data-state="active"] { @apply text-white; }
+
+/* Badges and subtle tints */
+.light-mode .bg-teal-600\/25, .light-mode .bg-emerald-600\/25 { @apply bg-blue-600/25; }
+.light-mode .text-teal-200, .light-mode .text-emerald-200 { @apply text-blue-500; }
+.light-mode .text-teal-100, .light-mode .text-emerald-100 { @apply text-blue-400; }
+
+.btn-danger {
+  @apply bg-red-600/20 hover:bg-red-600/30 border-red-600/30 hover:border-red-500 text-red-400 focus:ring-red-500/50;
 }
 
-/* Emerald Focus Styles - Calculator Input Highlighting */
-.emerald-focus {
-  @apply focus:ring-emerald-600/50 focus:border-emerald-600/50 transition-all duration-200;
+.btn-warning {
+  @apply bg-yellow-600/20 hover:bg-yellow-600/30 border-yellow-600/30 hover:border-yellow-500 text-yellow-400 focus:ring-yellow-500/50;
 }
 
-.emerald-focus:focus-within {
-  @apply bg-emerald-500/10;
+/* Dark mode */
+.dark-mode .btn-outline {
+  @apply border-gray-700/30 bg-gray-700/10 hover:bg-theme-surface hover:border-gray-600 text-gray-300 focus:ring-gray-600/50;
 }
 
-/* Calculator-specific emerald focus variants */
-.emerald-focus input:focus,
-.emerald-focus select:focus,
-.emerald-focus textarea:focus {
-  @apply ring-emerald-600/50 border-emerald-600/50;
+/* Light mode */
+.light-mode .btn-outline {
+  @apply border-gray-300/50 bg-gray-100/50 hover:bg-theme-surface hover:border-gray-400 text-gray-600 focus:ring-gray-400/50;
 }
 
-.emerald-focus:focus-within input,
-.emerald-focus:focus-within select,
-.emerald-focus:focus-within textarea {
-  @apply bg-emerald-500/5;
+/* Dark mode - Verde/Teal para inputs */
+.dark-mode .input {
+  @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
 }
 
-/* Connector: Estilos emerald-focus integram com CalcInput.tsx e DynamicCalculator.tsx */
-/* Hook: Classes aplicadas automaticamente em todos os inputs de calculadoras */
+.dark-mode .input-no-icon {
+  @apply bg-theme-card border border-gray-700/30 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
+}
+
+.dark-mode .search-input {
+  @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 w-full transition-all duration-200;
+}
+
+/* Light mode - Azul para inputs */
+.light-mode .input {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
+}
+
+.light-mode .input-no-icon {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
+}
+
+.light-mode .search-input {
+  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 w-full transition-all duration-200;
+}
+
+/* Dark mode */
+.dark-mode .search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+/* Light mode */
+.light-mode .search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500;
+}
+
+/* Estilos para o chat de IA */
+.chat-container {
+  @apply flex flex-col h-full;
+}
+
+.chat-messages {
+  @apply flex-1 overflow-y-auto p-4 space-y-4;
+}
+
+/* Dark mode */
+.dark-mode .chat-input {
+  @apply p-4 border-t border-gray-700;
+}
+
+/* Light mode */
+.light-mode .chat-input {
+  @apply p-4 border-t border-gray-200;
+}
+
+.message {
+  @apply p-3 rounded-lg max-w-xs;
+}
+
+/* Dark mode messages */
+.dark-mode .message-user {
+  @apply bg-emerald-600 text-white ml-auto;
+}
+
+.dark-mode .message-ai {
+  @apply bg-gray-700 text-white;
+}
+
+/* Light mode messages */
+.light-mode .message-user {
+  @apply bg-blue-600 text-white ml-auto;
+}
+
+.light-mode .message-ai {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Estilos para calculadoras */
+.calculator-container {
+  @apply p-4;
+}
+
+/* Dark mode */
+.dark-mode .calculator-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Light mode */
+.light-mode .calculator-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Estilos para alertas */
+.alert {
+  @apply p-4 rounded-lg mb-4;
+}
+
+/* Dark mode alerts */
+.dark-mode .alert-info {
+  @apply bg-teal-900 bg-opacity-50 text-teal-100 border border-teal-800;
+}
+
+.dark-mode .alert-warning {
+  @apply bg-orange-900 bg-opacity-50 text-orange-100 border border-orange-800;
+}
+
+.dark-mode .alert-danger {
+  @apply bg-red-900 bg-opacity-50 text-red-100 border border-red-800;
+}
+
+/* Light mode alerts */
+.light-mode .alert-info {
+  @apply bg-blue-100 bg-opacity-80 text-blue-800 border border-blue-300;
+}
+
+.light-mode .alert-warning {
+  @apply bg-orange-100 bg-opacity-80 text-orange-800 border border-orange-300;
+}
+
+.light-mode .alert-danger {
+  @apply bg-red-100 bg-opacity-80 text-red-800 border border-red-300;
+}
+
+/* Estilos para templates */
+/* Dark mode */
+.dark-mode .template-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Light mode */
+.light-mode .template-item {
+  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Cross-browser compatibility and accessibility improvements */
+
+/* Filter properties */
+.apply-filter {
+  -webkit-filter: grayscale(100%); /* IA prompt: Sugestão para extensão: Adicionar mais filtros como blur, sepia */
+  filter: grayscale(100%);
+}
+
+/* Text size adjustment */
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Backdrop filter (for frosted glass effect, etc.) */
+.apply-backdrop-filter {
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+/* User selection */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Image set for responsive images */
+.responsive-image {
+  background-image: -webkit-image-set(url('img.png') 1x, url('img@2x.png') 2x);
+  background-image: image-set(url('img.png') 1x, url('img@2x.png') 2x);
+}

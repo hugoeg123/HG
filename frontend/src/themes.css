@@ -1,0 +1,19 @@
+/* Central theme tokens (HSL) for shadcn/ui + Tailwind accent system */
+/* IA prompt: Consider extracting additional semantic tokens here as the design system evolves. */
+
+/* Dark mode (default) and :root fallback */
+:root, .dark-mode {
+  /* Accent tokens in HSL triplet format (H S L) compatible with hsl(var(--accent)) */
+  --accent: 172 66% 40%;           /* teal-500 equivalent */
+  --accent-foreground: 0 0% 100%;  /* white foreground on accent */
+  /* Legacy rgb channel (kept for backwards compatibility) */
+  --accent-rgb: 20 184 166;        /* rgb(#14b8a6) */
+}
+
+/* Light mode overrides */
+.light-mode {
+  --accent: 217 91% 60%;           /* blue-500 equivalent */
+  --accent-foreground: 0 0% 100%;  /* white foreground on accent */
+  /* Legacy rgb channel (kept for backwards compatibility) */
+  --accent-rgb: 59 130 246;        /* rgb(#3b82f6) */
+}

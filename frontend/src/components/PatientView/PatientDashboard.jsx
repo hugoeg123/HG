@@ -27,6 +27,7 @@ import {
   Save, 
   X 
 } from 'lucide-react';
+import { useThemeStore } from '../../store/themeStore';
 
 // Tipos de dados para o dashboard
 const statusColors = {
@@ -115,10 +116,10 @@ const TimelineItem = ({ item }) => {
 
   return (
     <div className="relative pl-8 py-2 group">
-      <div className="absolute left-0 top-4 w-px h-full bg-gray-700"></div>
-      <div className="absolute left-[-5px] top-4 w-4 h-4 bg-gray-700 rounded-full border-4 border-theme-background group-hover:bg-teal-500 transition-colors"></div>
+      <div className="absolute left-0 top-4 w-px h-full theme-border"></div>
+      <div className="absolute left-[-5px] top-4 w-4 h-4 theme-border rounded-full border-4 border-theme-background group-hover:bg-teal-500 transition-colors"></div>
       <div 
-        className={`bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 ${
+        className={`theme-card p-3 sm:p-4 rounded-lg border theme-border transition-all hover:border-teal-500/50 hover:bg-theme-surface ${
           isClickable ? 'cursor-pointer' : ''
         }`}
         onClick={isClickable ? handleItemClick : undefined}
@@ -128,9 +129,9 @@ const TimelineItem = ({ item }) => {
       >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
           <div className="flex-1">
-            <p className="text-xs sm:text-sm text-gray-400">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
+            <p className="text-xs sm:text-sm theme-text-secondary">{safeText(item.data)} às {safeText(item.hora)} • {safeText(item.contexto)}</p>
             <div className="flex items-start gap-2 mt-1">
-              <h3 className="font-semibold text-sm sm:text-base text-white flex-1">
+              <h3 className="font-semibold text-sm sm:text-base theme-text-primary flex-1">
                 {safeText(item.title || item.descricao)}
               </h3>
               {isClickable && (
@@ -138,11 +139,11 @@ const TimelineItem = ({ item }) => {
               )}
             </div>
             {item.content && item.content !== item.descricao && (
-              <p className="text-xs text-gray-300 mt-2 line-clamp-2">
+              <p className="text-xs theme-text-secondary mt-2 line-clamp-2">
                 {item.content.substring(0, 200)}{item.content.length > 200 ? '...' : ''}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs theme-text-muted mt-1">
             Registrado por: {safeText(item.doctorName) || 'Médico não identificado'}
             {item.doctorCRM && ` (CRM: ${item.doctorCRM})`}
           </p>
@@ -577,9 +578,9 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   }
   
   return (
-    <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-2 sm:p-4 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center pb-3 sm:pb-4 mb-4 sm:mb-6 lg:mb-8 border-b border-gray-800 gap-3 sm:gap-0">
+    <div className="min-h-screen bg-theme-background text-gray-300 font-sans p-2 sm:p-4 lg:p-6 xl:p-8">
+      <div className="max-w-7xl mx-auto w-full">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center pb-3 sm:pb-4 mb-4 sm:mb-6 lg:mb-8 border-b border-gray-800 gap-3 sm:gap-4">
           <UserCircle size={40} className="text-teal-400 sm:mr-4 sm:w-12 sm:h-12"/>
           <div className="flex-1 w-full sm:w-auto">
             {/* Nome do Paciente - Editável */}
@@ -685,78 +686,78 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
         </header>
         
         {/* Layout Flexbox Fluido - Adapta-se às barras laterais */}
-        <main className="flex flex-col lg:flex-row gap-4 sm:gap-6 xl:gap-8">
+        <main className="flex flex-col xl:flex-row gap-4 sm:gap-6 xl:gap-8">
           
           {/* Painel Principal - Flexbox com flex-grow para ocupar espaço disponível */}
-          <div className="flex-grow space-y-4 sm:space-y-6 order-1 lg:order-1 min-w-0">
+          <div className="flex-1 space-y-4 sm:space-y-6 order-1 xl:order-1 min-w-0 overflow-hidden">
     
-               <div className="p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background">
+               <div className="p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background overflow-hidden">
               {/* Navegação de Abas Responsiva */}
-              <div className="flex items-center justify-center">
-                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-1 bg-theme-card rounded-lg w-full sm:w-auto">
+              <div className="flex items-center justify-center overflow-x-auto">
+                <div className="flex flex-row items-center gap-1 sm:gap-2 p-1 bg-theme-card rounded-lg min-w-max">
                   <button
                     onClick={() => setActiveTab('historico')}
-                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[140px] h-[32px] sm:h-[36px] md:h-[44px] justify-center ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap ${
                       activeTab === 'historico'
                         ? 'border-teal-500 bg-teal-600/20 text-teal-300'
                         : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
-                    <History size={14} className="sm:w-4 sm:h-4"/>
-                    <span className="hidden md:inline">Linha do Tempo</span>
-                    <span className="md:hidden">Timeline</span>
+                    <History size={14} className="sm:w-4 sm:h-4 flex-shrink-0"/>
+                    <span className="hidden sm:inline">Timeline</span>
+                    <span className="sm:hidden">Hist</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('investigacao')}
-                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[140px] h-[32px] sm:h-[36px] md:h-[44px] justify-center ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap ${
                       activeTab === 'investigacao'
                         ? 'border-teal-500 bg-teal-600/20 text-teal-300'
                         : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
-                    <Beaker size={14} className="sm:w-4 sm:h-4"/>
-                    <span className="hidden md:inline">Investigação</span>
-                    <span className="md:hidden">Exames</span>
+                    <Beaker size={14} className="sm:w-4 sm:h-4 flex-shrink-0"/>
+                    <span className="hidden sm:inline">Exames</span>
+                    <span className="sm:hidden">Inv</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('planos')}
-                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[140px] h-[32px] sm:h-[36px] md:h-[44px] justify-center ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap ${
                       activeTab === 'planos'
                         ? 'border-teal-500 bg-teal-600/20 text-teal-300'
                         : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
-                    <NotebookPen size={14} className="sm:w-4 sm:h-4"/>
-                    <span className="hidden md:inline">Planos e Condutas</span>
-                    <span className="md:hidden">Planos</span>
+                    <NotebookPen size={14} className="sm:w-4 sm:h-4 flex-shrink-0"/>
+                    <span className="hidden sm:inline">Planos</span>
+                    <span className="sm:hidden">Pln</span>
                   </button>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 px-2 sm:px-0">
-                <div className="relative flex-1 w-full sm:w-auto max-w-md">
-                  <Search size={16} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 sm:w-[18px] sm:h-[18px]"/>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 px-2 sm:px-0">
+                <div className="relative flex-1 min-w-0">
+                  <Search size={16} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 sm:w-[18px] sm:h-[18px] flex-shrink-0"/>
                   <input 
                     type="text"
                     placeholder="Buscar na linha do tempo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-theme-card border border-gray-600 rounded-lg px-3 sm:px-4 py-2 pl-9 sm:pl-10 text-sm sm:text-base text-gray-100 placeholder-gray-400 focus:outline-none focus:border-teal-500"
+                    className="w-full bg-theme-card border border-gray-600 rounded-lg px-3 sm:px-4 py-2 pl-9 sm:pl-10 text-sm sm:text-base text-gray-100 placeholder-gray-400 focus:outline-none focus:border-teal-500 min-w-0"
                   />
                 </div>
-                <button className="px-3 sm:px-4 py-2 bg-theme-card text-gray-300 rounded-lg hover:bg-theme-surface hover:text-white transition-colors flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start border border-transparent hover:border-teal-500/30">
-                  <Search size={14} className="sm:w-4 sm:h-4" />
-                  <span className="hidden md:inline">Filtros Avançados</span>
-                  <span className="md:hidden">Filtrar</span>
+                <button className="px-3 sm:px-4 py-2 bg-theme-card text-gray-300 rounded-lg hover:bg-theme-surface hover:text-white transition-colors flex items-center gap-2 text-sm sm:text-base justify-center border border-transparent hover:border-teal-500/30 whitespace-nowrap flex-shrink-0">
+                  <Search size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Filtros</span>
+                  <span className="sm:hidden">Filtrar</span>
                 </button>
               </div>
             </div>
 
-            <div className="space-y-0 min-h-[400px]">
+            <div className="space-y-0 min-h-[300px] sm:min-h-[400px] overflow-hidden">
               {activeTab === 'historico' && (
                 filteredData.length === 0 ? (
-                  <div className="text-center py-16 text-gray-500">
-                    <p>Nenhum item encontrado.</p>
-                    <p className="text-sm">Tente ajustar sua busca ou o filtro de abas.</p>
+                  <div className="text-center py-8 sm:py-16 text-gray-500 px-4">
+                    <p className="text-sm sm:text-base">Nenhum item encontrado.</p>
+                    <p className="text-xs sm:text-sm mt-1">Tente ajustar sua busca ou o filtro de abas.</p>
                   </div>
                 ) : (
                   <HistoryList data={filteredData} patientId={safePatientId} />
@@ -764,9 +765,9 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               )}
               {activeTab === 'investigacao' && (
                 filteredData.length === 0 ? (
-                  <div className="text-center py-16 text-gray-500">
-                    <p>Nenhum item encontrado.</p>
-                    <p className="text-sm">Tente ajustar sua busca ou o filtro de abas.</p>
+                  <div className="text-center py-8 sm:py-16 text-gray-500 px-4">
+                    <p className="text-sm sm:text-base">Nenhum item encontrado.</p>
+                    <p className="text-xs sm:text-sm mt-1">Tente ajustar sua busca ou o filtro de abas.</p>
                   </div>
                 ) : (
                   <InvestigationList data={filteredData} patientId={safePatientId} />
@@ -796,18 +797,18 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               <span className="md:hidden">Novo Registro</span>
             </button>
             
-            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-gray-800">
-              <h3 className="font-semibold text-base sm:text-lg text-white mb-3 sm:mb-4">Sinais Vitais Recentes</h3>
+            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+              <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">Sinais Vitais Recentes</h3>
               {isLoading ? (
                 <div className="grid grid-cols-2 gap-4">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="text-center animate-pulse">
                       <div className="flex items-center justify-center gap-2 mb-1">
-                        <div className="w-4 h-4 bg-gray-700 rounded"></div>
-                        <div className="w-6 h-3 bg-gray-700 rounded"></div>
+                        <div className="w-4 h-4 theme-bg-secondary rounded"></div>
+                        <div className="w-6 h-3 theme-bg-secondary rounded"></div>
                       </div>
-                      <div className="h-5 bg-gray-700 rounded w-12 mx-auto mb-1"></div>
-                      <div className="h-3 bg-theme-card rounded w-16 mx-auto"></div>
+                      <div className="h-5 theme-bg-secondary rounded w-12 mx-auto mb-1"></div>
+                      <div className="h-3 theme-bg-card rounded w-16 mx-auto"></div>
                     </div>
                   ))}
                 </div>
@@ -816,49 +817,49 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <HeartPulse size={16} className="text-red-400"/>
-                      <span className="text-xs text-gray-400">PA</span>
+                      <span className="text-xs theme-text-secondary">PA</span>
                     </div>
                     <p className={`font-semibold ${statusColors[realData.sinaisVitais.pressao.status]}`}>
                       {realData.sinaisVitais.pressao.valor}
                     </p>
-                    <p className="text-xs text-gray-500">{realData.sinaisVitais.pressao.timestamp}</p>
+                    <p className="text-xs theme-text-muted">{realData.sinaisVitais.pressao.timestamp}</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Target size={16} className="text-teal-400"/>
-                      <span className="text-xs text-gray-400">Temp</span>
+                      <span className="text-xs theme-text-secondary">Temp</span>
                     </div>
                     <p className={`font-semibold ${statusColors[realData.sinaisVitais.temperatura.status]}`}>
                       {realData.sinaisVitais.temperatura.valor}
                     </p>
-                    <p className="text-xs text-gray-500">{realData.sinaisVitais.temperatura.timestamp}</p>
+                    <p className="text-xs theme-text-muted">{realData.sinaisVitais.temperatura.timestamp}</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <TestTube size={16} className="text-green-400"/>
-                      <span className="text-xs text-gray-400">SpO2</span>
+                      <span className="text-xs theme-text-secondary">SpO2</span>
                     </div>
                     <p className={`font-semibold ${statusColors[realData.sinaisVitais.saturacao.status]}`}>
                       {realData.sinaisVitais.saturacao.valor}
                     </p>
-                    <p className="text-xs text-gray-500">{realData.sinaisVitais.saturacao.timestamp}</p>
+                    <p className="text-xs theme-text-muted">{realData.sinaisVitais.saturacao.timestamp}</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Clock size={16} className="text-teal-400"/>
-                      <span className="text-xs text-gray-400">FC</span>
+                      <span className="text-xs theme-text-secondary">FC</span>
                     </div>
                     <p className={`font-semibold ${statusColors[realData.sinaisVitais.frequencia.status]}`}>
                       {realData.sinaisVitais.frequencia.valor}
                     </p>
-                    <p className="text-xs text-gray-500">{realData.sinaisVitais.frequencia.timestamp}</p>
+                    <p className="text-xs theme-text-muted">{realData.sinaisVitais.frequencia.timestamp}</p>
                   </div>
                 </div>
               )}
             </div>
             
-            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-gray-800">
-              <h3 className="font-semibold text-base sm:text-lg text-white mb-3 sm:mb-4">Plano Terapêutico Ativo</h3>
+            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+              <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">Plano Terapêutico Ativo</h3>
               {isLoading ? (
                 <div className="space-y-4">
                   <div className="animate-pulse">
@@ -897,8 +898,8 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               )}
             </div>
 
-            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-gray-800">
-              <h3 className="font-semibold text-base sm:text-lg text-white mb-3 sm:mb-4">Resumo Clínico</h3>
+            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+              <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">Resumo Clínico</h3>
               {isLoading ? (
                 <div className="space-y-4">
                   <div className="animate-pulse">
@@ -989,6 +990,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
  */
 const HistoryList = ({ data, patientId }) => {
   const navigate = useNavigate();
+  const { isDarkMode } = useThemeStore();
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -1003,7 +1005,7 @@ const HistoryList = ({ data, patientId }) => {
   return (
     <div className="relative">
       {/* Vertical timeline line */}
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-teal-800/50 pointer-events-none" aria-hidden="true"></div>
+      <div className={`absolute left-4 top-0 bottom-0 w-px ${isDarkMode ? 'bg-teal-800/50' : 'bg-blue-700/30'} pointer-events-none`} aria-hidden="true"></div>
       <ul className="space-y-4">
         {data.map((record) => (
           <li
@@ -1020,7 +1022,7 @@ const HistoryList = ({ data, patientId }) => {
             }}
           >
             {/* Timeline bullet */}
-            <div className="absolute left-[14px] top-5 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-teal-900 pointer-events-none" aria-hidden="true"></div>
+            <div className={`absolute left-[14px] top-5 h-2 w-2 rounded-full ${isDarkMode ? 'bg-teal-400 ring-2 ring-teal-900' : 'bg-blue-500 ring-2 ring-blue-900/30'} pointer-events-none`} aria-hidden="true"></div>
             <RecordCard record={record} type="historico" patientId={patientId} />
           </li>
         ))}
@@ -1036,6 +1038,7 @@ const HistoryList = ({ data, patientId }) => {
  */
 const InvestigationList = ({ data, patientId }) => {
   const navigate = useNavigate();
+  const { isDarkMode } = useThemeStore();
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -1049,7 +1052,7 @@ const InvestigationList = ({ data, patientId }) => {
   
   return (
     <div className="relative">
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-teal-800/50 pointer-events-none" aria-hidden="true"></div>
+      <div className={`absolute left-4 top-0 bottom-0 w-px ${isDarkMode ? 'bg-teal-800/50' : 'bg-blue-700/30'} pointer-events-none`} aria-hidden="true"></div>
       <ul className="space-y-4">
         {data.map((record) => (
           <li
@@ -1065,7 +1068,7 @@ const InvestigationList = ({ data, patientId }) => {
               }
             }}
           >
-            <div className="absolute left-[14px] top-5 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-teal-900" aria-hidden="true"></div>
+            <div className={`absolute left-[14px] top-5 h-2 w-2 rounded-full ${isDarkMode ? 'bg-teal-400 ring-2 ring-teal-900' : 'bg-blue-500 ring-2 ring-blue-900/30'} pointer-events-none`} aria-hidden="true"></div>
             <RecordCard record={record} type="investigacao" patientId={patientId} />
           </li>
         ))}
@@ -1081,6 +1084,7 @@ const InvestigationList = ({ data, patientId }) => {
  */
 const PlansList = ({ data, patientId }) => {
   const navigate = useNavigate();
+  const { isDarkMode } = useThemeStore();
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -1094,7 +1098,7 @@ const PlansList = ({ data, patientId }) => {
   
   return (
     <div className="relative">
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-teal-800/50 pointer-events-none" aria-hidden="true"></div>
+      <div className={`absolute left-4 top-0 bottom-0 w-px ${isDarkMode ? 'bg-teal-800/50' : 'bg-blue-700/30'} pointer-events-none`} aria-hidden="true"></div>
       <ul className="space-y-4">
         {data.map((record) => (
           <li
@@ -1110,7 +1114,7 @@ const PlansList = ({ data, patientId }) => {
               }
             }}
           >
-            <div className="absolute left-[14px] top-5 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-teal-900 pointer-events-none" aria-hidden="true"></div>
+            <div className={`absolute left-[14px] top-5 h-2 w-2 rounded-full ${isDarkMode ? 'bg-teal-400 ring-2 ring-teal-900' : 'bg-blue-500 ring-2 ring-blue-900/30'} pointer-events-none`} aria-hidden="true"></div>
             <RecordCard record={record} type="plano" patientId={patientId} />
           </li>
         ))}

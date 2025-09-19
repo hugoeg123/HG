@@ -26,25 +26,28 @@ const MainLayout = () => {
 
   return (
     <div className="app-container">
+      {/* Navbar - Always visible at top */}
       <Navbar 
         onToggleLeftSidebar={toggleLeftSidebar} 
         onToggleRightSidebar={toggleRightSidebar} 
       />
-      <div className="main-content flex min-h-screen">
+      
+      {/* Main content area with sidebars */}
+      <div className="main-content">
         {/* Left Sidebar */}
-        <aside className={`transition-all duration-300 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
+        <aside className={`transition-all duration-300 flex-shrink-0 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
           <LeftSidebar collapsed={leftSidebarCollapsed} />
         </aside>
         
         {/* Main Content */}
-        <main className="flex-1 p-4 overflow-y-auto bg-theme-background">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 p-2 sm:p-4 overflow-y-auto bg-theme-background min-w-0">
+          <div className="max-w-6xl mx-auto w-full">
             <Outlet />
           </div>
         </main>
         
         {/* Right Sidebar */}
-        <aside className={`transition-all duration-300 ${rightSidebarCollapsed ? 'w-0 overflow-hidden' : rightSidebarExpanded ? 'w-96 lg:w-1/2' : 'w-72 md:w-80 lg:w-96'}`}>
+        <aside className={`transition-all duration-300 flex-shrink-0 ${rightSidebarCollapsed ? 'w-0 overflow-hidden' : rightSidebarExpanded ? 'w-96 lg:w-1/2' : 'w-72 md:w-80 lg:w-96'}`}>
           <RightSidebar 
             collapsed={rightSidebarCollapsed} 
             expanded={rightSidebarExpanded}

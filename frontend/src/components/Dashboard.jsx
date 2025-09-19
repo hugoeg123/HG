@@ -14,7 +14,7 @@ import { usePatientStore } from '../store/patientStore';
  */
 const Dashboard = () => {
   const { user } = useAuthStore();
-  const { patients, currentPatient, fetchPatients, isLoading, error, createPatient } = usePatientStore();
+  const { patients, fetchPatients, isLoading, error, createPatient } = usePatientStore();
   const navigate = useNavigate();
   
   // Hook: Removed fetchPatients from dependencies to prevent infinite loop
@@ -59,75 +59,39 @@ const Dashboard = () => {
   
   return (
     <div className="dashboard-container p-6">
-      {/* Cabeçalho do paciente selecionado */}
-      {currentPatient && (
-        <div className="patient-header bg-dark-lighter p-4 rounded-lg mb-6 border border-dark-light">
-          <div className="flex items-center">
-            <div className="avatar placeholder mr-4">
-              <div className="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center">
-                <span className="text-xl">{currentPatient.name ? currentPatient.name.charAt(0) : '?'}</span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-white">
-                {currentPatient.name || 'Sem Nome'}
-                {currentPatient.dateOfBirth && (
-                  <span className="ml-2 text-gray-400 text-base font-normal">
-                    {(() => {
-                      const today = new Date();
-                      const birth = new Date(currentPatient.dateOfBirth);
-                      let age = today.getFullYear() - birth.getFullYear();
-                      const monthDiff = today.getMonth() - birth.getMonth();
-                      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                        age--;
-                      }
-                      return `${age} anos`;
-                    })()} 
-                  </span>
-                )}
-              </h2>
-              <div className="text-gray-400 text-sm flex items-center">
-                <span className="mr-3">ID: {currentPatient.id}</span>
-                {currentPatient.gender && (
-                  <span className="mr-3">{currentPatient.gender}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Dashboard do Profissional - Sem informações de paciente específico */}
       <div className="welcome-section mb-8 bg-gradient-to-r from-teal-600/20 to-blue-600/20 border border-teal-600/30 rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-white mb-2">Bem-vindo, {user?.name || 'Médico'}!</h1>
-        <p className="text-gray-300">Aqui está um resumo da sua atividade recente e pacientes.</p>
+        <h1 className="text-2xl font-bold theme-text-primary mb-2">Bem-vindo, {user?.name || 'Médico'}!</h1>
+        <p className="theme-text-secondary">Aqui está um resumo da sua atividade recente e pacientes.</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Card de estatísticas */}
-        <div className="stat-card bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-white mb-4">Pacientes Ativos</h3>
+        <div className="stat-card theme-bg-primary border theme-border p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold theme-text-primary mb-4">Pacientes Ativos</h3>
           <div className="text-3xl font-bold text-teal-400 mb-2">{patients?.length || 0}</div>
-          <p className="text-gray-400 text-sm">Total de pacientes sob seus cuidados</p>
+          <p className="theme-text-secondary text-sm">Total de pacientes sob seus cuidados</p>
         </div>
         
         {/* Card de consultas */}
-        <div className="stat-card bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-white mb-4">Consultas Hoje</h3>
+        <div className="stat-card theme-bg-primary border theme-border p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold theme-text-primary mb-4">Consultas Hoje</h3>
           <div className="text-3xl font-bold text-teal-400 mb-2">0</div>
-          <p className="text-gray-400 text-sm">Consultas agendadas para hoje</p>
+          <p className="theme-text-secondary text-sm">Consultas agendadas para hoje</p>
         </div>
         
         {/* Card de tarefas */}
-        <div className="stat-card bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-white mb-4">Tarefas Pendentes</h3>
-          <div className="text-3xl font-bold text-amber-400 mb-2">0</div>
-          <p className="text-gray-400 text-sm">Tarefas que precisam de sua atenção</p>
+        <div className="stat-card theme-bg-primary border theme-border p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold theme-text-primary mb-4">Tarefas Pendentes</h3>
+          <div className="text-3xl font-bold text-teal-400 mb-2">0</div>
+          <p className="theme-text-secondary text-sm">Tarefas que precisam de sua atenção</p>
         </div>
       </div>
       
       {/* Lista de pacientes recentes */}
-      <div className="recent-patients bg-theme-background border border-gray-700 p-6 rounded-lg shadow-md">
+      <div className="recent-patients theme-bg-primary border theme-border p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">Pacientes Recentes</h2>
+          <h2 className="text-xl font-semibold theme-text-primary">Pacientes Recentes</h2>
           <button 
             onClick={handleNewPatient}
             className="bg-teal-600/20 text-teal-300 hover:bg-teal-600/40 hover:text-teal-100 px-4 py-2 rounded-lg transition-colors border border-teal-500/30 hover:border-teal-400/50"
@@ -139,7 +103,7 @@ const Dashboard = () => {
         {isLoading ? (
           <div className="text-center py-8">
             <div className="loading loading-spinner loading-lg text-teal-400"></div>
-            <p className="text-gray-400 mt-2">Carregando pacientes...</p>
+            <p className="theme-text-secondary mt-2">Carregando pacientes...</p>
           </div>
         ) : error ? (
           <div className="text-center py-8">
@@ -157,7 +121,7 @@ const Dashboard = () => {
               <Link 
                 key={patient.id} 
                 to={`/patients/${patient.id}`}
-                className="patient-card bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-gray-700 hover:border-teal-500/30 p-4 rounded-lg transition-all duration-200 block"
+                className="patient-card theme-card theme-text-secondary theme-hover hover:theme-text-primary border theme-border hover:border-teal-500/30 p-4 rounded-lg transition-all duration-200 block"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -169,8 +133,8 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">{patient.name || 'Sem Nome'}</h3>
-                      <div className="text-sm text-gray-400 flex items-center">
+                      <h3 className="font-semibold theme-text-primary">{patient.name || 'Sem Nome'}</h3>
+                      <div className="text-sm theme-text-secondary flex items-center">
                         <span className="mr-3">ID: {patient.id.slice(0, 8)}...</span>
                         {patient.dateOfBirth && (
                           <span className="mr-3">
@@ -203,7 +167,7 @@ const Dashboard = () => {
             
             {patients.length > 5 && (
               <div className="text-center mt-4">
-                <p className="text-gray-400 text-sm">
+                <p className="theme-text-secondary text-sm">
                   Mostrando 5 de {patients.length} pacientes
                 </p>
               </div>

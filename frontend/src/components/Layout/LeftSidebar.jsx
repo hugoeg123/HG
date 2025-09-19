@@ -5,6 +5,7 @@ import { Users } from 'lucide-react'; // Importar o ícone Users do lucide-react
 import { Plus } from 'lucide-react';
 import { Search } from 'lucide-react'; // Importar o ícone Search do lucide-react
 import SidebarItem from '../ui/SidebarItem';
+import { useThemeStore } from '../../store/themeStore';
 
 /**
  * LeftSidebar component - Displays the patient list and search functionality
@@ -27,10 +28,11 @@ const LeftSidebar = ({ collapsed }) => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { id: activePatientId } = useParams(); // Get active patient ID from URL
+  const { id: activePatientId, recordId: activeRecordId } = useParams(); // Get active patient and record IDs from URL
   
   // Usar o store para gerenciar pacientes
-  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient, setCurrentRecord, clearCurrentRecord } = usePatientStore();
+  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient, setCurrentRecord, clearCurrentRecord, currentRecord } = usePatientStore();
+  const { isDarkMode } = useThemeStore(); // Connector: theme-aware styles for active/hover state
 
   // Carregar a lista de pacientes
   // Hook: Removed fetchPatients from dependencies to prevent infinite loop
@@ -40,6 +42,13 @@ const LeftSidebar = ({ collapsed }) => {
       fetchPatients();
     }
   }, []);
+
+  // Quando um registro está ativo (via URL ou store), garantir que o paciente correspondente esteja expandido
+  useEffect(() => {
+    if ((activeRecordId && String(activeRecordId).length > 0) || currentRecord) {
+      setExpandedPatient(activePatientId);
+    }
+  }, [activeRecordId, currentRecord, activePatientId]);
 
   // Filtrar pacientes com base na pesquisa
   const filteredPatients = Array.isArray(patients) ? patients.filter(patient => {
@@ -125,8 +134,9 @@ const LeftSidebar = ({ collapsed }) => {
       if (record) {
         // Set the current record in the store
         setCurrentRecord(record);
-        // Navigate to the patient view (not to a specific record route)
-        navigate(`/patients/${patientId}`);
+        // Navigate to specific record route to keep URL as source of truth
+        // Connector: PatientView/index.jsx reacts to /patients/:id/records/:recordId
+        navigate(`/patients/${patientId}/records/${recordId}`);
       }
     }
   };
@@ -170,7 +180,7 @@ const LeftSidebar = ({ collapsed }) => {
 
   return (
     <div className={`left-pane ${collapsed ? 'collapsed' : ''} bg-theme-background`}>
-      <div className="p-4 pb-20 border-r border-gray-700">
+      <div className="p-4 pb-20">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Users className="h-5 w-5 text-teal-400" />
@@ -278,16 +288,24 @@ const LeftSidebar = ({ collapsed }) => {
                         const recordId = record?.id || `temp-record-${patientId}-${recordIndex}-${Date.now()}`;
                         const recordDate = record?.date || new Date().toISOString();
                         const recordTags = record?.tags || [];
+
+                        // Registro ativo se coincide com o currentRecord do store ou com o recordId da URL
+                        const isRecordActive = (
+                          record?.id && (
+                            (currentRecord?.id && String(currentRecord.id) === String(record.id)) ||
+                            (activeRecordId && String(activeRecordId) === String(record.id))
+                          )
+                        );
                         
                         return (
                           <li key={`record-${recordId}`}>
                             <div
-                              className="p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent hover:border-teal-500/30 rounded-md cursor-pointer flex items-center transition-all duration-200"
-                              onClick={() => handleRecordClick(patientId, recordId)}
+                              className={`p-2 bg-theme-card ${isRecordActive ? (isDarkMode ? 'border-teal-500 bg-teal-600/20 text-teal-300' : 'border-blue-500 bg-blue-600/10 text-blue-700') : (isDarkMode ? 'text-gray-300' : 'text-gray-700')} hover:bg-theme-surface ${isDarkMode ? 'hover:text-white' : 'hover:text-gray-900'} border ${isRecordActive ? (isDarkMode ? 'border-teal-500' : 'border-blue-500') : `border-transparent ${isDarkMode ? 'hover:border-teal-500/30' : 'hover:border-blue-500/30'}`} rounded-md cursor-pointer flex items-center transition-all duration-200`}
+                              onClick={() => handleRecordClick(patientId, record.id)}
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 mr-2 text-gray-400"
+                                className={`h-4 w-4 mr-2 ${isRecordActive ? (isDarkMode ? 'text-teal-300' : 'text-blue-600') : (isDarkMode ? 'text-gray-400' : 'text-gray-500')}`}
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"

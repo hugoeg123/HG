@@ -87,14 +87,14 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
           key={index} 
           className={`mb-4 p-3 rounded-lg border transition-all duration-200 ${
             isSectionTitle 
-              ? 'bg-blue-900/20 border-blue-500/30 hover:bg-blue-900/30' 
+              ? 'bg-teal-900/20 border-teal-500/30 hover:bg-teal-900/30' 
               : 'bg-theme-card border-theme-border hover:bg-theme-surface'
           }`}
         >
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
               <p className={`whitespace-pre-wrap leading-relaxed ${
-                isSectionTitle ? 'font-semibold text-blue-300' : 'text-gray-300'
+                isSectionTitle ? 'font-semibold text-teal-300' : 'text-gray-300'
               }`}>
                 {trimmedSection}
               </p>

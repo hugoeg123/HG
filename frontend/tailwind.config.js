@@ -9,10 +9,19 @@ export default {
   	extend: {
   		colors: {
   			// --- Unified Semantic Color System (Single Source of Truth) ---
-  			'theme-background': '#1a1e23', // Main background for app body and sidebars
-  			'theme-surface': '#1C1C1F',    // Panels and distinct content areas
-  			'theme-card': '#22262b',       // Interactive items: cards, inputs, modals
-  			'theme-border': '#374151',     // Standard borders
+  			// Dark theme colors (default)
+			'theme-background': 'rgb(var(--theme-background-rgb) / <alpha-value>)', // Main background for app body and sidebars
+			'theme-surface': 'rgb(var(--theme-surface-rgb) / <alpha-value>)',    // Panels and distinct content areas
+			'theme-card': 'rgb(var(--theme-card-rgb) / <alpha-value>)',       // Interactive items: cards, inputs, modals
+			'theme-border': 'rgb(var(--theme-border-rgb) / <alpha-value>)',     // Standard borders
+  			
+  			// Light theme colors
+  			'light-background': '#ffffff',  // Light mode main background
+  			'light-surface': '#f8fafc',     // Light mode panels and surfaces
+  			'light-card': '#ffffff',        // Light mode cards and inputs
+  			'light-border': '#e2e8f0',      // Light mode borders
+  			'light-text': '#1e293b',        // Light mode primary text
+  			'light-text-secondary': '#475569', // Light mode secondary text
   			
   			// Legacy colors (deprecated - use theme-* instead)
   			darkBg: '#1a1e23',  // Now matches theme-background
@@ -20,9 +29,9 @@ export default {
   			border: 'hsl(var(--border))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
-  				hover: '#059669',
-  				light: '#34d399',
-  				dark: '#047857',
+  				hover: '#2563eb',
+  				light: '#60a5fa',
+  				dark: '#1d4ed8',
   				foreground: 'hsl(var(--primary-foreground))'
   			},
   			secondary: {
@@ -40,9 +49,9 @@ export default {
   				foreground: 'hsl(var(--accent-foreground))'
   			},
   			success: {
-  				DEFAULT: '#10b981',
-  				light: '#34d399',
-  				dark: '#059669'
+  				DEFAULT: '#3b82f6',
+  				light: '#60a5fa',
+  				dark: '#2563eb'
   			},
   			danger: {
   				DEFAULT: '#ef4444',
