@@ -28,7 +28,6 @@ import Dashboard from './components/Dashboard';
 import PatientView from './components/PatientView';
 import NewPatient from './components/PatientView/NewPatient';
 import NotFound from './components/NotFound';
-import TestLayout from './components/TestLayout';
 
 // Páginas de Calculadoras
 import CalculatorsIndex from './pages/calculators/CalculatorsIndex';
@@ -106,8 +105,7 @@ function App() {
     <ErrorBoundary fallbackTitle="Erro na Aplicação">
       <ToastProvider>
         <Routes>
-          {/* Rota de teste (temporária) */}
-          <Route path="/test" element={<TestLayout />} />
+          {/* Removed temporary test route */}
           
           {/* Rotas de autenticação */}
           <Route element={<AuthLayout />}>

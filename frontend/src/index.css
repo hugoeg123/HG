@@ -200,7 +200,40 @@ body {
 /* Light mode overrides for pane backgrounds */
 .light-mode .left-pane,
 .light-mode .right-pane {
-  background-color: #DDDDDD; /* Fundo gelo/cinza levemente azulado conforme solicitado */
+  background-color: #DDDDDD; /* Mantém sidebars no tom cinza; não alterar */
+}
+
+/* Bright mode: force central containers to pure white without affecting sidebars or dark mode */
+.light-mode .app-container,
+.light-mode .main-content,
+.light-mode .center-pane {
+  background-color: #ffffff !important;
+}
+
+/* Bright mode scoped tokens for center column
+ * Purpose: Make all center-pane cards/surfaces pure white without touching sidebars
+ * Connector: Affects components using bg-theme-card/bg-theme-surface within center-pane (Dashboard, HybridEditor, RecordViewer)
+ * IA prompt: "Scope theme variables to subtree using CSS cascade"
+ */
+.light-mode .center-pane {
+  /* Ensure all theme tokens inside center pane resolve to pure white */
+  --theme-background: #ffffff;           /* used by bg-theme-background */
+  --theme-background-rgb: 255 255 255;   /* support for Tailwind opacity syntax */
+  --theme-card: #ffffff;                  /* used by bg-theme-card */
+  --theme-card-rgb: 255 255 255;
+  --theme-surface: #ffffff;               /* used by bg-theme-surface */
+  --theme-surface-rgb: 255 255 255;
+}
+
+/* Light mode exception (surgical): Only patient dashboard cards should use light gray
+ * Why: Center-pane forces pure white; requested to keep 4 specific divs in light gray like other surfaces
+ * Scope: .dashboard-container → .stat-card (3 cards) and .recent-patients (list card)
+ * Dark mode: unaffected
+ * Connector: Integrates with components/Dashboard.jsx only
+ */
+.light-mode .dashboard-container .stat-card,
+.light-mode .dashboard-container .recent-patients {
+  background-color: var(--color-bg-light) !important; /* #F3F3F3 */
 }
 
 /* Estilos para a lista de pacientes */
@@ -846,264 +879,14 @@ body {
 .light-mode .text-teal-200, .light-mode .text-emerald-200 { @apply text-blue-500; }
 .light-mode .text-teal-100, .light-mode .text-emerald-100 { @apply text-blue-400; }
 
-.btn-danger {
-  @apply bg-red-600/20 hover:bg-red-600/30 border-red-600/30 hover:border-red-500 text-red-400 focus:ring-red-500/50;
+/* Bright mode: force headings and paragraph text to black */
+.light-mode h1,
+.light-mode h2,
+.light-mode h3,
+.light-mode h4,
+.light-mode p {
+  color: #000 !important;
 }
-
-.btn-warning {
-  @apply bg-yellow-600/20 hover:bg-yellow-600/30 border-yellow-600/30 hover:border-yellow-500 text-yellow-400 focus:ring-yellow-500/50;
-}
-
-/* Dark mode */
-.dark-mode .btn-outline {
-  @apply border-gray-700/30 bg-gray-700/10 hover:bg-theme-surface hover:border-gray-600 text-gray-300 focus:ring-gray-600/50;
-}
-
-/* Light mode */
-.light-mode .btn-outline {
-  @apply border-gray-300/50 bg-gray-100/50 hover:bg-theme-surface hover:border-gray-400 text-gray-600 focus:ring-gray-400/50;
-}
-
-/* Dark mode - Verde/Teal para inputs */
-.dark-mode .input {
-  @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
-}
-
-.dark-mode .input-no-icon {
-  @apply bg-theme-card border border-gray-700/30 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all duration-200 w-full;
-}
-
-.dark-mode .search-input {
-  @apply bg-theme-card border border-gray-700/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 w-full transition-all duration-200;
-}
-
-/* Light mode - Azul para inputs */
-.light-mode .input {
-  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
-}
-
-.light-mode .input-no-icon {
-  @apply bg-theme-card border border-gray-300/50 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 w-full;
-}
-
-.light-mode .search-input {
-  @apply bg-theme-card border border-gray-300/50 rounded-lg pl-10 pr-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 w-full transition-all duration-200;
-}
-
-/* Dark mode */
-.dark-mode .search-icon {
-  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
-}
-
-/* Light mode */
-.light-mode .search-icon {
-  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500;
-}
-
-/* Estilos para o chat de IA */
-.chat-container {
-  @apply flex flex-col h-full;
-}
-
-.chat-messages {
-  @apply flex-1 overflow-y-auto p-4 space-y-4;
-}
-
-/* Dark mode */
-.dark-mode .chat-input {
-  @apply p-4 border-t border-gray-700;
-}
-
-/* Light mode */
-.light-mode .chat-input {
-  @apply p-4 border-t border-gray-200;
-}
-
-.message {
-  @apply p-3 rounded-lg max-w-xs;
-}
-
-/* Dark mode messages */
-.dark-mode .message-user {
-  @apply bg-emerald-600 text-white ml-auto;
-}
-
-.dark-mode .message-ai {
-  @apply bg-gray-700 text-white;
-}
-
-/* Light mode messages */
-.light-mode .message-user {
-  @apply bg-blue-600 text-white ml-auto;
-}
-
-.light-mode .message-ai {
-  @apply bg-gray-100 text-gray-800;
-}
-
-/* Estilos para calculadoras */
-.calculator-container {
-  @apply p-4;
-}
-
-/* Dark mode */
-.dark-mode .calculator-item {
-  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
-}
-
-/* Light mode */
-.light-mode .calculator-item {
-  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
-}
-
-/* Estilos para alertas */
-.alert {
-  @apply p-4 rounded-lg mb-4;
-}
-
-/* Dark mode alerts */
-.dark-mode .alert-info {
-  @apply bg-teal-900 bg-opacity-50 text-teal-100 border border-teal-800;
-}
-
-.dark-mode .alert-warning {
-  @apply bg-orange-900 bg-opacity-50 text-orange-100 border border-orange-800;
-}
-
-.dark-mode .alert-danger {
-  @apply bg-red-900 bg-opacity-50 text-red-100 border border-red-800;
-}
-
-/* Light mode alerts */
-.light-mode .alert-info {
-  @apply bg-blue-100 bg-opacity-80 text-blue-800 border border-blue-300;
-}
-
-.light-mode .alert-warning {
-  @apply bg-orange-100 bg-opacity-80 text-orange-800 border border-orange-300;
-}
-
-.light-mode .alert-danger {
-  @apply bg-red-100 bg-opacity-80 text-red-800 border border-red-300;
-}
-
-/* Estilos para templates */
-/* Dark mode */
-.dark-mode .template-item {
-  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
-}
-
-/* Light mode */
-.light-mode .template-item {
-  @apply bg-theme-card p-4 rounded-lg mb-4 hover:bg-theme-surface cursor-pointer transition-colors duration-150;
-}
-
-/* Animações */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-/* Cross-browser compatibility and accessibility improvements */
-
-/* Filter properties */
-.apply-filter {
-  -webkit-filter: grayscale(100%); /* IA prompt: Sugestão para extensão: Adicionar mais filtros como blur, sepia */
-  filter: grayscale(100%);
-}
-
-/* Text size adjustment */
-body {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-/* Backdrop filter (for frosted glass effect, etc.) */
-.apply-backdrop-filter {
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
-}
-
-/* User selection */
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* Image set for responsive images */
-.responsive-image {
-  background-image: -webkit-image-set(url('img.png') 1x, url('img@2x.png') 2x);
-  background-image: image-set(url('img.png') 1x, url('img@2x.png') 2x);
-}
-
-/* ========================================
-   OTIMIZAÇÃO DE TRANSIÇÃO PARA ELEMENTOS QUE MUDAM DE TEMA
-   Restauração do bloco removido inadvertidamente ao inserir os remaps do light mode
-   Connector: Utilizado em componentes com animações de mudança de tema
-   IA prompt: "Ensure smooth theme transitions with minimal layout shift"
-*/
-.theme-transition {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-  will-change: background-color, color, border-color;
-}
-
-/* Otimização para elementos com hover */
-.theme-hover-optimized {
-  transition: all 0.2s ease;
-  will-change: background-color, color, border-color, transform;
-}
-
-.theme-hover-optimized:hover {
-  transform: translateZ(0); /* Force hardware acceleration */
-}
-
-/* Otimização para o toggle de tema */
-.theme-toggle-optimized {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: background-color, transform;
-  transform: translateZ(0); /* Force hardware acceleration */
-}
-
-/* Otimização para mudanças de tema no body */
-body {
-  transition: background-color 0.3s ease, color 0.3s ease;
-  will-change: background-color, color;
-}
-
-/* Otimização para elementos que aparecem/desaparecem com tema */
-.theme-fade {
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  will-change: opacity, visibility;
-}
-
-/* Reduzir motion para usuários que preferem */
-@media (prefers-reduced-motion: reduce) {
-  .theme-transition,
-  .theme-hover-optimized,
-  .theme-toggle-optimized,
-  body,
-  .theme-fade {
-    transition: none;
-    will-change: auto;
-  }
-}
-
-/* Connector: Otimizações aplicadas automaticamente em componentes com transições de tema */
-/* Hook: Melhora performance de renderização durante mudanças de tema */
-.light-mode .data-\[state\=active\]\:bg-teal-600[data-state="active"],
-.light-mode .data-\[state\=active\]\:bg-emerald-600[data-state="active"] { @apply bg-blue-600; }
-.light-mode .data-\[state\=active\]\:bg-teal-600\/20[data-state="active"],
-.light-mode .data-\[state\=active\]\:bg-emerald-600\/20[data-state="active"] { @apply bg-blue-600/20; }
-.light-mode .data-\[state\=active\]\:text-white[data-state="active"] { @apply text-white; }
-
-/* Badges and subtle tints */
-.light-mode .bg-teal-600\/25, .light-mode .bg-emerald-600\/25 { @apply bg-blue-600/25; }
-.light-mode .text-teal-200, .light-mode .text-emerald-200 { @apply text-blue-500; }
-.light-mode .text-teal-100, .light-mode .text-emerald-100 { @apply text-blue-400; }
 
 .btn-danger {
   @apply bg-red-600/20 hover:bg-red-600/30 border-red-600/30 hover:border-red-500 text-red-400 focus:ring-red-500/50;

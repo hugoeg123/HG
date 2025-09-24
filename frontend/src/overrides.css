@@ -75,3 +75,40 @@
 .light-mode .theme-border {
   border-color: rgb(var(--accent-rgb) / 0.18) !important; /* blue tint */
 }
+
+/* ---------------------------------------------------------
+ * Utilities: background fill for "second" divs
+ *
+ * Purpose: Provide easy classes to color only the second div or all even divs
+ * within a container, using the app theme tokens and allowing per-instance
+ * overrides via a CSS variable.
+ *
+ * Default color: var(--theme-card)
+ * Override per container: add style="--theme-fill-bg: var(--theme-background)"
+ *
+ * Connector: Intended to be used by React components as a class on container
+ * elements (e.g., cards, panels, lists) when design requires highlighting the
+ * second item. Works with both dark and light modes automatically.
+ * IA prompt: "Provide theme-aware utilities to style the 2nd child div and even
+ * div siblings across components, with minimal specificity and easy overrides"
+ * --------------------------------------------------------- */
+
+/* Fill only the 2nd div at multiple nesting depths (up to 4 levels) */
+.theme-fill-seconds {
+  /* Consumers can override this per container if needed */
+  --theme-fill-bg: var(--theme-card);
+}
+.theme-fill-seconds > div:nth-child(2),
+.theme-fill-seconds > * > div:nth-child(2),
+.theme-fill-seconds > * > * > div:nth-child(2),
+.theme-fill-seconds > * > * > * > div:nth-child(2) {
+  background-color: var(--theme-fill-bg);
+}
+
+/* Fill every even direct child div (2nd, 4th, ...) */
+.theme-fill-even-divs {
+  --theme-fill-bg: var(--theme-card);
+}
+.theme-fill-even-divs > div:nth-child(2n) {
+  background-color: var(--theme-fill-bg);
+}

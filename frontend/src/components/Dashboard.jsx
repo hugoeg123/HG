@@ -59,11 +59,8 @@ const Dashboard = () => {
   
   return (
     <div className="dashboard-container p-6">
-      {/* Dashboard do Profissional - Sem informações de paciente específico */}
-      <div className="welcome-section mb-8 bg-gradient-to-r from-teal-600/20 to-blue-600/20 border border-teal-600/30 rounded-lg p-6">
-        <h1 className="text-2xl font-bold theme-text-primary mb-2">Bem-vindo, {user?.name || 'Médico'}!</h1>
-        <p className="theme-text-secondary">Aqui está um resumo da sua atividade recente e pacientes.</p>
-      </div>
+      {/* Removed welcome-section to comply with request to delete the welcome card */}
+      {/* Conector: Esta remoção afeta apenas a página / (Dashboard). PatientView mantém seu fluxo próprio. */}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Card de estatísticas */}

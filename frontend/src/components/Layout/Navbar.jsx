@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 
-const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
+const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar, rightSidebarCollapsed }) => {
   const { user, logout } = useAuthStore();
   const { isDarkMode, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
   };
 
   return (
-    <nav className={`px-4 py-3 flex items-center justify-between transition-all duration-200 ${
+    <nav className={`px-4 py-1 flex items-center justify-between transition-all duration-200 ${
       isDarkMode 
         ? 'bg-theme-background border-b border-gray-700' 
         : 'bg-[#DDDDDD] border-b border-gray-300 shadow-sm'
@@ -24,7 +24,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
         {/* Botão para alternar a barra lateral esquerda */}
         <button 
           onClick={onToggleLeftSidebar}
-          className={`mr-4 p-2 rounded-lg transition-all duration-200 border border-transparent focus:outline-none ${
+          className={`mr-4 p-1.5 rounded-lg transition-all duration-200 border border-transparent focus:outline-none ${
             isDarkMode
               ? 'bg-theme-background text-gray-400 hover:bg-theme-background hover:border-transparent hover:text-gray-300'
               : 'bg-[#DDDDDD] text-gray-700 hover:bg-[#DDDDDD] hover:border-transparent hover:text-gray-800'
@@ -32,19 +32,19 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
           aria-label="Toggle left sidebar"
           title="Alternar barra lateral esquerda"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
         
         {/* Logo e nome do aplicativo */}
         <Link to="/dashboard" className="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${
-            isDarkMode ? 'text-teal-400' : 'text-blue-600'
-          }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M22 12h-4l-3 9L9 3l-3 9H2" />
-          </svg>
-          <span className={`ml-2 text-xl font-semibold ${
+          <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-lg ${
+            isDarkMode ? 'bg-teal-500 text-theme-background' : 'bg-blue-600 text-theme-background'
+          }`}>
+            HG
+          </div>
+          <span className={`ml-2 text-lg font-semibold ${
             isDarkMode ? 'text-white' : 'text-gray-800'
           }`}>Health Guardian</span>
         </Link>
@@ -56,7 +56,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
           <button
             onClick={toggleTheme}
             className={`
-              theme-toggle-optimized relative inline-flex h-8 w-16 items-center rounded-full border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2
+              theme-toggle-optimized relative inline-flex h-7 w-14 items-center rounded-full border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2
               ${isDarkMode 
                 ? 'bg-emerald-100 border-emerald-500 focus:ring-emerald-500 focus:ring-offset-theme-background shadow-[0_0_0_3px_rgba(16,185,129,0.25)]' 
                 : 'bg-blue-100 border-blue-500 focus:ring-blue-500 focus:ring-offset-[#DDDDDD] shadow-[0_0_0_3px_rgba(59,130,246,0.25)]'
@@ -68,9 +68,9 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
             {/* Slider/knob com ícone */}
             <span
               className={`
-                inline-flex h-6 w-6 transform rounded-full transition-all duration-300 ease-in-out items-center justify-center shadow
+                inline-flex h-5 w-5 transform rounded-full transition-all duration-300 ease-in-out items-center justify-center shadow
                 ${isDarkMode 
-                  ? 'translate-x-9 bg-emerald-600' 
+                  ? 'translate-x-8 bg-emerald-600' 
                   : 'translate-x-1 bg-blue-600'
                 }
               `}
@@ -105,27 +105,29 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar }) => {
         {/* Botão para alternar a barra lateral direita */}
         <button 
           onClick={onToggleRightSidebar}
-          className={`p-2 rounded-lg transition-all duration-200 border border-transparent focus:outline-none ${
+          className={`p-1.5 rounded-lg transition-all duration-200 border border-transparent focus:outline-none ${
             isDarkMode
               ? 'bg-theme-background text-gray-300 hover:bg-theme-background hover:text-gray-200 hover:border-transparent'
               : 'bg-[#DDDDDD] text-gray-700 hover:bg-[#DDDDDD] hover:text-gray-800 hover:border-transparent'
           }`}
+          aria-label="Toggle right sidebar"
+          title="Alternar barra lateral direita"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transform transition-transform ${rightSidebarCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
         <div className="relative">
           <button 
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 border border-transparent focus:outline-none ${
+              className={`flex items-center space-x-2 p-1.5 rounded-lg transition-all duration-200 border border-transparent focus:outline-none ${
                 isDarkMode
                   ? 'bg-theme-background text-gray-300 hover:bg-theme-background hover:text-white hover:border-transparent'
                   : 'bg-[#DDDDDD] text-gray-700 hover:bg-[#DDDDDD] hover:text-gray-800 hover:border-transparent'
               }`}
               title="Menu do usuário"
             >
-              <div className={`w-8 h-8 rounded-full border flex items-center justify-center font-medium ${
+              <div className={`w-7 h-7 rounded-full border flex items-center justify-center font-medium ${
                 isDarkMode
                   ? 'bg-theme-background border-gray-600/20 text-gray-300'
                   : 'bg-[#DDDDDD] border-gray-400/30 text-gray-700'

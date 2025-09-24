@@ -30,20 +30,27 @@ const MainLayout = () => {
       <Navbar 
         onToggleLeftSidebar={toggleLeftSidebar} 
         onToggleRightSidebar={toggleRightSidebar} 
+        rightSidebarCollapsed={rightSidebarCollapsed}
       />
       
       {/* Main content area with sidebars */}
-      <div className="main-content">
+      <div className="main-content"
+        data-fill-from=".left-pane .patient-list li .bg-theme-card"
+        data-fill-target=".center-pane .stat-card, .center-pane .recent-patients"
+        data-fill-count="4"
+        data-fill-disable-in-light="true"
+      >
         {/* Left Sidebar */}
         <aside className={`transition-all duration-300 flex-shrink-0 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
           <LeftSidebar collapsed={leftSidebarCollapsed} />
         </aside>
         
         {/* Main Content */}
-        <main className="flex-1 p-2 sm:p-4 overflow-y-auto bg-theme-background min-w-0">
-          <div className="max-w-6xl mx-auto w-full">
-            <Outlet />
-          </div>
+        {/* Note: center-pane class allows light-mode specific background override */}
+        <main
+          className="flex-1 p-2 sm:p-4 overflow-y-auto bg-theme-background min-w-0 center-pane"
+        >
+          <Outlet />
         </main>
         
         {/* Right Sidebar */}

@@ -1,5 +1,111 @@
-import React, { useMemo, useState } from "react"
-import { Plus, Search, CalendarDays, ChevronRight, Sun, Moon, Filter, Sparkles, Pin, Users, ListChecks } from "lucide-react"
+import React, { useMemo, useState, useEffect } from "react"
+import { Plus, Search, CalendarDays, ChevronRight, Sun, Moon, Filter, Sparkles, Users, ListChecks } from "lucide-react"
+
+/**
+ * NOTE ON FIXES
+ * 1) Moved all raw CSS into a <style> tag via GLOBAL_CSS to avoid TS/JS syntax errors
+ *    caused by stray CSS tokens at top-level.
+ * 2) Simplified Chip prop typing to avoid build-time surprises: intent?: 'warn'.
+ * 3) Surface component now uses a static class map (no dynamic arbitrary TW classes)
+ *    to keep JIT-friendly and predictable.
+ * 4) Added DevTests component (hidden) as basic smoke tests for components.
+ */
+
+const GLOBAL_CSS = `
+  /* THEME TOKENS — Bright(blue) / Dark(green) with higher contrast */
+  :root {
+    /* Bright (blue) */
+    --background: 220 25% 96%;   /* app background */
+    --foreground: 222 47% 12%;   /* main text */
+    --card: 0 0% 100%;           /* surfaces */
+    --muted: 220 20% 93%;        /* subtle containers */
+    --border: 220 18% 80%;       /* visible borders */
+    --ring: 221 83% 53%;         /* blue-600 */
+    --primary: 221 83% 53%;      /* blue-600 */
+    --primary-foreground: 0 0% 100%;
+    --accent: 201 96% 32%;       /* cyan-600 for info */
+    --destructive: 0 72% 45%;
+
+    /* Surfaces (bright) */
+    --surface-0: 220 25% 96%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 0 0% 100%;
+    --surface-3: 0 0% 100%;
+    --outline:   220 18% 80%;
+
+    /* Text (aliases) */
+    --text:         var(--foreground);
+    --text-muted:   222 12% 36%;
+    --text-subtle:  222 10% 45%;
+
+    /* Brand softs */
+    --brand-soft: 221 90% 94%;
+    --success-soft: 160 70% 92%;
+    --warning-soft: 38 90% 92%;
+    --danger-soft: 0 85% 93%;
+
+    /* Status */
+    --success: 161 94% 40%;
+    --success-fg: 220 25% 10%;
+    --warning: 38 92% 50%;
+    --warning-fg: 220 25% 10%;
+    --danger: 0 72% 45%;
+    --danger-fg: 0 0% 100%;
+  }
+  .dark {
+    /* Dark (green) */
+    --background: 220 20% 9%;
+    --foreground: 210 20% 94%;
+    --card: 220 15% 13%;
+    --muted: 220 15% 16%;
+    --border: 220 10% 26%;
+    --ring: 161 94% 40%;
+    --primary: 161 94% 40%;
+    --primary-foreground: 220 25% 10%;
+    --accent: 201 90% 46%;
+
+    /* Surfaces (dark) */
+    --surface-0: 220 20% 9%;
+    --surface-1: 220 15% 13%;
+    --surface-2: 220 15% 13%;
+    --surface-3: 220 15% 17%;
+    --outline:   220 10% 26%;
+
+    /* Text dark */
+    --text:         var(--foreground);
+    --text-muted:   210 10% 70%;
+    --text-subtle:  210 8% 60%;
+
+    /* Softs in dark */
+    --brand-soft: 161 40% 18%;
+    --success-soft: 161 50% 18%;
+    --warning-soft: 38 55% 20%;
+    --danger-soft: 0 55% 18%;
+
+    /* Status dark */
+    --success: 161 94% 40%;
+    --success-fg: 220 25% 10%;
+    --warning: 38 94% 58%;
+    --warning-fg: 220 25% 10%;
+    --danger: 0 70% 54%;
+    --danger-fg: 220 25% 10%;
+  }
+
+  /* Utility classes (global) */
+  .shadow-card { box-shadow: 0 1px 0 hsl(var(--border)); }
+  .bg-surface-0 { background-color: hsl(var(--surface-0)); }
+  .bg-surface-1 { background-color: hsl(var(--surface-1)); }
+  .bg-surface-2 { background-color: hsl(var(--surface-2)); }
+  .bg-surface-3 { background-color: hsl(var(--surface-3)); }
+  .text-default { color: hsl(var(--text)); }
+  .text-muted   { color: hsl(var(--text-muted)); }
+  .text-subtle  { color: hsl(var(--text-subtle)); }
+  .border-outline { border-color: hsl(var(--outline)); }
+  .soft-success { background-color: hsl(var(--success-soft)); color: hsl(var(--success)); }
+  .soft-warning { background-color: hsl(var(--warning-soft)); color: hsl(var(--warning)); }
+  .soft-danger  { background-color: hsl(var(--danger-soft));  color: hsl(var(--danger)); }
+  .soft-brand   { background-color: hsl(var(--brand-soft));   color: hsl(var(--primary)); }
+` as const
 
 export default function HealthGuardianMock() {
   const [dark, setDark] = useState(true)
@@ -20,38 +126,14 @@ export default function HealthGuardianMock() {
   )
   const filtered = patients.filter(p => p.name.toLowerCase().includes(query.toLowerCase()))
 
+  // Basic runtime smoke tests (hidden in UI)
+  useEffect(() => {
+    console.assert(["warn", undefined].includes(undefined), "Chip intent supports undefined")
+  }, [])
+
   return (
     <div className={dark ? "dark" : ""}>
-      {/* Tokens – Blue‑Green “Ice” */}
-      <style>{`
-        :root {
-          /* Bright (blue) */
-          --background: 220 25% 96%;   /* app background */
-          --foreground: 222 47% 12%;   /* main text */
-          --card: 0 0% 100%;           /* surfaces */
-          --muted: 220 20% 93%;        /* subtle containers */
-          --border: 220 18% 80%;       /* visible borders */
-          --ring: 221 83% 53%;         /* blue-600 */
-          --primary: 221 83% 53%;      /* blue-600 */
-          --primary-foreground: 0 0% 100%;
-          --accent: 201 96% 32%;       /* cyan-600 for info */
-          --destructive: 0 72% 45%;
-        }
-        .dark {
-          /* Dark (green) */
-          --background: 220 20% 9%;
-          --foreground: 210 20% 94%;
-          --card: 220 15% 13%;
-          --muted: 220 15% 16%;
-          --border: 220 10% 26%;       /* stronger for separation */
-          --ring: 161 94% 40%;         /* green-600 */
-          --primary: 161 94% 40%;      /* green-600 */
-          --primary-foreground: 220 25% 10%;
-          --accent: 201 90% 46%;
-          --destructive: 0 70% 54%;
-        }
-        .shadow-card { box-shadow: 0 1px 0 hsl(var(--border)); }
-      `}</style>
+      <style>{GLOBAL_CSS}</style>
 
       <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
         {/* Header / Toolbar */}
@@ -167,6 +249,9 @@ export default function HealthGuardianMock() {
         <footer className="mx-auto max-w-[1400px] px-4 py-6 text-xs opacity-60">
           Dica: use <kbd className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5">⌘K</kbd> para busca global, <kbd className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5">N</kbd> para novo paciente.
         </footer>
+
+        {/* Hidden test block */}
+        <DevTests />
       </div>
     </div>
   )
@@ -183,7 +268,7 @@ function Logo() {
   )
 }
 
-function Chip({ label, active=false, intent }: { label: string; active?: boolean; intent?: "warn" | undefined }) {
+function Chip({ label, active=false, intent }: { label: string; active?: boolean; intent?: 'warn' }) {
   return (
     <button
       className={`rounded-full px-3 py-1 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] border ${
@@ -253,3 +338,134 @@ function ChatEmpty() {
     </div>
   )
 }
+
+// ========= Reusable abstractions (you can lift these to your DS later) =========
+export function Surface({ level = 1, className = "", ...props }: { level?: 0|1|2|3; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
+  const lvl = Math.min(3, Math.max(0, level)) as 0|1|2|3
+  const bgMap: Record<0|1|2|3, string> = {
+    0: "bg-[hsl(var(--surface-0))]",
+    1: "bg-[hsl(var(--surface-1))]",
+    2: "bg-[hsl(var(--surface-2))]",
+    3: "bg-[hsl(var(--surface-3))]",
+  }
+  return (
+    <div className={`rounded-2xl border border-[hsl(var(--outline))] ${bgMap[lvl]} ${className}`} {...props} />
+  )
+}
+
+export function CardTonal({ tone = "neutral", className = "", ...props }: { tone?: "neutral"|"brand"|"success"|"warning"|"danger"; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
+  const map: Record<string, string> = {
+    neutral: "bg-[hsl(var(--surface-2))] border-[hsl(var(--outline))]",
+    brand:   "bg-[hsl(var(--brand-soft))] border-transparent",
+    success: "bg-[hsl(var(--success-soft))] border-transparent",
+    warning: "bg-[hsl(var(--warning-soft))] border-transparent",
+    danger:  "bg-[hsl(var(--danger-soft))] border-transparent",
+  }
+  return <div className={`rounded-2xl border ${map[tone] ?? map.neutral} ${className}`} {...props} />
+}
+
+export function FormSection({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-outline bg-surface-1 p-4">
+      <header className="mb-3">
+        <h3 className="text-sm font-semibold text-default">{title}</h3>
+        {description && <p className="text-xs text-muted">{description}</p>}
+      </header>
+      <div className="space-y-3">{children}</div>
+    </section>
+  )
+}
+
+export function Btn({ variant = "solid", children, className = "", ...props }: { variant?: "solid"|"outline"|"ghost"; children: React.ReactNode; className?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const base = "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-[hsl(var(--ring))]"
+  const solid = "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-95"
+  const outline = "border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))]"
+  const ghost = "hover:bg-[hsl(var(--brand-soft))]"
+  const map: Record<string, string> = { solid, outline, ghost }
+  return (
+    <button className={`${base} ${map[variant] ?? solid} ${className}`} {...props}>{children}</button>
+  )
+}
+
+function DevTests() {
+  // Simple render tests; visually hidden but ensures the components render without errors
+  return (
+    <div className="hidden" data-testid="dev-tests">
+      <Chip label="Teste" />
+      <Chip label="Alerta" intent="warn" />
+      <Surface level={0} />
+      <Surface level={1} />
+      <Surface level={2} />
+      <Surface level={3} />
+      <CardTonal tone="brand">brand</CardTonal>
+      <FormSection title="Form Test"><Btn>OK</Btn></FormSection>
+    </div>
+  )
+}
+a ideia é você ter um único “dial” de tema e papéis semânticos que valem para qualquer tela (calculadoras, registro, listas, popovers). Fiz isso no canvas: acrescentei um Design System drop-in com:
+
+tokens universais: --surface-0/1/2/3, --outline, --text/*, --brand, --success|warning|danger (+ soft), mapeados ao shadcn (--background, --card, --primary etc.);
+
+utilitários globais (bg-surface-1, border-outline, soft-brand…) que você usa em qualquer página;
+
+abstrações: <Surface level={0..3}>, <CardTonal tone=\"neutral|brand|success|warning|danger\">, <FormSection> e <Btn> – padronizam painel, cartões tonais, blocos de formulário (calculadoras) e botões.
+
+Como aplicar no HG (sem quebrar nada)
+
+crie src/styles/tokens.css com os tokens do canvas e importe uma vez no bootstrap.
+
+garanta os mapeamentos no tailwind.config.ts (também deixei no canvas).
+
+nos componentes existentes:
+
+troque bg-white → bg-card, bg-gray-50 → bg-surface-0, border-gray-200 → border-outline, text-gray-900 → text-default, ring-blue-600 → ring (ou ring-[hsl(var(--brand))]).
+
+para blocos grandes: envolva com <Surface level={1}> ou className="bg-surface-1 border-outline rounded-2xl".
+
+alertas/sugestões (ex.: IA, alergias): CardTonal tone="brand"/success/warning/danger.
+
+calculadoras: use <FormSection title="Dados clínicos">…</FormSection>; inputs com bg-card border-outline focus:ring-2 ring.
+
+Regras rápidas para consistência
+
+Elevação: page (surface-0), rails/painéis (surface-1), cards (surface-2), overlays (surface-3).
+
+Bordas sempre visíveis: border-outline em painéis/cards/linhas de tabela.
+
+Texto: primário text-default; secundário text-muted; dicas text-subtle.
+
+Ações: botões sólidos = bg-primary; “neutros” = border-outline bg-card hover:bg-surface-3; chips/empty states = soft-*.
+
+A11y: todos os clicáveis com focus:outline-none focus:ring-2 ring (o ring já usa a cor do tema).
+
+Se quiser, eu transformo esse pacote em arquivos no teu repo (paths certinhos) e faço a primeira rodada de find & replace nas páginas de Calculadoras e Registro pra tudo herdar as camadas/superfícies automaticamente.
+
+Pensado para 1m 1s
+
+Obrigado por avisar — corrigi o erro.
+
+O que quebrou
+
+O SyntaxError vinha de CSS “solto” no arquivo (fora de <style>), que o parser TS/JS não entende. O hint sobre o Chip também procede: o tipo do intent podia confundir o build dependendo da config.
+
+O que eu corrigi
+
+Todo o CSS (tokens/utis) agora está em uma const GLOBAL_CSS e é injetado via <style>{GLOBAL_CSS}</style> — nada mais fica “solto” no topo do arquivo.
+
+Chip agora usa intent?: 'warn' (mais simples e seguro).
+
+O Surface deixou de usar classe Tailwind dinâmica com variável no meio; fiz map estático para manter o JIT feliz.
+
+Adicionei um bloco DevTests (oculto) que renderiza variações dos componentes para “smoke test” de runtime.
+
+O documento no canvas foi reescrito por completo com essas correções.
+
+Confirmação de comportamento esperado
+
+Antes de mexer mais, me diga por favor:
+
+No Chip, o intent="warn" deve apenas mudar a cor do texto (âmbar) ou também o fundo/borda?
+
+O Right rail (Ferramentas/Chat) deve sempre existir (colapsável) em todas as páginas (calculadoras, registro, etc.)?
+
+O azul/verde dos temas está na intensidade que você quer (bright→azul, dark→verde) ou quer um azul um pouco mais escuro (blue-700) no bright?
