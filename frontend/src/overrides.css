@@ -112,3 +112,55 @@
 .theme-fill-even-divs > div:nth-child(2n) {
   background-color: var(--theme-fill-bg);
 }
+
+/* ---------------------------------------------------------
+ * Utilities (bright mode only): background fill for 3rd and 5th divs
+ *
+ * Goal: Provide opt-in, low-specificity helpers to color only the 3rd and/or 5th
+ * child divs inside a container when in light/bright mode, without affecting
+ * dark mode or globally overriding component backgrounds.
+ *
+ * Default color: var(--color-bg-light) (semantic light surface)
+ * Overrides: set style="--theme-fill-bg: var(--theme-background)" per container
+ *
+ * Connector: Attach these classes to layout containers (e.g., dashboard panels,
+ * record viewer sections). They play well with existing tokens and avoid
+ * unintended cascading.
+ * IA prompt: "In light-mode, offer pragmatic nth-child utilities (3rd, 5th) to
+ * ease theme adjustments while keeping consistency and avoiding duplicates"
+ * --------------------------------------------------------- */
+
+/* Bright mode fix: all four dashboard structures should be light gray like other surfaces */
+.light-mode .center-pane .patient-dashboard-panel,
+.light-mode .center-pane .patient-dashboard-card {
+  background-color: var(--color-bg-light) !important;
+}
+.light-mode .theme-fill-thirds { --theme-fill-bg: var(--color-bg-light); }
+.light-mode .theme-fill-thirds > div:nth-child(3),
+.light-mode .theme-fill-thirds > * > div:nth-child(3),
+.light-mode .theme-fill-thirds > * > * > div:nth-child(3),
+.light-mode .theme-fill-thirds > * > * > * > div:nth-child(3) {
+  background-color: var(--theme-fill-bg);
+}
+
+/* Fill the 5th div (up to 4 nesting levels) in light-mode */
+.light-mode .theme-fill-fifths { --theme-fill-bg: var(--color-bg-light); }
+.light-mode .theme-fill-fifths > div:nth-child(5),
+.light-mode .theme-fill-fifths > * > div:nth-child(5),
+.light-mode .theme-fill-fifths > * > * > div:nth-child(5),
+.light-mode .theme-fill-fifths > * > * > * > div:nth-child(5) {
+  background-color: var(--theme-fill-bg);
+}
+
+/* Copy the 3rd div background to the 5th div (light-mode only) */
+.light-mode .theme-fill-copy-3-to-5 { --theme-fill-3-bg: var(--color-bg-light); }
+.light-mode .theme-fill-copy-3-to-5 > div:nth-child(3),
+.light-mode .theme-fill-copy-3-to-5 > * > div:nth-child(3),
+.light-mode .theme-fill-copy-3-to-5 > * > * > div:nth-child(3),
+.light-mode .theme-fill-copy-3-to-5 > * > * > * > div:nth-child(3),
+.light-mode .theme-fill-copy-3-to-5 > div:nth-child(5),
+.light-mode .theme-fill-copy-3-to-5 > * > div:nth-child(5),
+.light-mode .theme-fill-copy-3-to-5 > * > * > div:nth-child(5),
+.light-mode .theme-fill-copy-3-to-5 > * > * > * > div:nth-child(5) {
+  background-color: var(--theme-fill-3-bg);
+}

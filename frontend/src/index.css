@@ -203,17 +203,27 @@ body {
   background-color: #DDDDDD; /* Mantém sidebars no tom cinza; não alterar */
 }
 
-/* Light mode: inherit background from parent containers to avoid hard-coded white */
-.light-mode .app-container {
-  background-color: var(--color-bg-light); /* DDDDDD / F3F3F3 via tokens */
-}
+/* Bright mode: force central containers to pure white without affecting sidebars or dark mode */
+.light-mode .app-container,
 .light-mode .main-content,
 .light-mode .center-pane {
-  background-color: inherit; /* Use parent background instead of forcing white */
+  background-color: #ffffff !important;
 }
 
-/* Remove scoped pure white tokens in light mode to respect global theme variables */
-/* Center pane will inherit --color-bg-light / semantic tokens from :root or .light-mode */
+/* Bright mode scoped tokens for center column
+ * Purpose: Make all center-pane cards/surfaces pure white without touching sidebars
+ * Connector: Affects components using bg-theme-card/bg-theme-surface within center-pane (Dashboard, HybridEditor, RecordViewer)
+ * IA prompt: "Scope theme variables to subtree using CSS cascade"
+ */
+.light-mode .center-pane {
+  /* Ensure all theme tokens inside center pane resolve to pure white */
+  --theme-background: #ffffff;           /* used by bg-theme-background */
+  --theme-background-rgb: 255 255 255;   /* support for Tailwind opacity syntax */
+  --theme-card: #ffffff;                  /* used by bg-theme-card */
+  --theme-card-rgb: 255 255 255;
+  --theme-surface: #ffffff;               /* used by bg-theme-surface */
+  --theme-surface-rgb: 255 255 255;
+}
 
 /* Light mode exception (surgical): Only patient dashboard cards should use light gray
  * Why: Center-pane forces pure white; requested to keep 4 specific divs in light gray like other surfaces

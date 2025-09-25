@@ -215,7 +215,7 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Metadata */}
-          <div className="p-4 bg-theme-card rounded-lg border border-theme-border">
+          <div className="patient-dashboard-card p-4 bg-theme-card rounded-lg border border-theme-border">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="text-gray-400 flex items-center gap-1">
@@ -250,7 +250,7 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
 
           {/* Tags */}
           {record.tags && record.tags.length > 0 && (
-            <div className="p-4 bg-theme-card rounded-lg border border-theme-border">
+            <div className="patient-dashboard-card p-4 bg-theme-card rounded-lg border border-theme-border">
               <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
                 <Tag className="w-4 h-4" />
                 Tags:
@@ -273,7 +273,7 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
           )}
 
           {/* Content */}
-          <div className="p-4 bg-theme-card rounded-lg border border-theme-border">
+          <div className="patient-dashboard-card p-4 bg-theme-card rounded-lg border border-theme-border">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-white">Conteúdo</h3>
               <div className="flex gap-2">
@@ -309,7 +309,7 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
 
           {/* Metadata adicional */}
           {record.metadata && Object.keys(record.metadata).length > 0 && (
-            <div className="p-4 bg-theme-card rounded-lg border border-theme-border">
+            <div className="patient-dashboard-card p-4 bg-theme-card rounded-lg border border-theme-border">
               <h3 className="text-lg font-medium text-white mb-4">Metadados</h3>
               <div className="p-4 bg-theme-background rounded-lg border border-theme-border">
                 <pre className="text-sm text-gray-300 whitespace-pre-wrap overflow-x-auto">

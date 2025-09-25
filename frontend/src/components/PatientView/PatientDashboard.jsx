@@ -618,7 +618,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </h1>
                   <button
                     onClick={handleEditName}
-                    className="p-1 sm:p-2 text-gray-400 hover:text-teal-400 transition-colors self-start sm:self-auto"
+                    className="p-1 sm:p-2 text-gray-400 hover:text-teal-400 transition-colors"
                     title="Editar nome"
                   >
                     <Edit2 size={14} className="sm:w-4 sm:h-4" />
@@ -691,7 +691,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
           {/* Painel Principal - Flexbox com flex-grow para ocupar espaço disponível */}
           <div className="flex-1 space-y-4 sm:space-y-6 order-1 xl:order-1 min-w-0 overflow-hidden">
     
-               <div className="p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background overflow-hidden">
+               <div className="patient-dashboard-panel p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background overflow-hidden">
               {/* Navegação de Abas Responsiva */}
               <div className="flex items-center justify-center overflow-x-auto">
                 <div className="flex flex-row items-center gap-1 sm:gap-2 p-1 bg-theme-card rounded-lg min-w-max">
@@ -797,7 +797,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               <span className="md:hidden">Novo Registro</span>
             </button>
             
-            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+            <div className="patient-dashboard-card bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer">
               <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">Sinais Vitais Recentes</h3>
               {isLoading ? (
                 <div className="grid grid-cols-2 gap-4">
@@ -858,7 +858,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               )}
             </div>
             
-            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+            <div className="patient-dashboard-card bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
               <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">Plano Terapêutico Ativo</h3>
               {isLoading ? (
                 <div className="space-y-4">
@@ -898,7 +898,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               )}
             </div>
 
-            <div className="bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+            <div className="patient-dashboard-card bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
               <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">Resumo Clínico</h3>
               {isLoading ? (
                 <div className="space-y-4">
@@ -993,7 +993,7 @@ const HistoryList = ({ data, patientId }) => {
   const { isDarkMode } = useThemeStore();
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className="patient-dashboard-card">
         <CardContent className="p-6 text-center text-gray-500">
           <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p>Nenhum registro histórico encontrado</p>
@@ -1041,7 +1041,7 @@ const InvestigationList = ({ data, patientId }) => {
   const { isDarkMode } = useThemeStore();
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className="patient-dashboard-card">
         <CardContent className="p-6 text-center text-gray-500">
           <Microscope className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p>Nenhuma investigação encontrada</p>
@@ -1087,7 +1087,7 @@ const PlansList = ({ data, patientId }) => {
   const { isDarkMode } = useThemeStore();
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className="patient-dashboard-card">
         <CardContent className="p-6 text-center text-gray-500">
           <NotebookPen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p>Nenhum plano terapêutico encontrado</p>
@@ -1156,7 +1156,7 @@ const RecordCard = ({ record, type, patientId }) => {
   
   return (
     <div 
-      className="bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer"
+      className="patient-dashboard-card bg-theme-card p-3 sm:p-4 rounded-lg border border-gray-800 transition-all hover:border-teal-500/50 hover:bg-theme-card/80 cursor-pointer"
       onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
       role="button"
       tabIndex={0}
