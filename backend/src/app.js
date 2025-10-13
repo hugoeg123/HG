@@ -135,6 +135,10 @@ app.use(express.urlencoded({
   limit: '10mb' 
 }));
 
+// Servir arquivos estáticos da pasta uploads
+// Conector: Permite acesso direto aos arquivos enviados via /uploads/
+app.use('/uploads', express.static('uploads'));
+
 // Middleware de logging para desenvolvimento
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
@@ -239,7 +243,7 @@ const startServer = async () => {
       console.log('✅ Modelos sincronizados com o banco');
     }
     
-    const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 5001;
     
     // Criar servidor HTTP
     const server = createServer(app);
