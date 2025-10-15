@@ -7,6 +7,7 @@
 
 const jwt = require('jsonwebtoken');
 const { Medico } = require('../models/sequelize');
+const DEBUG_AUTH_MIDDLEWARE = process.env.DEBUG_AUTH_MIDDLEWARE === 'true';
 
 /**
  * Middleware para verificar token JWT
@@ -15,10 +16,14 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Extrair token do header Authorization
     const authHeader = req.headers.authorization;
-    console.log('Auth Middleware: Received Authorization header:', authHeader); // Log para depuração
+    if (DEBUG_AUTH_MIDDLEWARE) {
+      console.debug('Auth Middleware: Received Authorization header:', authHeader);
+    }
     
     if (!authHeader) {
-      console.log('Auth Middleware: No Authorization header found.'); // Log para depuração
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.debug('Auth Middleware: No Authorization header found.');
+      }
       return res.status(401).json({
         error: 'Token de acesso requerido',
         code: 'NO_TOKEN'
@@ -27,10 +32,14 @@ const authMiddleware = async (req, res, next) => {
 
     // Verificar formato do header (Bearer <token>)
     const parts = authHeader.split(' ');
-    console.log('Auth Middleware: Header parts:', parts); // Log para depuração
+    if (DEBUG_AUTH_MIDDLEWARE) {
+      console.debug('Auth Middleware: Header parts:', parts);
+    }
     
     if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      console.log('Auth Middleware: Invalid token format.'); // Log para depuração
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.debug('Auth Middleware: Invalid token format.');
+      }
       return res.status(401).json({
         error: 'Formato de token inválido',
         code: 'INVALID_TOKEN_FORMAT',
@@ -44,7 +53,9 @@ const authMiddleware = async (req, res, next) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Auth Middleware: Token decoded successfully:', decoded); // Log para depuração
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.debug('Auth Middleware: Token decoded successfully:', decoded);
+      }
 
     } catch (jwtError) {
       if (jwtError.name === 'TokenExpiredError') {
@@ -71,7 +82,9 @@ const authMiddleware = async (req, res, next) => {
     });
 
     if (!medico) {
-      console.log('Auth Middleware: User not found for decoded ID:', decoded.sub); // Log para depuração
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.debug('Auth Middleware: User not found for decoded ID:', decoded.sub);
+      }
       return res.status(401).json({
         error: 'Usuário não encontrado',
         code: 'USER_NOT_FOUND'
@@ -90,13 +103,14 @@ const authMiddleware = async (req, res, next) => {
       roles: decoded.roles || [decoded.role || 'medico']
     };
     
-    console.log('Auth Middleware: req.user configurado com sucesso:', {
-      id: req.user.id,
-      email: req.user.email,
-      nome: req.user.nome
-    });
-    
-    console.log('Auth Middleware: User attached to request:', req.user); // Log para depuração
+    if (DEBUG_AUTH_MIDDLEWARE) {
+      console.debug('Auth Middleware: req.user configurado com sucesso:', {
+        id: req.user.id,
+        email: req.user.email,
+        nome: req.user.nome
+      });
+      console.debug('Auth Middleware: User attached to request:', req.user);
+    }
 
     next();
 
@@ -191,5 +205,5 @@ module.exports = {
   adminMiddleware,
   generateToken,
   verifyToken,
-  extractToken
+  extractToken,
 };

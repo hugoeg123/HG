@@ -14,12 +14,14 @@ const { Op } = require('sequelize');
 const { Medico } = require('../models/sequelize');
 
 // Função auxiliar para gerar token JWT
-const generateToken = (medicoId, role = 'medico') => {
+const generateToken = (medico, role = 'medico') => {
   return jwt.sign(
-    { 
-      sub: medicoId,
+    {
+      sub: medico.id,
+      email: medico.email,
+      nome: medico.nome,
       role: role,
-      roles: [role]
+      roles: [role],
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
@@ -62,7 +64,7 @@ exports.register = async (req, res) => {
     });
 
     // Gerar token
-    const token = generateToken(medico.id);
+    const token = generateToken(medico);
 
     res.status(201).json({
       message: 'Médico registrado com sucesso',
@@ -138,7 +140,7 @@ exports.login = async (req, res) => {
 
     // Gerar token
     console.log(`[LOGIN-${requestId}] Gerando token JWT...`);
-    const token = generateToken(medico.id);
+    const token = generateToken(medico);
     
     const loginDuration = Date.now() - startTime;
     console.log(`[LOGIN-${requestId}] Login realizado com sucesso em ${loginDuration}ms`, {
@@ -195,6 +197,13 @@ exports.getCurrentUser = async (req, res) => {
         id: medico.id,
         name: medico.nome,
         email: medico.email,
+        professional_type: medico.professional_type,
+        professional_id: medico.professional_id,
+        specialty: medico.specialty,
+        titulo_profissional: medico.titulo_profissional,
+        biografia: medico.biografia,
+        avatar_url: medico.avatar_url,
+        curriculo_url: medico.curriculo_url,
         createdAt: medico.createdAt
       }
     });
@@ -204,21 +213,84 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
+// Obter perfil completo do médico (endpoint específico para perfil)
+exports.getProfile = async (req, res) => {
+  try {
+    const medico = await Medico.findByPk(req.user.sub, { 
+      attributes: { exclude: ['senha_hash'] } 
+    });
+    if (!medico) {
+      return res.status(404).json({ message: 'Médico não encontrado' });
+    }
+
+    res.json({
+      id: medico.id,
+      nome: medico.nome,
+      email: medico.email,
+      professional_type: medico.professional_type,
+      professional_id: medico.professional_id,
+      specialty: medico.specialty,
+      titulo_profissional: medico.titulo_profissional,
+      biografia: medico.biografia,
+      avatar_url: medico.avatar_url,
+      curriculo_url: medico.curriculo_url,
+      formacao: [], // TODO: Implementar quando criar tabela de formação
+      experiencias: [], // TODO: Implementar quando criar tabela de experiências
+      createdAt: medico.createdAt,
+      updatedAt: medico.updatedAt
+    });
+  } catch (error) {
+    console.error('Erro ao obter perfil:', error);
+    res.status(500).json({ message: 'Erro ao obter perfil' });
+  }
+};
+
 // Atualizar perfil
 exports.updateProfile = async (req, res) => {
   try {
     // Validar entrada
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const errorArray = errors.array();
+      
+      // Log estruturado para debug
+      console.error('❌ Validação falhou:', {
+        endpoint: 'PUT /auth/profile',
+        userId: req.user?.id,
+        fieldCount: Object.keys(req.body).length,
+        validationErrors: errorArray.length,
+        firstError: errorArray[0]?.msg || null,
+        fieldsWithErrors: errorArray.map(err => err.path)
+      });
+      
+      return res.status(400).json({ 
+        message: 'Erro de validação nos dados do perfil',
+        errors: errorArray 
+      });
     }
 
-    const { nome, email } = req.body;
+    const { 
+      nome, 
+      email, 
+      titulo_profissional, 
+      biografia, 
+      specialty, 
+      avatar_url, 
+      curriculo_url 
+    } = req.body;
+    
     const updateData = {};
 
+    // Campos básicos
     if (nome) updateData.nome = nome;
+    if (titulo_profissional !== undefined) updateData.titulo_profissional = titulo_profissional;
+    if (biografia !== undefined) updateData.biografia = biografia;
+    if (specialty) updateData.specialty = specialty;
+    if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
+    if (curriculo_url !== undefined) updateData.curriculo_url = curriculo_url;
+    
+    // Verificar email duplicado
     if (email) {
-      // Verificar se o email já está em uso por outro médico
       const existingMedico = await Medico.findOne({
         where: {
           email,
@@ -243,14 +315,32 @@ exports.updateProfile = async (req, res) => {
       attributes: { exclude: ['senha_hash'] } 
     });
 
+    // Log de sucesso para rastreabilidade
+    console.log('✅ Perfil atualizado com sucesso:', {
+      endpoint: 'PUT /auth/profile',
+      userId: req.user.sub,
+      updatedFields: Object.keys(updateData),
+      emailChanged: updateData.email ? 'yes' : 'no',
+      hasAvatar: updateData.avatar_url ? 'yes' : 'no',
+      hasCurriculo: updateData.curriculo_url ? 'yes' : 'no'
+    });
+
     res.json({
       message: 'Perfil atualizado com sucesso',
-      medico: {
-        id: medico.id,
-        nome: medico.nome,
-        email: medico.email,
-        createdAt: medico.createdAt
-      }
+      id: medico.id,
+      nome: medico.nome,
+      email: medico.email,
+      professional_type: medico.professional_type,
+      professional_id: medico.professional_id,
+      specialty: medico.specialty,
+      titulo_profissional: medico.titulo_profissional,
+      biografia: medico.biografia,
+      avatar_url: medico.avatar_url,
+      curriculo_url: medico.curriculo_url,
+      formacao: [], // TODO: Implementar quando criar tabela de formação
+      experiencias: [], // TODO: Implementar quando criar tabela de experiências
+      createdAt: medico.createdAt,
+      updatedAt: medico.updatedAt
     });
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);

@@ -4,6 +4,7 @@ import api, { rawApi } from '../services/api';
 import { initSocket, disconnectSocket, reconnectSocket } from '../services/socket';
 import axios from 'axios';
 
+const DEBUG_AUTH = Boolean(import.meta.env.VITE_DEBUG_AUTH);
 const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -12,6 +13,7 @@ const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      _tokenLoggedOnce: false,
 
       login: async (email, password) => {
         set({ isLoading: true, error: null });
@@ -204,7 +206,7 @@ const useAuthStore = create(
         
         if (!token) {
           // Log único para token ausente
-          if (!get()._tokenLoggedOnce) {
+          if (!get()._tokenLoggedOnce && DEBUG_AUTH) {
             console.log('checkAuth: No token found');
             set({ _tokenLoggedOnce: true });
           }
@@ -218,11 +220,15 @@ const useAuthStore = create(
           // Verificar se o token é válido
           const response = await api.get('/auth/me');
           set({ user: response.data.user, isAuthenticated: true });
-          console.log('checkAuth: Token valid, user authenticated');
+          if (DEBUG_AUTH) {
+            console.log('checkAuth: Token valid, user authenticated');
+          }
           return true;
         } catch (error) {
           // Se o token for inválido, fazer logout
-          console.error('checkAuth: Token invalid or expired, logging out');
+          if (DEBUG_AUTH) {
+            console.error('checkAuth: Token invalid or expired, logging out');
+          }
           get().logout();
           return false;
         }
@@ -239,6 +245,9 @@ const useAuthStore = create(
             error: error.response?.data?.message || 'Falha ao atualizar perfil', 
             isLoading: false 
           });
+          if (DEBUG_AUTH) {
+            console.error('updateProfile: failed', error);
+          }
           return false;
         }
       },

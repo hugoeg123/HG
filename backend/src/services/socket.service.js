@@ -2,6 +2,8 @@
  * Serviço de Socket.io
  * 
  * Configura e gerencia conexões em tempo real via Socket.io
+ * 
+ * Conector: Usa payload JWT gerado em auth.controller.js (campos: sub, email)
  */
 
 const jwt = require('jsonwebtoken');
@@ -21,10 +23,11 @@ module.exports = (io) => {
 
       // Verificar e decodificar o token JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.id;
+      // Ajuste para usar 'sub' como identificador, conforme padrão do backend
+      socket.userId = decoded.sub;
       socket.userEmail = decoded.email;
       
-      console.log(`Usuário ${decoded.email} (ID: ${decoded.id}) autenticado no socket ${socket.id}`);
+      console.log(`Usuário ${decoded.email} (ID: ${decoded.sub}) autenticado no socket ${socket.id}`);
       next();
     } catch (error) {
       console.error('Erro de autenticação socket:', error.message);
@@ -36,7 +39,9 @@ module.exports = (io) => {
     console.log(`Nova conexão autenticada: ${socket.id} - Usuário: ${socket.userEmail}`);
     
     // Armazenar usuário conectado
-    connectedUsers.set(socket.userId, socket.id);
+    if (socket.userId) {
+      connectedUsers.set(socket.userId, socket.id);
+    }
 
     // Notificar usuário sobre conexão bem-sucedida
     socket.emit('authenticated', { 

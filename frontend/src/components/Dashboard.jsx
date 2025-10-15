@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePatientStore } from '../store/patientStore';
@@ -17,10 +17,14 @@ const Dashboard = () => {
   const { patients, fetchPatients, isLoading, error, createPatient } = usePatientStore();
   const navigate = useNavigate();
   
-  // Hook: Removed fetchPatients from dependencies to prevent infinite loop
-  // since Zustand functions are recreated on each render
+  // Hook: Guard against React.StrictMode double-invocation and duplicate data loads
+  const didInit = useRef(false);
   useEffect(() => {
-    fetchPatients();
+    if (didInit.current) return;
+    didInit.current = true;
+    if (!patients || patients.length === 0) {
+      fetchPatients();
+    }
   }, []);
   
   const handleNewPatient = async () => {
@@ -106,7 +110,7 @@ const Dashboard = () => {
           <div className="text-center py-8">
             <p className="text-red-400 mb-4">Erro ao carregar pacientes: {error}</p>
             <button 
-              onClick={() => fetchPatients()}
+              onClick={() => fetchPatients(false)}
               className="bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white px-4 py-2 rounded-lg transition-colors border border-transparent hover:border-teal-500/30"
             >
               Tentar Novamente

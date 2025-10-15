@@ -4,20 +4,32 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "../../lib/utils"
 
+// /**
+//  * Button component variants using semantic tokens
+//  * 
+//  * Connectors: Used across UI for actions, integrates with Tailwind semantic colors defined in tailwind.config.js
+//  * IA prompt: Suggest variant mapping for accessibility (contrast, focus states)
+//  * 
+//  * Example:
+//  * <Button variant="destructive" size="sm">Delete</Button>
+//  */
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-theme-background disabled:pointer-events-none disabled:opacity-50 border",
   {
     variants: {
       variant: {
-        default: "bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent hover:border-teal-500/30 focus-visible:ring-teal-500/50",
+        default: "bg-theme-card text-foreground hover:bg-theme-surface hover:text-foreground border-theme-border hover:border-accent/30 focus-visible:ring-accent/50",
         destructive:
-          "bg-theme-card text-gray-300 hover:bg-red-600/20 hover:text-red-300 border-transparent hover:border-red-500/30 focus-visible:ring-red-500/50",
+          "bg-theme-card text-muted-foreground hover:bg-destructive/20 hover:text-destructive border-theme-border hover:border-destructive/30 focus-visible:ring-destructive/50",
         outline:
-          "bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent hover:border-gray-600/30 focus-visible:ring-gray-600/50",
+          // Themed outline: blue on light, green/teal on dark via accent token
+          "bg-transparent text-accent border-accent/40 hover:bg-accent/10 hover:text-accent focus-visible:ring-accent/50",
         secondary:
-          "bg-theme-card text-gray-300 hover:bg-blue-600/20 hover:text-blue-300 border-transparent hover:border-blue-500/30 focus-visible:ring-blue-500/50",
-        ghost: "bg-transparent text-gray-400 hover:bg-theme-surface hover:text-gray-300 border-transparent",
-        link: "bg-transparent text-teal-400 hover:text-teal-300 underline-offset-4 hover:underline border-transparent",
+          "bg-theme-card text-muted-foreground hover:bg-accent/20 hover:text-accent border-theme-border hover:border-accent/40 focus-visible:ring-accent/50",
+        ghost: "bg-transparent text-muted-foreground hover:bg-theme-surface hover:text-foreground border-transparent",
+        link: "bg-transparent text-accent underline-offset-4 hover:underline border-transparent",
+        // Primary: translucent accent fill (blue on bright, green on dark)
+        primary: "bg-accent/20 hover:bg-accent/30 text-accent border-accent/30 hover:border-accent focus-visible:ring-accent/50"
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -27,7 +39,8 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      // Change default to primary to meet spec: blue (light) / green (dark)
+      variant: "primary",
       size: "default",
     },
   }

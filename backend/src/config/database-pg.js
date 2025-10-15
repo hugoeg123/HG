@@ -28,6 +28,14 @@ const options = {
     underscoredAll: false,
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+  },
+  // Pool de conexões para escalabilidade
+  pool: {
+    max: process.env.DB_POOL_MAX ? Number(process.env.DB_POOL_MAX) : (process.env.NODE_ENV === 'production' ? 15 : 5),
+    min: 0,
+    idle: 10000,
+    acquire: 30000,
+    evict: 30000
   }
 };
 
@@ -37,7 +45,8 @@ if (process.env.NODE_ENV === 'production') {
     ssl: {
       require: true,
       rejectUnauthorized: false
-    }
+    },
+    keepAlive: true
   };
 }
 

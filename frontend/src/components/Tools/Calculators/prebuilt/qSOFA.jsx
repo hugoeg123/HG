@@ -49,7 +49,7 @@ import { toast } from 'sonner';
  * @since Sprint 3
  * @version 1.0.0
  */
-function qSOFA({ open, onOpenChange }) {
+function QSOFA({ open, onOpenChange }) {
   const [inputs, setInputs] = useState({
     respiratoryRate: '',
     systolicBP: '',
@@ -490,4 +490,4 @@ function qSOFA({ open, onOpenChange }) {
   );
 }
 
-export default qSOFA;
+export default QSOFA;

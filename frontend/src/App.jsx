@@ -8,8 +8,7 @@
  */
 
 import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
+import { Routes, Route } from 'react-router-dom';
 import { useThemeStore } from './store/themeStore';
 import { useCalculatorStore } from './store/calculatorStore';
 
@@ -34,32 +33,19 @@ import CalculatorsIndex from './pages/calculators/CalculatorsIndex';
 import GotejamentoPage from './pages/calculators/GotejamentoPage';
 import McgKgMinGttMinPage from './pages/calculators/McgKgMinGttMinPage';
 
+// Página de Perfil
+import Profile from './pages/Profile';
+
 // Componente de rota protegida
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuthStore();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return children;
-};
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const { checkAuth } = useAuthStore();
   const { isDarkMode } = useThemeStore();
   const { seedCalculators, getAll } = useCalculatorStore();
   
   // Verificar autenticação ao iniciar
-  // Hook: Removed checkAuth from dependencies to prevent infinite loop
-  // since Zustand functions are recreated on each render
+  // Hook: Autenticação é verificada em ProtectedRoute para evitar duplicidades
   useEffect(() => {
-    checkAuth();
-    
     // Inicializar calculadoras se necessário
     const calculators = getAll();
     if (calculators.length === 0) {
@@ -81,19 +67,14 @@ function App() {
      */
     const html = document.documentElement;
     const body = document.body;
-
-    /** Small helpers to manage multiple classes cleanly */
     const add = (el, ...cls) => cls.forEach((c) => el.classList.add(c));
     const remove = (el, ...cls) => cls.forEach((c) => el.classList.remove(c));
-
     if (isDarkMode) {
-      // Dark mode: keep legacy + enable Tailwind dark variant + semantic theme
       add(html, 'dark', 'dark-mode', 'theme-dark-teal');
       remove(html, 'light-mode', 'theme-light-ice');
       add(body, 'dark', 'dark-mode', 'theme-dark-teal');
       remove(body, 'light-mode', 'theme-light-ice');
     } else {
-      // Light ice theme: remove dark classes and apply blue-ice semantic theme
       add(html, 'light-mode', 'theme-light-ice');
       remove(html, 'dark', 'dark-mode', 'theme-dark-teal');
       add(body, 'light-mode', 'theme-light-ice');
@@ -105,15 +86,10 @@ function App() {
     <ErrorBoundary fallbackTitle="Erro na Aplicação">
       <ToastProvider>
         <Routes>
-          {/* Removed temporary test route */}
-          
-          {/* Rotas de autenticação */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Route>
-          
-          {/* Rotas protegidas */}
           <Route element={
             <ProtectedRoute>
               <MainLayout />
@@ -131,8 +107,11 @@ function App() {
                 <PatientView />
               </ErrorBoundary>
             } />
-            
-            {/* Rotas de Calculadoras */}
+            <Route path="/profile" element={
+              <ErrorBoundary fallbackTitle="Erro no Perfil" showDetails={true}>
+                <Profile />
+              </ErrorBoundary>
+            } />
             <Route path="/calculators" element={
               <ErrorBoundary fallbackTitle="Erro nas Calculadoras" showDetails={true}>
                 <CalculatorsIndex />
@@ -149,8 +128,6 @@ function App() {
               </ErrorBoundary>
             } />
           </Route>
-          
-          {/* Rota 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ToastProvider>

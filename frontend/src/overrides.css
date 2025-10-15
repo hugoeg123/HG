@@ -164,3 +164,19 @@
 .light-mode .theme-fill-copy-3-to-5 > * > * > * > div:nth-child(5) {
   background-color: var(--theme-fill-3-bg);
 }
+
+/* 6) Div blue tint utility (light mode only)
+ * Purpose: Allow specific <div> elements to use the same bluish tone as light-mode buttons
+ * Scope: Only applies when .light-mode is present and only to <div> with .button-tint
+ * Connector: Use this class in React components where a non-button element should visually match button tint
+ * IA prompt: "Apply button-like blue tint to specific divs in light mode without altering dark mode"
+ */
+.light-mode div.button-tint {
+  /* Minimal, surgical: background tint only to avoid layout/typography side-effects */
+  @apply bg-blue-600/20;
+}
+
+.light-mode div.button-tint:hover {
+  /* Match the hover depth used by .btn-primary in light mode */
+  @apply bg-blue-600/30;
+}

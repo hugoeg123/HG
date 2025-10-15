@@ -21,17 +21,25 @@ const { sequelize } = require('./models/sequelize');
 // Criar aplicação Express
 const app = express();
 
+const DEBUG_HTTP = process.env.DEBUG_HTTP === 'true';
+const DEBUG_CORS = process.env.DEBUG_CORS === 'true';
+
 // Configurações de segurança
+// Ajuste: permitir carregamento de imagens e arquivos de uploads a partir de outra origem
+// Motivo: evitar bloqueio "net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin" causado por CORP padrão do Helmet
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      // Em desenvolvimento permitimos http e https para imagens
+      imgSrc: ["'self'", "data:", "https:", "http:"],
     },
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  // Permitir que recursos (como imagens) sejam incorporados por outras origens (frontend em outra porta)
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
 // CORS configurado para desenvolvimento e produção
@@ -137,26 +145,36 @@ app.use(express.urlencoded({
 
 // Servir arquivos estáticos da pasta uploads
 // Conector: Permite acesso direto aos arquivos enviados via /uploads/
-app.use('/uploads', express.static('uploads'));
+// Também reforça cabeçalho CORP para evitar bloqueios de incorporação cross-origin
+app.use(
+  '/uploads',
+  express.static('uploads', {
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      // Opcional: facilita testes em desenvolvimento
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  })
+);
 
 // Middleware de logging para desenvolvimento
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' && DEBUG_HTTP) {
   app.use((req, res, next) => {
     const start = Date.now();
-    
-    // Log detalhado para requisições CORS e OPTIONS
-    if (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/')) {
+
+    // Log detalhado para requisições CORS e OPTIONS (condicional)
+    if (DEBUG_CORS && (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/'))) {
       console.log(`[CORS-DEBUG] ${req.method} ${req.originalUrl}`);
       console.log(`[CORS-DEBUG] Origin: ${req.headers.origin}`);
       console.log(`[CORS-DEBUG] Headers: ${JSON.stringify(req.headers)}`);
     }
-    
+
     res.on('finish', () => {
       const duration = Date.now() - start;
       console.log(`${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
-      
-      // Log adicional para respostas CORS
-      if (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/')) {
+
+      // Log adicional para respostas CORS (condicional)
+      if (DEBUG_CORS && (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/'))) {
         console.log(`[CORS-DEBUG] Response Headers: ${JSON.stringify(res.getHeaders())}`);
       }
     });
@@ -258,12 +276,16 @@ const startServer = async () => {
           'http://localhost:3003',
           'http://localhost:3004',
           'http://localhost:3005',
+          'http://localhost:5173', // Vite default port
+          'http://localhost:5174', // Vite alternative port
           'http://127.0.0.1:3000',
           'http://127.0.0.1:3001',
           'http://127.0.0.1:3002',
           'http://127.0.0.1:3003',
           'http://127.0.0.1:3004',
-          'http://127.0.0.1:3005'
+          'http://127.0.0.1:3005',
+          'http://127.0.0.1:5173',
+          'http://127.0.0.1:5174'
         ],
         credentials: true
       }
@@ -278,7 +300,7 @@ const startServer = async () => {
       console.log(`🔗 API: http://localhost:${PORT}/api`);
       console.log(`❤️  Health: http://localhost:${PORT}/api/health`);
       console.log(`🔌 Socket.io configurado e ativo`);
-      console.log(`⚡ Servidor reiniciado com sucesso!`);
+      // Log de reinício removido para evitar duplicidade de logs com nodemon
     });
     
     // Graceful shutdown

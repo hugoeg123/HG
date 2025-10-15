@@ -17,7 +17,7 @@ async function testLogin() {
     
     console.log('📧 Testando com:', credentials.email);
     
-    const response = await axios.post('http://localhost:5000/api/auth/login', credentials, {
+    const response = await axios.post('http://localhost:5001/api/auth/login', credentials, {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -63,7 +63,7 @@ async function testInvalidLogin() {
       password: 'senhaerrada'
     };
     
-    const response = await axios.post('http://localhost:5000/api/auth/login', invalidCredentials, {
+    const response = await axios.post('http://localhost:5001/api/auth/login', invalidCredentials, {
       headers: {
         'Content-Type': 'application/json'
       },

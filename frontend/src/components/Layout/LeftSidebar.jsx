@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
 import { Users } from 'lucide-react'; // Importar o ícone Users do lucide-react
@@ -35,9 +35,11 @@ const LeftSidebar = ({ collapsed }) => {
   const { isDarkMode } = useThemeStore(); // Connector: theme-aware styles for active/hover state
 
   // Carregar a lista de pacientes
-  // Hook: Removed fetchPatients from dependencies to prevent infinite loop
-  // since Zustand functions are recreated on each render
+  // Hook: Guard against React.StrictMode double-invocation and duplicate data loads
+  const didInit = useRef(false);
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     if (!patients || patients.length === 0) {
       fetchPatients();
     }

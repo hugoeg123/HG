@@ -43,13 +43,27 @@ router.post(
 // Rota para obter médico atual
 router.get('/me', authMiddleware, authController.getCurrentUser);
 
+// Rota para obter perfil completo
+router.get('/profile', authMiddleware, authController.getProfile);
+
 // Rota para atualizar perfil
 router.put(
   '/profile',
   authMiddleware,
   [
-    body('nome').optional().isLength({ min: 2 }).withMessage('Nome deve ter pelo menos 2 caracteres'),
-    body('email').optional().isEmail().withMessage('Email inválido'),
+    body('nome').optional({ checkFalsy: true }).isLength({ min: 2 }).withMessage('Nome deve ter pelo menos 2 caracteres'),
+    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email inválido'),
+    body('titulo_profissional').optional({ checkFalsy: true }).isLength({ max: 100 }).withMessage('Título profissional muito longo'),
+    body('biografia').optional({ checkFalsy: true }).isLength({ max: 1000 }).withMessage('Biografia muito longa'),
+    body('specialty').optional({ checkFalsy: true }).isString().withMessage('Especialidade inválida'),
+    body('avatar_url')
+      .optional({ checkFalsy: true })
+      .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
+      .withMessage('URL do avatar inválida'),
+    body('curriculo_url')
+      .optional({ checkFalsy: true })
+      .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
+      .withMessage('URL do currículo inválida')
   ],
   authController.updateProfile
 );

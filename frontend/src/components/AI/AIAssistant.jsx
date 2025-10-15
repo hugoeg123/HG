@@ -202,16 +202,16 @@ const AIAssistant = () => {
       <form onSubmit={sendMessage} className="chat-input">
         {/* Context content display */}
         {contextContent && (
-          <div className="mb-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg relative">
+          <div className="mb-3 p-3 button-tint bg-teal-900/20 border border-teal-500/30 rounded-lg relative">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="text-xs text-green-400 font-medium mb-1">📋 Conteúdo adicionado:</div>
-                <div className="text-sm text-green-300 whitespace-pre-wrap">{contextContent}</div>
+                <div className="text-xs text-teal-400 font-medium mb-1">📋 Conteúdo adicionado:</div>
+                <div className="text-sm text-teal-300 whitespace-pre-wrap">{contextContent}</div>
               </div>
               <button
                 type="button"
                 onClick={removeContext}
-                className="ml-2 p-1 text-green-400 hover:text-green-300 hover:bg-green-500/20 rounded transition-colors"
+                className="ml-2 p-1 text-teal-400 hover:text-teal-300 hover:bg-teal-900/20 rounded transition-colors"
                 aria-label="Remover contexto"
               >
                 <X className="h-4 w-4" />

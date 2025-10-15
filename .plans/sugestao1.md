@@ -1,255 +1,403 @@
-import React, { useMemo, useState } from "react"
-import { Plus, Search, CalendarDays, ChevronRight, Sun, Moon, Filter, Sparkles, Pin, Users, ListChecks } from "lucide-react"
+### **Bmad Orchestrator Log**
 
-export default function HealthGuardianMock() {
-  const [dark, setDark] = useState(true)
-  const [toolsOpen, setToolsOpen] = useState(true)
-  const [query, setQuery] = useState("")
+**STATUS:** User has approved the continuation of the workflow. The project is now in the final validation stage.
+**ANALYSIS:** The `greenfield` workflow dictates that the Product Owner Agent performs the final review before development begins. All necessary artifacts have been produced and are ready for inspection.
+**ACTION:** Activating the Product Owner Agent.
 
-  const patients = useMemo(
-    () => [
-      { id: "45d1e08c", name: "Sem Nome", age: "0 anos", records: 1 },
-      { id: "ba92230a", name: "Sem Nome", age: "0 anos", records: 0 },
-      { id: "31a60300", name: "Sem Nome", age: "0 anos", records: 0 },
-      { id: "ibiu-001", name: "ibiu", age: "—", records: 3 },
-      { id: "c24", name: "Maria da Silva", age: "34 anos", records: 7 },
-      { id: "a11", name: "João Pereira", age: "57 anos", records: 2 },
-      { id: "b09", name: "Carla Santos", age: "23 anos", records: 1 },
-    ],
-    []
-  )
-  const filtered = patients.filter(p => p.name.toLowerCase().includes(query.toLowerCase()))
+-----
+
+### **Product Owner Agent Activated**
+
+Greetings. I am the Product Owner Agent. I have received the complete set of planning artifacts from the Architect:
+
+  * `$docs/project-brief.md`
+  * `$docs/prd.md`
+  * `$docs/front-end-architecture.md`
+
+My responsibility is to perform a final validation, ensuring that the initial business requirements have been consistently translated through each stage of the planning process, from the brief to the final technical design.
+
+**Validation Process:**
+
+1.  **Brief-to-PRD Alignment:** The Product Requirements Document (`prd.md`) accurately captures the MVP scope defined in the `project-brief.md`, correctly prioritizing the core features (view/edit profile, file uploads) while moving additional suggestions (privacy, CRM, etc.) to a documented backlog. **Result: PASS**
+
+2.  **PRD-to-Architecture Alignment:** The Frontend Architecture (`front-end-architecture.md`) directly addresses every user story and acceptance criterion in the `prd.md`. The proposed `Profile.jsx` component, its state management, and API integration plan are a perfect technical representation of the product requirements. **Result: PASS**
+
+3.  **Overall Cohesion:** All documents are consistent. The terminology, feature scope, and technical approach are coherent across the entire planning phase. The provided code from your colleague was instrumental in ensuring this seamless alignment. **Result: PASS**
+
+**Validation Complete:** All artifacts have been validated and approved. There are no inconsistencies.
+
+-----
+
+### **Bmad Orchestrator Log**
+
+**STATUS:** All planning artifacts have been successfully validated by the Product Owner. The `greenfield` planning workflow is now complete.
+
+**ANALYSIS:** The project has successfully passed through the Analyst, Project Manager, Architect, and Product Owner agents. The objective is clear, the requirements are detailed, and the technical plan is sound.
+
+**ACTION:** The planning phase is officially concluded. The project is now ready for implementation. Transitioning from the planning environment to the development environment.
+
+**Handoff:** Activating the **Engineer Agent** to write the code based on the approved architectural documents.
+
+-----
+
+### **Engineer Agent Activated**
+
+Greetings. I am the Engineer Agent. I have received the validated project documents and am ready to begin implementation.
+
+Based on the `front-end-architecture.md` and the provided `ProfilePage.jsx` code, I will now generate the necessary files.
+
+**Action:** Creating the following files:
+
+1.  **`frontend/src/pages/Profile.jsx`** - The main page component.
+2.  **`frontend/src/App.jsx` (Modification)** - Instructions to add the new route.
+
+Here is the code. Please add these files to your project as specified.
+
+-----
+
+### **File 1: `frontend/src/pages/Profile.jsx`**
+
+```jsx
+import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import api from '../services/api/apiClient';
+import { AUTH_ENDPOINTS, FILE_ENDPOINTS } from '../services/api/endpoints';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../components/ui/card';
+
+const emptyProfile = {
+  name: '',
+  professional_title: '',
+  specialty: '',
+  bio: '',
+  avatar_url: '',
+  cv_url: '',
+  education: [],   // array de strings
+  experiences: []  // array de strings
+};
+
+export default function ProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState(emptyProfile);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCV, setUploadingCV] = useState(false);
+
+  // Carrega perfil
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get(AUTH_ENDPOINTS.PROFILE);
+        // aceita formatos {user: {...}} ou payload direto
+        const payload = data?.user || data?.data || data;
+        setProfile(p => ({ ...p, ...mapFromApi(payload) }));
+      } catch (err) {
+        toast.error('Não foi possível carregar o perfil.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const mapFromApi = (u = {}) => ({
+    name: u.name || u.nome || '',
+    professional_title: u.professional_title || u.cargo || '',
+    specialty: u.specialty || u.especialidade || '',
+    bio: u.bio || u.biografia || '',
+    avatar_url: u.avatar_url || u.avatar || '',
+    cv_url: u.cv_url || u.curriculum_url || '',
+    education: Array.isArray(u.education) ? u.education : (u.education ? String(u.education).split('\n').filter(Boolean) : []),
+    experiences: Array.isArray(u.experiences) ? u.experiences : (u.experiences ? String(u.experiences).split('\n').filter(Boolean) : []),
+  });
+
+  const mapToApi = (p) => ({
+    name: p.name,
+    professional_title: p.professional_title,
+    specialty: p.specialty,
+    bio: p.bio,
+    avatar_url: p.avatar_url || null,
+    cv_url: p.cv_url || null,
+    education: p.education,
+    experiences: p.experiences,
+  });
+
+  const handleChange = (field) => (e) => {
+    setProfile(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleListChange = (field, index, value) => {
+    setProfile(prev => {
+      const arr = [...prev[field]];
+      arr[index] = value;
+      return { ...prev, [field]: arr };
+    });
+  };
+
+  const handleAddItem = (field) => {
+    setProfile(prev => ({ ...prev, [field]: [...prev[field], ''] }));
+  };
+
+  const handleRemoveItem = (field, index) => {
+    setProfile(prev => {
+      const arr = prev[field].filter((_, i) => i !== index);
+      return { ...prev, [field]: arr };
+    });
+  };
+
+  const uploadFile = async (file, setUploading) => {
+    if (!file) return null;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.upload(FILE_ENDPOINTS.UPLOAD, formData);
+      const payload = res?.data || {};
+      // tenta várias chaves comuns
+      return payload.url || payload.file?.url || payload.path || payload.location || null;
+    } catch (e) {
+      toast.error('Falha no upload do arquivo.');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onAvatarSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file, setUploadingAvatar);
+    if (url) {
+      setProfile(prev => ({ ...prev, avatar_url: url }));
+      toast.success('Foto atualizada (pré-visualização). Não esqueça de salvar.');
+    }
+  };
+
+  const onCVSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file, setUploadingCV);
+    if (url) {
+      setProfile(prev => ({ ...prev, cv_url: url }));
+      toast.success('Currículo anexado. Não esqueça de salvar.');
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload = mapToApi(profile);
+      await api.put(AUTH_ENDPOINTS.PROFILE, payload);
+      toast.success('Perfil salvo com sucesso!');
+    } catch (e) {
+      toast.error('Erro ao salvar perfil. Verifique os campos.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const PublicCard = useMemo(() => (
+    <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <CardHeader className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-gray-700 bg-gray-100 dark:bg-gray-800">
+          {profile.avatar_url ? (
+            <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">Sem foto</div>
+          )}
+        </div>
+        <div className="flex-1">
+          <CardTitle className="text-xl">{profile.name || 'Profissional'}</CardTitle>
+          <CardDescription className="mt-1">
+            {[profile.professional_title, profile.specialty].filter(Boolean).join(' · ') || 'defina seu cargo/especialidade'}
+          </CardDescription>
+          {profile.cv_url && (
+            <a href={profile.cv_url} target="_blank" rel="noreferrer" className="text-sm mt-2 inline-block text-blue-600 dark:text-blue-400 underline">
+              Ver currículo (PDF/Doc)
+            </a>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-6">
+        <section>
+          <h3 className="font-medium mb-2">Biografia</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+            {profile.bio || 'Conte um pouco sobre você, sua abordagem e experiência.'}
+          </p>
+        </section>
+
+        <section>
+          <h3 className="font-medium mb-2">Formação</h3>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+            {profile.education?.length ? profile.education.map((e, i) => (<li key={i}>{e}</li>)) : <li>Adicione sua formação acadêmica.</li>}
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="font-medium mb-2">Experiências</h3>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+            {profile.experiences?.length ? profile.experiences.map((e, i) => (<li key={i}>{e}</li>)) : <li>Adicione suas experiências profissionais.</li>}
+          </ul>
+        </section>
+      </CardContent>
+    </Card>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [profile]);
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse text-sm text-gray-500">Carregando perfil…</div>
+      </div>
+    );
+  }
 
   return (
-    <div className={dark ? "dark" : ""}>
-      {/* Tokens – Blue‑Green “Ice” */}
-      <style>{`
-        :root {
-          /* Bright (blue) */
-          --background: 220 25% 96%;   /* app background */
-          --foreground: 222 47% 12%;   /* main text */
-          --card: 0 0% 100%;           /* surfaces */
-          --muted: 220 20% 93%;        /* subtle containers */
-          --border: 220 18% 80%;       /* visible borders */
-          --ring: 221 83% 53%;         /* blue-600 */
-          --primary: 221 83% 53%;      /* blue-600 */
-          --primary-foreground: 0 0% 100%;
-          --accent: 201 96% 32%;       /* cyan-600 for info */
-          --destructive: 0 72% 45%;
-        }
-        .dark {
-          /* Dark (green) */
-          --background: 220 20% 9%;
-          --foreground: 210 20% 94%;
-          --card: 220 15% 13%;
-          --muted: 220 15% 16%;
-          --border: 220 10% 26%;       /* stronger for separation */
-          --ring: 161 94% 40%;         /* green-600 */
-          --primary: 161 94% 40%;      /* green-600 */
-          --primary-foreground: 220 25% 10%;
-          --accent: 201 90% 46%;
-          --destructive: 0 70% 54%;
-        }
-        .shadow-card { box-shadow: 0 1px 0 hsl(var(--border)); }
-      `}</style>
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-4">Perfil</h1>
 
-      <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
-        {/* Header / Toolbar */}
-        <header className="sticky top-0 z-20 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--card))]/75">
-          <div className="mx-auto max-w-[1400px] px-4 py-3 flex items-center gap-3">
-            <Logo />
-            {/* Global Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar pacientes, exames, prescrições…  (⌘K)"
-                className="w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-9 py-2 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-              />
+      <Tabs defaultValue="view" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="view">Visão pública</TabsTrigger>
+          <TabsTrigger value="edit">Editar</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="view">
+          {PublicCard}
+        </TabsContent>
+
+        <TabsContent value="edit">
+          <div className="grid gap-6">
+            {/* Cabeçalho + avatar */}
+            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <CardContent className="pt-6 grid gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-gray-700 bg-gray-100 dark:bg-gray-800">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">Sem foto</div>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="avatar" className="text-sm block mb-2">Foto do perfil</label>
+                    <Input id="avatar" type="file" accept="image/*" onChange={onAvatarSelect} disabled={uploadingAvatar} />
+                    <p className="text-xs text-gray-500 mt-1">JPG/PNG/WebP até 10MB.</p>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm block mb-1">Nome</label>
+                    <Input value={profile.name} onChange={handleChange('name')} placeholder="Seu nome completo" />
+                  </div>
+                  <div>
+                    <label className="text-sm block mb-1">Cargo/Título</label>
+                    <Input value={profile.professional_title} onChange={handleChange('professional_title')} placeholder="Ex.: Médico(a) Cardiologista" />
+                  </div>
+                  <div>
+                    <label className="text-sm block mb-1">Especialidade</label>
+                    <Input value={profile.specialty} onChange={handleChange('specialty')} placeholder="Ex.: Cardiologia" />
+                  </div>
+                  <div>
+                    <label htmlFor="cv" className="text-sm block mb-1">Currículo (PDF/DOC)</label>
+                    <Input id="cv" type="file" accept=".pdf,.doc,.docx,.txt" onChange={onCVSelect} disabled={uploadingCV} />
+                    {profile.cv_url && (
+                      <a href={profile.cv_url} target="_blank" rel="noreferrer" className="text-xs mt-1 inline-block text-blue-600 dark:text-blue-400 underline">
+                        Ver arquivo atual
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm block mb-1">Biografia</label>
+                  <Textarea rows={5} value={profile.bio} onChange={handleChange('bio')} placeholder="Conte sobre sua formação, linha de cuidado e experiência." />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Formação */}
+            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <CardHeader>
+                <CardTitle>Formação</CardTitle>
+                <CardDescription>Ex.: Graduação, Residência, Pós, Títulos.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                {profile.education.map((item, idx) => (
+                  <div key={`edu-${idx}`} className="flex gap-2">
+                    <Input value={item} onChange={(e) => handleListChange('education', idx, e.target.value)} placeholder="Ex.: Residência em Clínica Médica - USP (2018–2020)" />
+                    <Button variant="destructive" type="button" onClick={() => handleRemoveItem('education', idx)}>Remover</Button>
+                  </div>
+                ))}
+                <div>
+                  <Button type="button" onClick={() => handleAddItem('education')}>+ Adicionar formação</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Experiências */}
+            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <CardHeader>
+                <CardTitle>Experiências</CardTitle>
+                <CardDescription>Ex.: Hospitais, clínicas, pesquisas, docência.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                {profile.experiences.map((item, idx) => (
+                  <div key={`exp-${idx}`} className="flex gap-2">
+                    <Input value={item} onChange={(e) => handleListChange('experiences', idx, e.target.value)} placeholder="Ex.: Cardiologista - HCor (2020–atual)" />
+                    <Button variant="destructive" type="button" onClick={() => handleRemoveItem('experiences', idx)}>Remover</Button>
+                  </div>
+                ))}
+                <div>
+                  <Button type="button" onClick={() => handleAddItem('experiences')}>+ Adicionar experiência</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" type="button" onClick={() => window.history.back()}>Voltar</Button>
+              <Button type="button" onClick={handleSave} disabled={saving || uploadingAvatar || uploadingCV}>
+                {saving ? 'Salvando…' : 'Salvar perfil'}
+              </Button>
             </div>
-            <button className="hidden md:inline-flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2 text-sm hover:bg-[hsl(var(--muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]">
-              <CalendarDays className="h-4 w-4" /> Hoje
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--primary))] px-3 py-2 text-sm text-[hsl(var(--primary-foreground))] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]">
-              <Plus className="h-4 w-4" /> Novo Paciente
-            </button>
-
-            {/* Theme toggle */}
-            <button
-              onClick={() => setDark((v) => !v)}
-              className="ml-2 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-              aria-label="Alternar tema"
-              title="Alternar tema"
-            >
-              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
           </div>
-        </header>
-
-        {/* Main Grid */}
-        <div className="mx-auto max-w-[1400px] grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[320px_1fr] xl:grid-cols-[320px_1fr_360px]">
-          {/* Sidebar – Patients */}
-          <aside className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3 shadow-card">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold tracking-tight flex items-center gap-2"><Users className="h-4 w-4"/>Pacientes</h2>
-              <button className="inline-flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-2 py-1 text-xs hover:bg-[hsl(var(--muted))]">
-                <Filter className="h-3.5 w-3.5"/> Filtros
-              </button>
-            </div>
-            <div className="mb-2 flex flex-wrap gap-2">
-              <Chip label="Meus" active />
-              <Chip label="Ativos" />
-              <Chip label="Hoje" />
-              <Chip label="Atrasados" intent="warn" />
-            </div>
-            <div className="mt-2 h-[60vh] overflow-auto pr-1">
-              <ul className="space-y-1">
-                {filtered.map((p) => (
-                  <li key={p.id}>
-                    <PatientRow {...p} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-
-          {/* Center – Overview + Recent */}
-          <main className="space-y-4">
-            {/* Metrics */}
-            <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <MetricCard icon={<Users className="h-5 w-5"/>} label="Pacientes Ativos" value={5} />
-              <MetricCard icon={<CalendarDays className="h-5 w-5"/>} label="Consultas Hoje" value={0} />
-              <MetricCard icon={<ListChecks className="h-5 w-5"/>} label="Tarefas Pendentes" value={0} highlight />
-            </section>
-
-            {/* Recent Patients */}
-            <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 shadow-card">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold tracking-tight">Ações Recentes</h3>
-                <a className="text-sm text-[hsl(var(--primary))] hover:underline" href="#">ver todos</a>
-              </div>
-
-              <div className="space-y-2">
-                {patients.slice(0, 3).map((p) => (
-                  <button key={`recent-${p.id}`} className="group w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-3 text-left hover:bg-[hsl(var(--muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">{p.name}</div>
-                        <div className="truncate text-xs opacity-70">ID: {p.id} • {p.age} • {p.records} {p.records === 1 ? "registro" : "registros"}</div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 opacity-60 group-hover:opacity-100" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </main>
-
-          {/* Right – Tools/Chat */}
-          <aside className={`${toolsOpen ? "block" : "hidden xl:block"} xl:sticky xl:top-[68px]`}>
-            <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3 shadow-card">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-sm font-semibold tracking-tight flex items-center gap-2">
-                  <Sparkles className="h-4 w-4"/> Ferramentas
-                </h2>
-                <button onClick={() => setToolsOpen(!toolsOpen)} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-2 py-1 text-xs hover:bg-[hsl(var(--muted))]">
-                  {toolsOpen ? "Ocultar" : "Mostrar"}
-                </button>
-              </div>
-
-              <ChatEmpty />
-            </div>
-          </aside>
-        </div>
-
-        {/* Footer microcopy */}
-        <footer className="mx-auto max-w-[1400px] px-4 py-6 text-xs opacity-60">
-          Dica: use <kbd className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5">⌘K</kbd> para busca global, <kbd className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5">N</kbd> para novo paciente.
-        </footer>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
-  )
+  );
 }
+```
 
-function Logo() {
-  return (
-    <div className="mr-1 flex items-center gap-2">
-      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold">
-        HG
-      </span>
-      <span className="hidden text-sm font-semibold tracking-tight sm:inline">Health Guardian</span>
-    </div>
-  )
-}
+-----
 
-function Chip({ label, active=false, intent }: { label: string; active?: boolean; intent?: "warn" | undefined }) {
-  return (
-    <button
-      className={`rounded-full px-3 py-1 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] border ${
-        active
-          ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-transparent"
-          : intent === "warn"
-          ? "bg-[hsl(var(--muted))] text-amber-600 dark:text-amber-300 border-[hsl(var(--border))]"
-          : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]"
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
+### **File 2: `frontend/src/App.jsx` (Modification Instructions)**
 
-function PatientRow({ name, age, records }: { name: string; age: string; records: number }) {
-  return (
-    <button className="group w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2 text-left hover:bg-[hsl(var(--muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]">
-      <div className="flex items-center justify-between">
-        <div className="min-w-0">
-          <div className="truncate font-medium">{name || "Sem nome"}</div>
-          <div className="truncate text-xs opacity-70">{age || "idade não informada"} • {records} {records === 1 ? "registro" : "registros"}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[hsl(var(--muted))] text-[10px]">
-            {records}
-          </span>
-          <ChevronRight className="h-4 w-4 opacity-60 group-hover:opacity-100" />
-        </div>
-      </div>
-    </button>
-  )
-}
+In your `frontend/src/App.jsx` file, add the import for the new page and then add the new route inside your `<Routes>` definition, wrapped in `ProtectedRoute`.
 
-function MetricCard({ label, value, icon, highlight=false }: { label: string; value: number; icon?: React.ReactNode; highlight?: boolean }) {
-  return (
-    <div className={`rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 shadow-card ${highlight ? "ring-1 ring-[hsl(var(--primary))]/40" : ""}`}>
-      <div className="mb-1 flex items-center justify-between">
-        <div className="text-sm opacity-70">{label}</div>
-        <div className="opacity-60">{icon}</div>
-      </div>
-      <div className="flex items-end justify-between">
-        <div className="text-3xl font-semibold tracking-tight">{value}</div>
-        <a className="text-sm text-[hsl(var(--primary))] hover:underline" href="#">ver todos</a>
-      </div>
-    </div>
-  )
-}
+```jsx
+// frontend/src/App.jsx
 
-function ChatEmpty() {
-  const suggestions = [
-    "Gerar SOAP inicial para paciente ativo",
-    "Revisar alergias e interações",
-    "Sugerir exames conforme queixa",
-  ]
-  return (
-    <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 text-center">
-      <Sparkles className="mx-auto mb-3 h-6 w-6 opacity-70" />
-      <p className="mb-3 text-sm opacity-75">Selecione um paciente ou comece com um atalho:</p>
-      <div className="flex flex-col gap-2">
-        {suggestions.map((s) => (
-          <button key={s} className="rounded-lg bg-[hsl(var(--muted))] px-3 py-2 text-sm hover:bg-[hsl(var(--muted))]/80 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]">
-            {s}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
+// 1. Add this import at the top with your other page imports
+import ProfilePage from './pages/Profile.jsx'; 
+
+// ... other code ...
+
+// 2. Add this Route within your <Routes> component, alongside other protected routes
+<Route
+  path="/profile"
+  element={
+    <ProtectedRoute>
+      <Layout>
+        <ProfilePage />
+      </Layout>
+    </ProtectedRoute>
+  }
+/>
+```
+
+-----
+
+**Task Complete.** The necessary code has been delivered. Please integrate it into your project. The BMad process for this feature request is now concluded.

@@ -45,6 +45,26 @@ module.exports = (sequelize) => {
     specialty: {
       type: DataTypes.STRING(100),
       allowNull: true
+    },
+    titulo_profissional: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Título profissional do médico (ex: Cardiologista, Clínico Geral)'
+    },
+    biografia: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Biografia/apresentação profissional do médico'
+    },
+    avatar_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'URL da foto de perfil do médico'
+    },
+    curriculo_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'URL do currículo em PDF do médico'
     }
   }, {
     tableName: 'medicos',

@@ -548,7 +548,7 @@ body {
 
 /* Dark mode - Verde/Teal para botões gerais */
 .dark-mode .btn-primary {
-  @apply bg-teal-600/20 hover:bg-teal-600/30 border-teal-600/30 hover:border-teal-500 text-teal-400 focus:ring-teal-500/50;
+  @apply bg-accent/20 hover:bg-accent/30 border-accent/30 hover:border-accent text-accent focus:ring-accent/50;
 }
 
 .dark-mode .btn-secondary {
@@ -561,7 +561,7 @@ body {
 
 /* Light mode - Azul para botões gerais */
 .light-mode .btn-primary {
-  @apply bg-blue-600/20 hover:bg-blue-600/30 border-blue-600/30 hover:border-blue-500 text-blue-600 focus:ring-blue-500/50;
+  @apply bg-accent/20 hover:bg-accent/30 border-accent/30 hover:border-accent text-accent focus:ring-accent/50;
 }
 
 .light-mode .btn-secondary {
@@ -872,6 +872,12 @@ body {
 .light-mode .data-\[state\=active\]\:bg-emerald-600[data-state="active"] { @apply bg-blue-600; }
 .light-mode .data-\[state\=active\]\:bg-teal-600\/20[data-state="active"],
 .light-mode .data-\[state\=active\]\:bg-emerald-600\/20[data-state="active"] { @apply bg-blue-600/20; }
+/* NEW: Ensure active text is darker blue in light mode (instead of green) */
+.light-mode .data-\[state\=active\]\:text-teal-300[data-state="active"],
+.light-mode .data-\[state\=active\]\:text-emerald-300[data-state="active"] { @apply text-blue-700; }
+/* NEW: Ensure active border uses blue tone in light mode */
+.light-mode .data-\[state\=active\]\:border-teal-600[data-state="active"],
+.light-mode .data-\[state\=active\]\:border-emerald-600[data-state="active"] { @apply border-blue-600; }
 .light-mode .data-\[state\=active\]\:text-white[data-state="active"] { @apply text-white; }
 
 /* Badges and subtle tints */

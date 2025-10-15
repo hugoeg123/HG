@@ -141,18 +141,3 @@ class ErrorBoundary extends React.Component {
 }
 
 export default ErrorBoundary;
-
-/**
- * Hook version for functional components (React 18+)
- * Currently class components are still recommended for error boundaries
- */
-export const useErrorHandler = () => {
-  const handleError = React.useCallback((error, errorInfo) => {
-    console.error('Error caught by useErrorHandler:', error, errorInfo);
-    
-    // Hook: Could trigger toast notification or redirect
-    // For now, just log the error
-  }, []);
-
-  return handleError;
-};

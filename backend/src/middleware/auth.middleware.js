@@ -8,6 +8,8 @@
 const jwt = require('jsonwebtoken');
 const { Medico } = require('../models/sequelize');
 
+const DEBUG_AUTH_MIDDLEWARE = process.env.DEBUG_AUTH_MIDDLEWARE === 'true';
+
 // Middleware para verificar autenticação
 exports.authenticate = async (req, res, next) => {
   try {
@@ -22,16 +24,22 @@ exports.authenticate = async (req, res, next) => {
 
     // Verificar e decodificar o token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
+    if (DEBUG_AUTH_MIDDLEWARE) {
+      console.log('Decoded token:', decoded);
+    }
 
     // Verificar se o médico existe
     const medico = await Medico.findByPk(decoded.sub || decoded.id, { 
       attributes: ['id', 'email', 'nome'] 
     });
-    console.log('Medico found:', medico);
+    if (DEBUG_AUTH_MIDDLEWARE) {
+      console.log('Medico found:', medico);
+    }
     
     if (!medico) {
-      console.log('Medico not found for ID:', decoded.sub || decoded.id);
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.warn('Medico not found for ID:', decoded.sub || decoded.id);
+      }
       return res.status(401).json({ message: 'Usuário não encontrado' });
     }
 

@@ -19,7 +19,19 @@ import { initThemeFill } from './utils/themeFill'; // Hook: Applies background f
 initThemeFill();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+  import.meta.env.MODE === 'production' ? (
+    <React.StrictMode>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
+        <App />
+      </BrowserRouter>
+    </React.StrictMode>
+  ) : (
+    // Desabilitar StrictMode em desenvolvimento para evitar logs/chamadas duplicadas causadas por double-invocation do React 18
     <BrowserRouter
       future={{
         v7_startTransition: true,
@@ -28,5 +40,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     >
       <App />
     </BrowserRouter>
-  </React.StrictMode>
+  )
 );

@@ -16,6 +16,7 @@ const templateRoutes = require('./template.routes');
 const calculatorRoutes = require('./calculator.routes');
 const dynamicCalculatorRoutes = require('./dynamic-calculator.routes.js');
 const alertRoutes = require('./alert.routes');
+const fileRoutes = require('./file.routes');
 
 // Middleware para logging de requests (desenvolvimento)
 if (process.env.NODE_ENV === 'development') {
@@ -50,6 +51,7 @@ router.use('/templates', templateRoutes);
 router.use('/calculators', calculatorRoutes);
 router.use('/dynamic-calculators', dynamicCalculatorRoutes);
 router.use('/alerts', alertRoutes);
+router.use('/files', fileRoutes);
 
 // Rota 404 para endpoints não encontrados
 router.use('*', (req, res) => {

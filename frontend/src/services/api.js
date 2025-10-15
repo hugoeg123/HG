@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Enable debug logging via env: set VITE_DEBUG_API=true to see detailed logs
+const DEBUG_API = Boolean(import.meta.env.VITE_DEBUG_API);
+
 /**
  * Request throttling and queue management
  * Hook: Prevents rate limiting by controlling concurrent requests
@@ -58,7 +61,7 @@ const requestThrottler = new RequestThrottler(3, 200); // Max 3 concurrent, 200m
  * Hook: Implements automatic retry, timeout and throttling to prevent rate limiting
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   timeout: 30000, // 30 seconds timeout to prevent hanging requests
   headers: {
     'Content-Type': 'application/json',
@@ -80,7 +83,9 @@ api.interceptors.request.use(
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Token adicionado ao header:', token.substring(0, 20) + '...');
+      if (DEBUG_API) {
+        console.log('Token adicionado ao header:', token.substring(0, 20) + '...');
+      }
       return config;
     }
     
@@ -89,69 +94,46 @@ api.interceptors.request.use(
     if (authStorage) {
       try {
         // Verificar se o storage não é um objeto serializado incorretamente
-        if (authStorage === '[object Object]') {
-          console.warn('Storage de auth corrompido detectado, limpando');
-          localStorage.removeItem('auth-storage');
+        const parsed = JSON.parse(authStorage);
+        const zustandState = parsed?.state;
+        const storedToken = zustandState?.token;
+        if (storedToken) {
+          config.headers.Authorization = `Bearer ${storedToken}`;
+          if (DEBUG_API) {
+            console.log('Token do Zustand adicionado ao header:', storedToken.substring(0, 20) + '...');
+          }
           return config;
         }
-        
-        // Parse do storage do Zustand
-        const parsedAuth = JSON.parse(authStorage);
-        
-        // Verificar se tem o token no formato do Zustand
-        if (parsedAuth && parsedAuth.state && parsedAuth.state.token) {
-          config.headers.Authorization = `Bearer ${parsedAuth.state.token}`;
-          console.log('Token do Zustand adicionado ao header:', parsedAuth.state.token.substring(0, 20) + '...');
-        }
-      } catch (error) {
-        console.warn('Storage de auth inválido, limpando:', error);
-        // Limpar storage corrompido
-        localStorage.removeItem('auth-storage');
+      } catch (_) {
+        // Ignorar erros de parse silenciosamente
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-/**
- * Retry configuration for failed requests
- * Hook: Prevents ERR_INSUFFICIENT_RESOURCES by implementing exponential backoff
- */
-const retryRequest = async (error) => {
+function retryRequest(error) {
   const config = error.config;
-  
-  // Don't retry if we've already retried too many times
-  if (!config || config.__retryCount >= 3) {
-    return Promise.reject(error);
-  }
-  
-  // Initialize retry count
   config.__retryCount = config.__retryCount || 0;
-  config.__retryCount += 1;
   
-  // Only retry on network errors or 5xx server errors
-  const shouldRetry = (
-    !error.response || 
-    error.response.status >= 500 ||
-    error.code === 'ECONNABORTED' ||
-    error.code === 'ECONNREFUSED' ||
-    error.code === 'NETWORK_ERROR'
-  );
-  
-  if (!shouldRetry) {
-    return Promise.reject(error);
+  if (config.__retryCount < 3) {
+    config.__retryCount += 1;
+    const delay = Math.pow(2, config.__retryCount) * 1000; // 2s, 4s, 8s
+    if (DEBUG_API) {
+      console.warn(`Retrying request in ${delay}ms (attempt ${config.__retryCount}/3):`, config.url);
+    }
+    
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(requestThrottler.throttle(() => api(config)));
+      }, delay);
+    });
   }
   
-  // Exponential backoff: 1s, 2s, 4s
-  const delay = Math.pow(2, config.__retryCount - 1) * 1000;
-  
-  console.log(`Retrying request (attempt ${config.__retryCount}/3) after ${delay}ms:`, config.url);
-  
-  return new Promise(resolve => {
-    setTimeout(() => resolve(api(config)), delay);
-  });
-};
+  return Promise.reject(error);
+}
 
 // Interceptor para tratar erros de resposta
 api.interceptors.response.use(
@@ -166,7 +148,9 @@ api.interceptors.response.use(
         config.__retryCount += 1;
         const delay = Math.pow(2, config.__retryCount) * 1000; // 2s, 4s, 8s
         
-        console.warn(`Rate limited (429), retrying in ${delay}ms (attempt ${config.__retryCount}/3):`, config.url);
+        if (DEBUG_API) {
+          console.warn(`Rate limited (429), retrying in ${delay}ms (attempt ${config.__retryCount}/3):`, config.url);
+        }
         
         return new Promise(resolve => {
           setTimeout(() => {
@@ -183,13 +167,17 @@ api.interceptors.response.use(
       error.code === 'NETWORK_ERROR' ||
       (!error.response && error.request)
     ) {
-      console.warn('Network error detected, attempting retry:', error.message);
+      if (DEBUG_API) {
+        console.warn('Network error detected, attempting retry:', error.message);
+      }
       return retryRequest(error);
     }
     
     // Handle server errors (5xx) with retry
     if (error.response && error.response.status >= 500) {
-      console.warn('Server error detected, attempting retry:', error.response.status);
+      if (DEBUG_API) {
+        console.warn('Server error detected, attempting retry:', error.response.status);
+      }
       return retryRequest(error);
     }
     
@@ -207,18 +195,22 @@ api.interceptors.response.use(
     
     // Don't log cancellation errors as they are expected behavior
     if (error.code === 'ERR_CANCELED' || error.name === 'AbortError') {
-      console.debug('Request canceled (expected behavior):', error.config?.url);
+      if (DEBUG_API) {
+        console.debug('Request canceled (expected behavior):', error.config?.url);
+      }
       return Promise.reject(error);
     }
     
     // Log error details for debugging (excluding expected cancellations)
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      code: error.code,
-      message: error.message
-    });
+    if (DEBUG_API) {
+      console.error('API Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        code: error.code,
+        message: error.message
+      });
+    }
     
     return Promise.reject(error);
   }
@@ -230,25 +222,57 @@ api.interceptors.response.use(
  * Exception: Auth requests bypass throttling for better UX
  */
 const throttledApi = {
-  get: (url, config) => {
+  get: (url, config = {}) => {
+    const key = getSingleFlightKey(url, config);
     // Auth requests bypass throttling
     if (url.includes('/auth/')) {
-      console.log('API: Auth request detected, bypassing throttling:', url);
-      return api.get(url, config);
+      if (DEBUG_API) {
+        console.log('API: Auth GET detected, bypassing throttling:', url);
+      }
+      return runSingleFlight(key, () => api.get(url, config));
     }
-    return requestThrottler.throttle(() => api.get(url, config));
+    return runSingleFlight(key, () => requestThrottler.throttle(() => api.get(url, config)));
   },
   post: (url, data, config) => {
     // Auth requests bypass throttling
     if (url.includes('/auth/')) {
-      console.log('API: Auth request detected, bypassing throttling:', url);
+      if (DEBUG_API) {
+        console.log('API: Auth request detected, bypassing throttling:', url);
+      }
       return api.post(url, data, config);
     }
     return requestThrottler.throttle(() => api.post(url, data, config));
   },
-  put: (url, data, config) => requestThrottler.throttle(() => api.put(url, data, config)),
-  delete: (url, config) => requestThrottler.throttle(() => api.delete(url, config)),
-  patch: (url, data, config) => requestThrottler.throttle(() => api.patch(url, data, config))
+  put: (url, data, config) => {
+    // Auth requests bypass throttling
+    if (url.includes('/auth/')) {
+      if (DEBUG_API) {
+        console.log('API: Auth request detected, bypassing throttling:', url);
+      }
+      return api.put(url, data, config);
+    }
+    return requestThrottler.throttle(() => api.put(url, data, config));
+  },
+  delete: (url, config) => {
+    // Auth requests bypass throttling
+    if (url.includes('/auth/')) {
+      if (DEBUG_API) {
+        console.log('API: Auth request detected, bypassing throttling:', url);
+      }
+      return api.delete(url, config);
+    }
+    return requestThrottler.throttle(() => api.delete(url, config));
+  },
+  patch: (url, data, config) => {
+    // Auth requests bypass throttling
+    if (url.includes('/auth/')) {
+      if (DEBUG_API) {
+        console.log('API: Auth request detected, bypassing throttling:', url);
+      }
+      return api.patch(url, data, config);
+    }
+    return requestThrottler.throttle(() => api.patch(url, data, config));
+  }
 };
 
 export default throttledApi;
@@ -354,4 +378,24 @@ export const exportService = {
   exportToPdf: (patientId) => throttledApi.get(`/export/pdf/${patientId}`, { responseType: 'blob' }),
   exportToCsv: (patientId) => throttledApi.get(`/export/csv/${patientId}`, { responseType: 'blob' }),
   exportToFhir: (patientId) => throttledApi.get(`/export/fhir/${patientId}`, { responseType: 'blob' }),
+};
+
+// Single-flight map to deduplicate concurrent GETs for the same resource
+const SINGLE_FLIGHT_ENABLED = true;
+const singleFlightMap = new Map();
+const getSingleFlightKey = (url, config = {}) => {
+  const params = config?.params ? JSON.stringify(config.params) : '';
+  return `${url}::${params}`;
+};
+const runSingleFlight = (key, requestFactory) => {
+  if (!SINGLE_FLIGHT_ENABLED) return requestFactory();
+  if (singleFlightMap.has(key)) {
+    return singleFlightMap.get(key);
+  }
+  const p = requestFactory()
+    .finally(() => {
+      singleFlightMap.delete(key);
+    });
+  singleFlightMap.set(key, p);
+  return p;
 };

@@ -44,27 +44,17 @@ const CalculatorsIndex: React.FC = () => {
   ];
 
   const getColorClasses = (color: string) => {
+    // Semantic accent tokens for consistent theming across dark/bright modes
+    // Conector: Consumed by button/icon/border in this page; integrates with index.css theme variables
     switch (color) {
       case 'emerald':
-        return {
-          icon: 'text-emerald-400',
-          border: 'border-emerald-500/30',
-          hover: 'hover:border-emerald-400/50',
-          button: 'bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40'
-        };
       case 'teal':
-        return {
-          icon: 'text-teal-400',
-          border: 'border-teal-500/30',
-          hover: 'hover:border-teal-400/50',
-          button: 'bg-teal-600/20 text-teal-300 hover:bg-teal-600/40'
-        };
       default:
         return {
-          icon: 'text-gray-400',
-          border: 'border-gray-500/30',
-          hover: 'hover:border-gray-400/50',
-          button: 'bg-gray-600/20 text-gray-300 hover:bg-gray-600/40'
+          icon: 'text-accent',
+          border: 'border-accent/30',
+          hover: 'hover:border-accent/50',
+          button: 'bg-accent/20 text-foreground hover:bg-accent/40'
         };
     }
   };
@@ -74,10 +64,10 @@ const CalculatorsIndex: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <Calculator className="h-8 w-8 text-emerald-400" />
-          <h1 className="text-3xl font-bold text-white">Calculadoras Médicas</h1>
+          <Calculator className="h-8 w-8 text-accent" />
+          <h1 className="text-3xl font-bold text-foreground">Calculadoras Médicas</h1>
         </div>
-        <p className="text-gray-400 text-lg">
+        <p className="text-muted-foreground text-lg">
           Ferramentas de cálculo para apoio à prática clínica. Todas as calculadoras seguem
           protocolos estabelecidos e incluem disclaimers de responsabilidade.
         </p>
@@ -99,21 +89,21 @@ const CalculatorsIndex: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <Icon className={`h-6 w-6 ${colors.icon}`} />
                     <div>
-                      <CardTitle className="text-white text-lg">{calc.title}</CardTitle>
-                      <div className="text-sm text-gray-400 mt-1">{calc.category}</div>
+                      <CardTitle className="text-foreground text-lg">{calc.title}</CardTitle>
+                      <div className="text-sm text-muted-foreground mt-1">{calc.category}</div>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               
               <CardContent className="pt-0">
-                <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
                   {calc.description}
                 </p>
                 
                 <Link to={calc.path}>
                   <Button 
-                    className={`w-full ${colors.button} border border-transparent hover:border-current transition-all duration-200`}
+                    className={`w-full ${colors.button} border border-transparent hover:border-accent/30 transition-all duration-200`}
                   >
                     <span>Abrir Calculadora</span>
                     <ArrowRight className="h-4 w-4 ml-2" />

@@ -694,12 +694,12 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                <div className="patient-dashboard-panel p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background overflow-hidden">
               {/* Navegação de Abas Responsiva */}
               <div className="flex items-center justify-center overflow-x-auto">
-                <div className="flex flex-row items-center gap-1 sm:gap-2 p-1 bg-theme-card rounded-lg min-w-max">
+                <div className="flex flex-row items-stretch gap-1 sm:gap-2 p-0 bg-theme-card rounded-lg min-w-max">
                   <button
                     onClick={() => setActiveTab('historico')}
-                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-theme-background ${
                       activeTab === 'historico'
-                        ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                        ? 'border-teal-600 border-2 bg-teal-600/20 text-teal-300'
                         : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
@@ -709,9 +709,9 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </button>
                   <button
                     onClick={() => setActiveTab('investigacao')}
-                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-theme-background ${
                       activeTab === 'investigacao'
-                        ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                        ? 'border-teal-600 border-2 bg-teal-600/20 text-teal-300'
                         : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >
@@ -721,9 +721,9 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </button>
                   <button
                     onClick={() => setActiveTab('planos')}
-                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 border min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-[32px] sm:h-[36px] md:h-[40px] justify-center whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-theme-background ${
                       activeTab === 'planos'
-                        ? 'border-teal-500 bg-teal-600/20 text-teal-300'
+                        ? 'border-teal-600 border-2 bg-teal-600/20 text-teal-300'
                         : 'bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border-transparent'
                     }`}
                   >

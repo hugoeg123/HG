@@ -7,7 +7,7 @@ const axios = require('axios');
 
 // Configuração igual ao frontend
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'http://localhost:5001/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
@@ -28,7 +28,7 @@ async function testFrontendLogin() {
     console.log('\n2. Testando preflight CORS...');
     const preflightResponse = await axios({
       method: 'OPTIONS',
-      url: 'http://localhost:5000/api/auth/login',
+      url: 'http://localhost:5001/api/auth/login',
       headers: {
         'Origin': 'http://localhost:3000',
         'Access-Control-Request-Method': 'POST',
@@ -46,7 +46,7 @@ async function testFrontendLogin() {
     console.log('\n3. Testando login POST...');
     const loginResponse = await axios({
       method: 'POST',
-      url: 'http://localhost:5000/api/auth/login',
+      url: 'http://localhost:5001/api/auth/login',
       headers: {
         'Content-Type': 'application/json',
         'Origin': 'http://localhost:3000'
@@ -75,7 +75,7 @@ async function testFrontendLogin() {
       
       const authResponse = await axios({
         method: 'GET',
-        url: 'http://localhost:5000/api/auth/me',
+        url: 'http://localhost:5001/api/auth/me',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Origin': 'http://localhost:3000'

@@ -28,7 +28,7 @@ import SpO2FiO2Ratio from './Calculators/prebuilt/SpO2FiO2Ratio';
 import ChildPugh from './Calculators/prebuilt/ChildPugh';
 import MELD from './Calculators/prebuilt/MELD';
 // import ParklandFormula from './prebuilt/ParklandFormula';
-import qSOFA from './Calculators/prebuilt/qSOFA';
+import QSOFA from './Calculators/prebuilt/qSOFA';
 import APACHE2 from './Calculators/prebuilt/APACHE2';
 import SOFA from './Calculators/prebuilt/SOFA';
 import CHA2DS2VASc from './Calculators/prebuilt/CHA2DS2VASc';
@@ -821,9 +821,9 @@ const Calculators = ({ patientId = null }) => {
          )} */}
          
          {showHardcodedCalculator === 'qsofa' && (
-           <qSOFA 
-             open={true} 
-             onOpenChange={(isOpen) => { if (!isOpen) closeHardcodedCalculator(); }}
+           <QSOFA
+             open={showHardcodedCalculator === 'qsofa'}
+             onOpenChange={() => setShowHardcodedCalculator(null)}
            />
          )}
          

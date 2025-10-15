@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
@@ -6,15 +6,20 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, checkAuth } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
   const location = useLocation();
+  const hasCheckedRef = useRef(false);
 
   useEffect(() => {
+    if (hasCheckedRef.current) return;
+    hasCheckedRef.current = true;
+
     const verifyAuth = async () => {
       await checkAuth();
       setIsChecking(false);
     };
 
     verifyAuth();
-  }, [checkAuth]);
+    // No deps to avoid duplicate calls under React.StrictMode
+  }, []);
 
   if (isChecking) {
     // Exibir um indicador de carregamento enquanto verifica a autenticação
