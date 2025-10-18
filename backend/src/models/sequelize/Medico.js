@@ -65,6 +65,24 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(500),
       allowNull: true,
       comment: 'URL do currículo em PDF do médico'
+    },
+    formacao: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      comment: 'Lista de formações acadêmicas do médico'
+    },
+    experiencias: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      comment: 'Lista de experiências profissionais do médico'
+    },
+    public_visibility: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: 'Controle de visibilidade pública no marketplace'
     }
   }, {
     tableName: 'medicos',

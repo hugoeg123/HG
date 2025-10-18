@@ -236,6 +236,12 @@ body {
   background-color: var(--color-bg-light) !important; /* #F3F3F3 */
 }
 
+/* Dark mode: contornos finos esverdeados nos 4 divs do dashboard */
+.dark-mode .dashboard-container .stat-card,
+.dark-mode .dashboard-container .recent-patients {
+  border: 1px solid hsl(var(--accent) / 0.5);
+}
+
 /* Estilos para a lista de pacientes */
 /* Dark mode */
 .dark-mode .patient-list {

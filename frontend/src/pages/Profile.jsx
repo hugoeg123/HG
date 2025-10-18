@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { toast } from 'sonner';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { useNavigate } from 'react-router-dom';
 import throttledApi from "../services/api";
 
 // Componentes UI
@@ -18,8 +19,9 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
+import { Checkbox } from '../components/ui/checkbox';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 
@@ -40,7 +42,8 @@ import {
   Trash2,
   Eye,
   Edit3,
-  Download
+  Download,
+  Calendar
 } from 'lucide-react';
 
 /**
@@ -55,6 +58,7 @@ const emptyProfile = {
   biografia: '',
   avatar_url: '',
   curriculo_url: '',
+  public_visibility: false,
   formacao: [],
   experiencias: []
 };
@@ -90,9 +94,10 @@ const emptyExperiencia = {
  */
 const PublicCard = React.memo(({ profile }) => {
   const { theme } = useThemeStore();
+  const navigate = useNavigate();
   
   return (
-    <Card className="w-full max-w-2xl mx-auto bg-theme-card border-theme-border">
+    <Card className="w-full max-w-2xl mx-auto bg-theme-card border-theme-border theme-border">
       <CardHeader className="text-center pb-4">
         <div className="flex flex-col items-center space-y-4">
           <Avatar className="w-24 h-24">
@@ -119,8 +124,17 @@ const PublicCard = React.memo(({ profile }) => {
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {profile.curriculo_url && (
-          <div className="flex justify-center">
+        <div className="flex justify-center gap-3">
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={() => navigate('/agenda')}
+            className="flex items-center space-x-2 bg-accent/20 text-accent hover:bg-accent/40 border border-transparent hover:border-accent/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 transition-all duration-200"
+          >
+            <Calendar className="w-4 h-4 text-accent" />
+            <span className="text-accent">Agenda</span>
+          </Button>
+          {profile.curriculo_url && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -130,8 +144,8 @@ const PublicCard = React.memo(({ profile }) => {
               <Download className="w-4 h-4" />
               <span>Baixar Currículo</span>
             </Button>
-          </div>
-        )}
+          )}
+        </div>
         
         {profile.biografia && (
           <div>
@@ -248,6 +262,7 @@ const Profile = () => {
       biografia: apiData.biografia || '',
       avatar_url: apiData.avatar_url || '',
       curriculo_url: apiData.curriculo_url || '',
+      public_visibility: apiData.public_visibility !== undefined ? !!apiData.public_visibility : false,
       formacao: apiData.formacao || [],
       experiencias: apiData.experiencias || []
     };
@@ -660,19 +675,12 @@ const Profile = () => {
   }
   
   return (
-    <div className="min-h-screen p-6 bg-theme-background">
+    <div className="profile-page min-h-screen p-6 bg-theme-background">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">
-            Perfil Profissional
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie suas informações profissionais e visibilidade no marketplace
-          </p>
-        </div>
+
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-theme-surface border border-theme-border">
+          <TabsList className="grid w-full grid-cols-2 bg-theme-surface border border-theme-border theme-border">
             <TabsTrigger value="public" className="flex items-center space-x-2">
               <Eye className="w-4 h-4" />
               <span>Visão Pública</span>
@@ -684,6 +692,11 @@ const Profile = () => {
           </TabsList>
           
           <TabsContent value="public" className="mt-6">
+            {!profile.public_visibility && (
+              <div className="mb-4 p-3 rounded-lg border border-theme-border theme-border bg-theme-card text-muted-foreground">
+                Seu perfil está marcado como privado. Altere a visibilidade na aba Editar.
+              </div>
+            )}
             <PublicCard profile={profile} />
           </TabsContent>
           
@@ -851,6 +864,19 @@ const Profile = () => {
                       {editProfile.biografia?.length || 0}/1000 caracteres
                     </p>
                   </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-1">Visibilidade Pública</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={!!editProfile.public_visibility}
+                        onCheckedChange={(checked) => handleInputChange('public_visibility', !!checked)}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        Exibir seu perfil no marketplace público
+                      </span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -881,7 +907,7 @@ const Profile = () => {
                   ) : (
                     <div className="space-y-4">
                       {editProfile.formacao.map((item, index) => (
-                        <div key={index} className={`p-4 border rounded-lg border-theme-border`}>
+                        <div key={index} className={`p-4 border rounded-lg border-theme-border theme-border`}>
                           <div className="flex justify-between items-start mb-4">
                             <h4 className="font-medium">Formação {index + 1}</h4>
                             <Button
@@ -980,7 +1006,7 @@ const Profile = () => {
                   ) : (
                     <div className="space-y-4">
                       {editProfile.experiencias.map((item, index) => (
-                        <div key={index} className={`p-4 border rounded-lg border-theme-border`}>
+                        <div key={index} className={`p-4 border rounded-lg border-theme-border theme-border`}>
                           <div className="flex justify-between items-start mb-4">
                             <h4 className="font-medium">Experiência {index + 1}</h4>
                             <Button

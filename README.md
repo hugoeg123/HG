@@ -53,6 +53,23 @@ O projeto está dividido em componentes principais:
 - **Usuário**: Guias de uso e configuração
 - **Desenvolvimento**: Padrões de código e contribuição
 
+## 🩺 Análise Profunda e Saúde do Projeto
+
+Uma análise detalhada foi conduzida para mapear a arquitetura, identificar conflitos e avaliar a saúde geral do código. Os resultados estão consolidados na pasta [`/docs`](./docs/), servindo como um guia essencial para o desenvolvimento contínuo.
+
+O ponto de partida para entender o estado atual do projeto é o **[📄 Resumo da Análise do Projeto](./docs/project_overview.md)**.
+
+### Resumo das Descobertas
+
+| Área Analisada | Documento de Referência | Estado | Resumo das Descobertas |
+| :--- | :--- | :--- | :--- |
+| **Fluxo da API** | [`api_interaction_flow.md`](./docs/api_interaction_flow.md) | ✅ **Bom** | O serviço de API do frontend é robusto, com throttling, retries e single-flight. |
+| **Integração de IA** | [`ai_integration.md`](./docs/ai_integration.md) | ⚠️ **Conflito** | O frontend espera endpoints de IA (`/chat`, `/suggestions`) que não estão implementados no backend. |
+| **Estratégia de Testes** | [`testing_strategy.md`](./docs/testing_strategy.md) | ❌ **Crítico** | O projeto **não possui testes automatizados**, representando um débito técnico significativo. |
+| **Segurança & Conformidade** | [`security_and_compliance.md`](./docs/security_and_compliance.md) | ⚠️ **Conflito** | A conformidade com **FHIR** está **quebrada** devido a um endpoint de exportação ausente no backend. |
+
+**Prioridade de Ação:** É crucial que novas contribuições se concentrem em resolver os débitos técnicos críticos, especialmente a **criação da suíte de testes** e a **implementação dos endpoints de IA e FHIR** no backend.
+
 ## ⚙️ Configuração do Ambiente
 
 ### Pré-requisitos

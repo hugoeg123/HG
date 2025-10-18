@@ -26,6 +26,25 @@ frontend/
 └── vite.config.js      # Configuração do Vite
 ```
 
+## Análise e Saúde do Código
+
+Uma análise aprofundada do código do frontend revelou pontos críticos que precisam de atenção. Um resumo está disponível abaixo, com links para a documentação detalhada.
+
+| Documento de Análise | Principais Conclusões | Débitos Técnicos Críticos |
+| :--- | :--- | :--- |
+| [Análise do Frontend](../../docs/frontend/README.md) | - **Componentização bem definida**, mas com baixa coesão em alguns casos.<br>- **Gerenciamento de estado centralizado** com Zustand.<br>- **Comunicação com API bem estruturada** através de serviços. | - **Ausência total de testes automatizados**.<br>- **Funcionalidades de UI implementadas para endpoints inexistentes** (IA e exportação FHIR).<br>- **Inconsistência na chamada da API** para exportação FHIR. |
+| [Estratégia de Testes](../../docs/testing_strategy.md) | - **Nenhum teste automatizado** (unitário, integração ou E2E) foi encontrado. | - **Alto risco de regressões** a cada nova alteração.<br>- **Dificuldade em validar a estabilidade** da aplicação. |
+| [Integração de IA](../../docs/ai_integration.md) | - O frontend possui componentes e serviços para interagir com uma API de IA. | - **A funcionalidade está quebrada**, pois o backend não implementa o endpoint esperado. |
+| [Segurança e Conformidade](../../docs/security_and_compliance.md) | - O frontend tenta exportar dados no padrão FHIR. | - **A funcionalidade de exportação está quebrada**.<br>- A URL da API chamada no frontend (`/export/fhir/:id`) não corresponde à documentada no backend (`/api/records/:id/fhir`). |
+
+**Recomendações:**
+
+1.  **Implementar Testes Urgente:** Iniciar a criação de testes unitários e de integração para componentes críticos e serviços.
+2.  **Alinhar com o Backend:** Sincronizar as implementações da API de IA e de exportação FHIR com a equipe de backend antes de continuar o desenvolvimento de novas funcionalidades.
+3.  **Corrigir a Chamada da API:** Ajustar a chamada da API de exportação FHIR no frontend para corresponder ao endpoint que será implementado no backend.
+
+---
+
 ## Começando
 
 1.  **Instale as dependências:**
@@ -131,3 +150,55 @@ Esta seção documenta problemas reais enfrentados no desenvolvimento do fronten
 - Usar Tailwind para composição de classes (ex.: `bg-theme-card`, `border-theme-border`).
 - Para blocos específicos do dashboard, prefira prefixos semânticos (`patient-dashboard-panel`, `patient-dashboard-card`).
 - Documentar cada intervenção com comentários e apontar conectores de integração quando aplicável.
+
+# Frontend README
+
+## Mapa de Conflitos de Estilo (Bordas, Preenchimentos, Foco)
+
+- Bordas sem cor explícita
+  - Sintoma: borda branca no dark.
+  - Causa: `border` sozinho herda `currentColor` (com `text-foreground`).
+  - Solução: usar `border border-theme-border`; adicionar `theme-border` se quiser matiz.
+
+- Preenchimentos inconsistentes (cards/superfícies)
+  - Sintoma: cartões brancos no light/dark fora do esperado.
+  - Causa: regras como `.light-mode .center-pane { --theme-card: #fff; }` e uso de `bg-white`.
+  - Solução: preferir `bg-theme-card`/`bg-theme-surface`; escopar ajustes por wrapper de página/aba.
+
+- Texto influenciando a borda
+  - Sintoma: borda parece branca por herança de `currentColor`.
+  - Causa: `text-foreground` definindo cor corrente.
+  - Solução: sempre forçar `border-theme-border` em contêineres com `text-foreground`.
+
+- Rings e foco exagerados
+  - Sintoma: halo grosso/branco.
+  - Causa: `--ring` ausente e defaults do Tailwind.
+  - Solução: definir `--ring` em `themes.css`; usar `ring-accent/40` ou confiar em `overrides.css`.
+
+- Transparência/alpha em preenchimentos
+  - Sintoma: bg muito claro/“lavado”.
+  - Causa: empilhamento de `bg-*-opacity` sobre `theme-card`.
+  - Solução: usar tokens de tema; evitar múltiplas camadas translúcidas.
+
+- Duplicidade de tokens
+  - Sintoma: divergência entre `index.css`, `themes.css`, `overrides.css`.
+  - Causa: redefinições de variáveis e semânticas paralelas.
+  - Solução: `index.css` como base semântica; `themes.css` para acento; `overrides.css` apenas normalizações.
+
+- `border-transparent` em triggers
+  - Sintoma: borda “fantasma” com ring.
+  - Causa: ring sobrepõe borda transparente.
+  - Solução: para triggers, usar `border-transparent` + `focus:theme-border` ou customizar `ring`.
+
+- Componentes shadcn com `primary`
+  - Sintoma: uso de `border-primary` fora de contexto.
+  - Causa: tokens `primary` não alinhados ao tema.
+  - Solução: `border-theme-border` e `bg-accent`/`text-accent-foreground` quando “ativo”.
+
+## Checklist Rápido (Preenchimentos e Rings)
+
+- Usar `bg-theme-card`/`bg-theme-surface` para cartões/superfícies; evitar `bg-white`.
+- Verificar `.center-pane`: não redefinir tokens globais; preferir wrappers locais.
+- Confirmar `--ring` em `themes.css` e ring sutil (`ring-accent/40`).
+- Onde há `text-foreground`, garantir `border-theme-border`.
+- Evitar empilhamento de `bg-*/opacity` sobre temas; usar única camada.

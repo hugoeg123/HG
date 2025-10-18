@@ -35,6 +35,7 @@ import McgKgMinGttMinPage from './pages/calculators/McgKgMinGttMinPage';
 
 // Página de Perfil
 import Profile from './pages/Profile';
+import Agenda from './pages/Agenda';
 
 // Componente de rota protegida
 import ProtectedRoute from './components/ProtectedRoute';
@@ -110,6 +111,11 @@ function App() {
             <Route path="/profile" element={
               <ErrorBoundary fallbackTitle="Erro no Perfil" showDetails={true}>
                 <Profile />
+              </ErrorBoundary>
+            } />
+            <Route path="/agenda" element={
+              <ErrorBoundary fallbackTitle="Erro na Agenda" showDetails={true}>
+                <Agenda />
               </ErrorBoundary>
             } />
             <Route path="/calculators" element={

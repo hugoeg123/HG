@@ -204,6 +204,9 @@ exports.getCurrentUser = async (req, res) => {
         biografia: medico.biografia,
         avatar_url: medico.avatar_url,
         curriculo_url: medico.curriculo_url,
+        public_visibility: medico.public_visibility,
+        formacao: medico.formacao || [],
+        experiencias: medico.experiencias || [],
         createdAt: medico.createdAt
       }
     });
@@ -234,8 +237,9 @@ exports.getProfile = async (req, res) => {
       biografia: medico.biografia,
       avatar_url: medico.avatar_url,
       curriculo_url: medico.curriculo_url,
-      formacao: [], // TODO: Implementar quando criar tabela de formação
-      experiencias: [], // TODO: Implementar quando criar tabela de experiências
+      public_visibility: medico.public_visibility,
+      formacao: medico.formacao || [],
+      experiencias: medico.experiencias || [],
       createdAt: medico.createdAt,
       updatedAt: medico.updatedAt
     });
@@ -276,7 +280,10 @@ exports.updateProfile = async (req, res) => {
       biografia, 
       specialty, 
       avatar_url, 
-      curriculo_url 
+      curriculo_url, 
+      public_visibility,
+      formacao,
+      experiencias
     } = req.body;
     
     const updateData = {};
@@ -288,6 +295,9 @@ exports.updateProfile = async (req, res) => {
     if (specialty) updateData.specialty = specialty;
     if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
     if (curriculo_url !== undefined) updateData.curriculo_url = curriculo_url;
+    if (public_visibility !== undefined) updateData.public_visibility = !!public_visibility;
+    if (Array.isArray(formacao)) updateData.formacao = formacao;
+    if (Array.isArray(experiencias)) updateData.experiencias = experiencias;
     
     // Verificar email duplicado
     if (email) {
@@ -337,8 +347,9 @@ exports.updateProfile = async (req, res) => {
       biografia: medico.biografia,
       avatar_url: medico.avatar_url,
       curriculo_url: medico.curriculo_url,
-      formacao: [], // TODO: Implementar quando criar tabela de formação
-      experiencias: [], // TODO: Implementar quando criar tabela de experiências
+      public_visibility: medico.public_visibility,
+      formacao: medico.formacao || [],
+      experiencias: medico.experiencias || [],
       createdAt: medico.createdAt,
       updatedAt: medico.updatedAt
     });

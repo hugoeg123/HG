@@ -63,7 +63,25 @@ router.put(
     body('curriculo_url')
       .optional({ checkFalsy: true })
       .isURL({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
-      .withMessage('URL do currículo inválida')
+      .withMessage('URL do currículo inválida'),
+    body('public_visibility')
+      .optional()
+      .isBoolean()
+      .withMessage('Visibilidade pública deve ser booleana'),
+    // Arrays de formação e experiências
+    body('formacao').optional().isArray().withMessage('Formação deve ser um array'),
+    body('formacao.*.instituicao').optional({ checkFalsy: true }).isString().withMessage('Instituição inválida'),
+    body('formacao.*.curso').optional({ checkFalsy: true }).isString().withMessage('Curso inválido'),
+    body('formacao.*.ano_inicio').optional({ checkFalsy: true }).isString().withMessage('Ano início inválido'),
+    body('formacao.*.ano_fim').optional({ checkFalsy: true }).isString().withMessage('Ano fim inválido'),
+    body('formacao.*.descricao').optional({ checkFalsy: true }).isString().withMessage('Descrição inválida'),
+    body('experiencias').optional().isArray().withMessage('Experiências devem ser um array'),
+    body('experiencias.*.empresa').optional({ checkFalsy: true }).isString().withMessage('Empresa inválida'),
+    body('experiencias.*.cargo').optional({ checkFalsy: true }).isString().withMessage('Cargo inválido'),
+    body('experiencias.*.ano_inicio').optional({ checkFalsy: true }).isString().withMessage('Ano início inválido'),
+    body('experiencias.*.ano_fim').optional({ checkFalsy: true }).isString().withMessage('Ano fim inválido'),
+    body('experiencias.*.descricao').optional({ checkFalsy: true }).isString().withMessage('Descrição inválida'),
+    body('experiencias.*.atual').optional().isBoolean().withMessage('Campo atual deve ser booleano')
   ],
   authController.updateProfile
 );

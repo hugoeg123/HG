@@ -134,3 +134,70 @@ Ao desenvolver novos componentes:
 - **Verifique a Herança**: Antes de aplicar uma cor de fundo, verifique se o componente pai já não fornece a cor correta através da herança de `bg-theme-background` ou `bg-theme-surface`.
 
 Este guia deve ser mantido atualizado para refletir quaisquer mudanças na arquitetura de estilização.
+
+
+## 7. Conflitos de Escopo e Especificidade (Atualização)
+
+## 11. Matriz de Conflitos (Sintoma → Causa → Correção → Verificação)
+
+- Bordas aparentando branco
+  - Sintoma: contornos brancos no dark.
+  - Causa: `border` sem `border-color` explícito herda `currentColor`.
+  - Correção: `border border-theme-border` + opcional `theme-border`.
+  - Verificação: inspeção no DevTools (computed `border-color` ≠ `#fff`).
+
+- Cartões/superfícies com preenchimento incorreto
+  - Sintoma: `bg` branco puro onde deveria ser `theme-card/surface`.
+  - Causa: `.light-mode .center-pane` redefinindo tokens; uso de `bg-white` direto.
+  - Correção: usar `bg-theme-card/surface`; mover redefinições para escopos locais.
+  - Verificação: checar variáveis herdadas no container; alternar light/dark.
+
+- Halo de foco grosso/branco
+  - Sintoma: `ring` muito evidente, branco.
+  - Causa: ausência de `--ring` e defaults do Tailwind.
+  - Correção: definir `--ring` em `themes.css`; usar `ring-accent/40`; `overrides.css` suaviza.
+  - Verificação: `:focus-visible` com halo fino e matizado.
+
+- Transparências sobrepostas
+  - Sintoma: aparência “lavada” por múltiplas camadas semiopacas.
+  - Causa: empilhamento de `bg-*-opacity` sobre `theme-card`.
+  - Correção: usar uma única camada baseada em token; evitar misturar opacidades.
+  - Verificação: contraste WCAG aceitável e sem wash-out visual.
+
+- Duplicidade de tokens/variáveis
+  - Sintoma: valores divergentes entre arquivos de estilo.
+  - Causa: variáveis redefinidas em escopos amplos; semânticas paralelas.
+  - Correção: `index.css` como base; `themes.css` para acento; `overrides.css` para normalizações.
+  - Verificação: inspeção de cascata e ordem de import em `main.jsx`.
+
+- Triggers com `border-transparent`
+  - Sintoma: contorno “fantasma” quando focado.
+  - Causa: `ring` sobrepondo borda transparente.
+  - Correção: `border-transparent` + `focus:theme-border` ou custom ring.
+  - Verificação: foco visível, fino e matizado, sem “fantasmas”.
+
+- shadcn/ui usando `primary`
+  - Sintoma: `border-primary` sem integração com semântica de tema.
+  - Causa: tokens `primary` não definidos ou não utilizados.
+  - Correção: `border-theme-border` para base; `bg-accent`/`text-accent-foreground` quando ativo.
+  - Verificação: estados ativos com acento; base sempre neutra.
+
+## 12. Checklist de Auditoria Visual (por página/aba)
+
+- Bordas: garantir `border-theme-border` em containers e itens listados.
+- Preenchimentos: usar `bg-theme-card/surface`; evitar `bg-white`.
+- Foco: confirmar `--ring` e halo sutil (`ring-accent/40`).
+- Transparências: evitar múltiplas camadas; manter contraste.
+- Escopo: usar wrappers (`.profile-page`, `.edit-tab`) em correções locais.
+- Tokens: não redefinir variáveis em containers globais.
+
+## 13. Exemplos Rápidos
+
+- Card padrão
+  - `class="border border-theme-border theme-border bg-theme-card text-foreground"`
+
+- Checkbox consistente
+  - `class="border border-theme-border theme-border data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground"`
+
+- Foco sutil
+  - `class="focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"`

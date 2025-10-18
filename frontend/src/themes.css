@@ -8,6 +8,12 @@
   --accent-foreground: 0 0% 100%;  /* white foreground on accent */
   /* Legacy rgb channel (kept for backwards compatibility) */
   --accent-rgb: 20 184 166;        /* rgb(#14b8a6) */
+  
+  /* Primary tokens for components relying on `border-primary`/`bg-primary` */
+  --primary: 172 66% 40%;
+  --primary-foreground: 0 0% 100%;
+  /* Ring color used by ring utilities */
+  --ring: 172 66% 40%;
 }
 
 /* Light mode overrides */
@@ -16,4 +22,9 @@
   --accent-foreground: 0 0% 100%;  /* white foreground on accent */
   /* Legacy rgb channel (kept for backwards compatibility) */
   --accent-rgb: 59 130 246;        /* rgb(#3b82f6) */
+  
+  /* Primary + ring tokens for bright mode */
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 217 91% 60%;
 }

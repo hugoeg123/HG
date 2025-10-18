@@ -26,6 +26,24 @@ backend/
 └── sequelize-config.js # Configuração do Sequelize CLI
 ```
 
+## 🩺 Análise e Saúde do Código
+
+Uma análise profunda do backend revelou débitos técnicos e inconsistências que precisam de atenção. A documentação completa pode ser encontrada na pasta [`/docs`](../docs/) do projeto principal.
+
+**Principais Pontos de Atenção para o Backend:**
+
+1.  **❌ Ausência de Testes Automatizados:**
+    - **Problema:** Não há uma suíte de testes para o backend, o que aumenta o risco de regressões.
+    - **Ação:** Implementar uma estratégia de testes com Jest e Supertest, conforme detalhado no **[📄 Plano de Testes](./../docs/testing_strategy.md)**.
+
+2.  **⚠️ Endpoints Faltantes (IA & FHIR):**
+    - **Problema:** O frontend espera endpoints para funcionalidades de IA (`/api/ai/*`) e exportação FHIR (`/api/export/fhir/*`) que não estão implementados.
+    - **Ação:** Desenvolver os controladores e rotas necessários. Veja os detalhes em **[📄 Análise de IA](./../docs/ai_integration.md)** e **[📄 Análise de Conformidade](./../docs/security_and_compliance.md)**.
+
+3.  **⚠️ Modelos de Dados Duplicados:**
+    - **Problema:** Existem modelos de dados com conceitos sobrepostos (ex: `User`/`Medico`, `Patient`/`Paciente`), o que pode causar inconsistências.
+    - **Ação:** Planejar a refatoração e unificação desses modelos para criar um esquema de dados coeso.
+
 ## Começando
 
 1.  **Instale as dependências:**
