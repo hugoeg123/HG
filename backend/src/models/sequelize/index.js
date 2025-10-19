@@ -25,6 +25,8 @@ const Paciente = require('./Paciente')(sequelize);
 const TagDinamica = require('./TagDinamica')(sequelize);
 const Registro = require('./Registro')(sequelize);
 const SecaoRegistro = require('./SecaoRegistro')(sequelize);
+const AvailabilitySlot = require('./AvailabilitySlot')(sequelize);
+const Appointment = require('./Appointment')(sequelize);
 
 // Definir associações entre modelos legados
 
@@ -80,7 +82,10 @@ const models = {
   Paciente,
   TagDinamica,
   Registro,
-  SecaoRegistro
+  SecaoRegistro,
+  AvailabilitySlot,
+  Appointment,
+  Patient
 };
 
 // Executar associações dos novos modelos
@@ -107,5 +112,7 @@ module.exports = {
   Paciente,
   TagDinamica,
   Registro,
-  SecaoRegistro
+  SecaoRegistro,
+  AvailabilitySlot,
+  Appointment
 };
