@@ -12,16 +12,16 @@ Este diretório contém hooks customizados do React para a aplicação Health Gu
 **Propósito**: Gerenciar autenticação e estado do usuário.
 
 **Funcionalidades**:
-- Login/logout de usuários
-- Verificação de autenticação
-- Gerenciamento de tokens
-- Redirecionamento automático
+Login/logout de usuários
+Verificação de autenticação
+Gerenciamento de tokens
+Redirecionamento automático
 
-**Conectores**:
-- **Store**: Integra com `store/authStore.js`
-- **API**: Utiliza `services/api.js` para autenticação
-- **Router**: Integra com React Router para redirecionamentos
-- **Storage**: Persiste tokens no localStorage
+
+**Store**: Integra com `store/authStore.js`
+**API**: Utiliza `services/api.js` para autenticação
+**Router**: Integra com React Router para redirecionamentos
+**Storage**: Persiste tokens no localStorage
 
 **Uso**:
 ```javascript
@@ -33,14 +33,14 @@ const { user, login, logout, isAuthenticated, loading } = useAuth();
 
 **Funcionalidades**:
 - CRUD de pacientes
-- Busca e filtros
-- Paginação
-- Cache de dados
+CRUD de pacientes
+Busca e filtros
+Paginação
+Cache de dados
 
-**Conectores**:
-- **Store**: Integra com `store/patientStore.js`
-- **API**: Utiliza `services/api.js` para operações
-- **Components**: Usado em `PatientView/` components
+**Store**: Integra com `store/patientStore.js`
+**API**: Utiliza `services/api.js` para operações
+**Components**: Usado em `PatientView/` components
 
 **Uso**:
 ```javascript
@@ -59,15 +59,14 @@ const {
 **Propósito**: Gerenciar registros médicos e operações relacionadas.
 
 **Funcionalidades**:
-- CRUD de registros médicos
-- Busca por paciente
-- Filtros por data/tipo
-- Parsing de tags estruturadas
+CRUD de registros médicos
+Busca por paciente
+Filtros por data/tipo
+Parsing de tags estruturadas
 
-**Conectores**:
-- **API**: Utiliza `services/api.js` para operações
-- **Components**: Usado em `Tools/` e `PatientView/`
-- **AI**: Integra com análises de IA
+**API**: Utiliza `services/api.js` para operações
+**Components**: Usado em `Tools/` e `PatientView/`
+**AI**: Integra com análises de IA
 
 **Uso**:
 ```javascript
@@ -85,15 +84,14 @@ const {
 **Propósito**: Gerenciar conexões WebSocket para comunicação em tempo real.
 
 **Funcionalidades**:
-- Conexão/desconexão automática
-- Escuta de eventos
-- Envio de mensagens
-- Reconexão automática
+Conexão/desconexão automática
+Escuta de eventos
+Envio de mensagens
+Reconexão automática
 
-**Conectores**:
-- **Socket**: Utiliza `services/socket.js`
-- **Store**: Atualiza stores com dados em tempo real
-- **Components**: Usado para notificações e atualizações
+**Socket**: Utiliza `services/socket.js`
+**Store**: Atualiza stores com dados em tempo real
+**Components**: Usado para notificações e atualizações
 
 **Uso**:
 ```javascript
@@ -109,10 +107,10 @@ const {
 **Propósito**: Gerenciar persistência de dados no localStorage.
 
 **Funcionalidades**:
-- Leitura/escrita no localStorage
-- Serialização automática
-- Sincronização com estado
-- Limpeza automática
+Leitura/escrita no localStorage
+Serialização automática
+Sincronização com estado
+Limpeza automática
 
 **Conectores**:
 - **Store**: Persiste estado de stores

@@ -188,3 +188,46 @@
   /* Match the hover depth used by .btn-primary in light mode */
   @apply bg-blue-600/30;
 }
+
+/* 7) Native button theme styling
+ * Purpose: Apply theme-colored fills to native HTML <button> elements
+ * Scope: Only applies to buttons that don't already have specific background classes
+ * Connector: Ensures native buttons in calculators and modals match theme colors
+ * IA prompt: "Style native buttons with theme colors while preserving existing custom styles"
+ */
+/* Narrow scope: avoid icon-only buttons (any button that contains an SVG)
+   Exclude calendar-day buttons to respect agenda-specific backgrounds. */
+.light-mode button:not([class*="bg-"]):not(.btn):not([class*="button-"]):not(.calendar-day):not(:has(svg)) {
+  @apply bg-blue-600 text-white hover:bg-blue-700 transition-colors;
+}
+
+.dark-mode button:not([class*="bg-"]):not(.btn):not([class*="button-"]):not(.calendar-day):not(:has(svg)) {
+  @apply bg-emerald-600 text-white hover:bg-emerald-700 transition-colors;
+}
+
+/* For buttons that have some styling but need theme colors */
+.light-mode button.theme-button {
+  @apply bg-blue-600 text-white hover:bg-blue-700 transition-colors;
+}
+
+.dark-mode button.theme-button {
+  @apply bg-emerald-600 text-white hover:bg-emerald-700 transition-colors;
+}
+
+/* 8) Exceptions: transparent buttons with theme foreground text/icon
+ * Purpose: Allow specific native buttons to remain transparent in both modes
+ * Behavior: Text and icons are white in dark, black in light (via explicit colors)
+ */
+.light-mode button.button-exception, .light-mode .button-exception {
+  background-color: transparent !important;
+  color: #000000 !important; /* bright mode: black */
+  border-color: transparent !important;
+}
+.dark-mode button.button-exception, .dark-mode .button-exception {
+  background-color: transparent !important;
+  color: #ffffff !important; /* dark mode: white */
+  border-color: transparent !important;
+}
+/* Ensure SVG icons inherit the current text color without filling shapes */
+.button-exception svg { stroke: currentColor; }
+.button-exception svg path { stroke: currentColor; fill: none; }

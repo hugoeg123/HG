@@ -19,7 +19,9 @@ const TimeGridControls = () => {
     clearAllSlots, 
     timeSlots,
     exportData,
-    importData 
+    importData,
+    markingMode,
+    setMarkingMode,
   } = useTimeSlotStore();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,6 +113,30 @@ const TimeGridControls = () => {
               <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
             </Button>
+
+            {/* Modos de marcação */}
+            <div className="flex items-center gap-2 ml-4">
+              <Button
+                type="button"
+                variant={markingMode === 'availability' ? 'default' : 'outline'}
+                size="sm"
+                className={markingMode === 'availability' ? 'bg-blue-600 dark:bg-emerald-600 text-white' : ''}
+                onClick={() => setMarkingMode(markingMode === 'availability' ? null : 'availability')}
+                aria-pressed={markingMode === 'availability'}
+              >
+                Disponibilidade
+              </Button>
+              <Button
+                type="button"
+                variant={markingMode === 'booking' ? 'default' : 'outline'}
+                size="sm"
+                className={markingMode === 'booking' ? 'bg-blue-600 dark:bg-emerald-600 text-white' : ''}
+                onClick={() => setMarkingMode(markingMode === 'booking' ? null : 'booking')}
+                aria-pressed={markingMode === 'booking'}
+              >
+                Consulta
+              </Button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

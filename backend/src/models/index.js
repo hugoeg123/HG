@@ -13,6 +13,8 @@ const Template = require('./sequelize/Template');
 const Calculator = require('./sequelize/Calculator');
 const Alert = require('./sequelize/Alert');
 const Medico = require('./sequelize/Medico')(sequelize);
+const AvailabilitySlot = require('./sequelize/AvailabilitySlot')(sequelize);
+const Appointment = require('./sequelize/Appointment')(sequelize);
 
 module.exports = {
   User,
@@ -22,5 +24,7 @@ module.exports = {
   Template,
   Calculator,
   Alert,
-  Medico
+  Medico,
+  AvailabilitySlot,
+  Appointment
 };

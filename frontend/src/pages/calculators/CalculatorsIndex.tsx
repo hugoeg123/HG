@@ -54,7 +54,8 @@ const CalculatorsIndex: React.FC = () => {
           icon: 'text-accent',
           border: 'border-accent/30',
           hover: 'hover:border-accent/50',
-          button: 'bg-accent/20 text-foreground hover:bg-accent/40'
+          // Solid accent fill for button: blue (light) / green/teal (dark)
+          button: 'bg-accent text-accent-foreground hover:bg-accent/90'
         };
     }
   };

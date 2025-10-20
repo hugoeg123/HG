@@ -4,30 +4,12 @@ import { MapPin, Video, Home, User, Clock, AlertCircle } from 'lucide-react';
 
 const TimeGridSlot = ({ slot, isDarkMode, onClick, onDelete }) => {
   const getSlotStyle = () => {
-    const baseClasses = 'absolute rounded-md border text-xs font-medium transition-all duration-200 cursor-pointer hover:opacity-80 group';
-    
-    if (slot.status === 'booked') {
-      return `${baseClasses} ${isDarkMode 
-        ? 'bg-green-800 border-green-600 text-green-100 hover:bg-green-700' 
-        : 'bg-blue-900 border-blue-700 text-blue-100 hover:bg-blue-800'
-      }`;
-    }
-    
-    if (slot.status === 'available') {
-      return `${baseClasses} ${isDarkMode 
-        ? 'bg-teal-700 border-teal-500 text-teal-100 hover:bg-teal-600' 
-        : 'bg-blue-200 border-blue-400 text-blue-800 hover:bg-blue-300'
-      }`;
-    }
-    
-    if (slot.status === 'blocked') {
-      return `${baseClasses} ${isDarkMode 
-        ? 'bg-gray-700 border-gray-500 text-gray-300 hover:bg-gray-600' 
-        : 'bg-gray-300 border-gray-400 text-gray-600 hover:bg-gray-400'
-      }`;
-    }
-    
-    return baseClasses;
+    const statusClass =
+      slot.status === 'booked' ? 'slot-booked' :
+      slot.status === 'available' ? 'slot-available' :
+      'slot-blocked';
+    // Absolute positioning is set on the wrapper inline style
+    return `slot ${statusClass} group`;
   };
 
   const getSlotPosition = () => {

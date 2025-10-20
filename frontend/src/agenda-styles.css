@@ -1,0 +1,52 @@
+/* agenda-styles.css */
+@layer components {
+  /* Dia do calendário: altura fixa e layout */
+  .calendar-day {
+    @apply relative rounded-md text-left border transition-colors focus:outline-none overflow-hidden;
+    /* Altura fixa para uniformidade */
+    height: 6rem; /* h-24 */
+  }
+
+  /* Número do dia, grande, no canto superior direito, ocupando metade superior */
+  .day-number {
+    @apply absolute top-2 right-2 text-4xl font-bold leading-none;
+    /* Usar variável de tema para cor, compatível com dark/light */
+    color: var(--color-text-primary);
+    height: 50%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  /* Container para barras (counters) centralizadas na metade inferior */
+  .calendar-bars {
+    @apply absolute left-0 right-0 bottom-0 h-1/2 flex flex-col items-center justify-center gap-1 px-2 pb-2;
+  }
+
+  /* Barras: expandem quase toda largura sem tocar bordas */
+  .calendar-bar {
+    @apply flex items-center justify-center rounded font-medium whitespace-nowrap w-full text-center;
+    height: 1rem;       /* h-4 (um pouco menor que chips anteriores) */
+    min-width: 3.5rem;  /* garante largura mínima */
+    padding: 0 0.5rem;  /* px-2 */
+    font-size: 0.75rem; /* text-sm base reduzida */
+  }
+
+  /* Light mode cores */
+  .light-mode .calendar-day.in-month { @apply bg-theme-card border-theme-border hover:border-blue-400; }
+  .light-mode .calendar-day.out-month { @apply bg-theme-card border-transparent opacity-60; }
+  .light-mode .calendar-day.is-selected { @apply ring-1 ring-blue-500 border-blue-600 bg-blue-500/10; }
+  .light-mode .calendar-day.is-today { @apply shadow-inner; }
+
+  .light-mode .bar-scheduled { @apply bg-blue-900 text-blue-100; }
+  .light-mode .bar-available { @apply bg-blue-100 text-blue-900; }
+
+  /* Dark mode cores */
+  .dark-mode .calendar-day.in-month { @apply bg-theme-background border-theme-border hover:border-emerald-400; }
+  .dark-mode .calendar-day.out-month { @apply bg-theme-background border-transparent opacity-60; }
+  .dark-mode .calendar-day.is-selected { @apply ring-1 ring-emerald-500 border-emerald-600 bg-emerald-500/10; }
+  .dark-mode .calendar-day.is-today { @apply shadow-inner; }
+
+  .dark-mode .bar-scheduled { @apply bg-emerald-900 text-emerald-100; }
+  .dark-mode .bar-available { @apply bg-emerald-100 text-emerald-900; }
+}

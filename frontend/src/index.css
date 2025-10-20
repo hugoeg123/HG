@@ -1,8 +1,9 @@
 @import './themes.css';
+@import './slot-styles.css';
+@import './agenda-styles.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 
 :root {

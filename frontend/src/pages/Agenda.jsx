@@ -12,6 +12,8 @@ import {
 // Importar novos componentes
 import WeeklyTimeGrid from '../components/WeeklyTimeGrid';
 import TimeSlotConfig from '../components/TimeSlotConfig';
+import TimeGridHeader from '../components/TimeGridHeader';
+import TimeGridControls from '../components/TimeGridControls';
 
 import { useTimeSlotStore } from '../stores/timeSlotStore';
 
@@ -92,6 +94,7 @@ const Agenda = () => {
   const days = useMemo(() => buildMonthDays(currentMonth), [currentMonth]);
   const todayKey = formatDateKey(new Date());
   const selectedKey = formatDateKey(selectedDate);
+  const arrowColorClass = isDarkMode ? 'text-emerald-500' : 'text-blue-600';
 
 
 
@@ -147,9 +150,25 @@ const Agenda = () => {
               <CalendarIcon className="w-5 h-5" />
               <span>{monthLabel(currentMonth)}</span>
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>Anterior</Button>
-              <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>Próximo</Button>
+            <div className="flex items-center gap-1 px-1 rounded-md border border-theme-border bg-theme-hover/40">
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Mês anterior"
+                onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                className="hover:bg-theme-hover h-8 w-8 p-0 rounded"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Próximo mês"
+                onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                className="hover:bg-theme-hover h-8 w-8 p-0 rounded"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
@@ -163,27 +182,37 @@ const Agenda = () => {
                 const key = formatDateKey(date);
                 const isToday = key === todayKey;
                 const isSelected = key === selectedKey;
-                const slotsCount = getSlotsForDay(date).length;
+                const slots = getSlotsForDay(date);
+                const availableCount = slots.filter(s => s.status === 'available').length;
+                const bookedCount = slots.filter(s => s.status === 'booked').length;
                 return (
                   <button
                     key={idx}
                     onClick={() => { setSelectedDate(date); setSelectedWeek(date); }}
                     className={[
-                      'relative rounded-md p-2 sm:p-3 text-left border transition-colors focus:outline-none focus:ring-1 focus:ring-teal-500',
-                      inMonth ? 'bg-theme-surface border-theme-border' : 'bg-theme-background border-transparent opacity-60',
-                      isSelected ? (isDarkMode ? 'ring-2 ring-teal-400' : 'ring-2 ring-blue-600') : '',
-                      isToday ? 'shadow-inner' : ''
+                      'calendar-day',
+                      inMonth ? 'in-month' : 'out-month',
+                      isSelected ? 'is-selected' : '',
+                      isToday ? 'is-today' : ''
                     ].join(' ')}
+                    style={{ borderWidth: isSelected ? '3px' : '1px' }}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm sm:text-base font-medium text-foreground">
+                    <div className="relative w-full h-full">
+                      <span className="day-number">
                         {date.getDate()}
                       </span>
-                      {slotsCount > 0 && (
-                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                          {slotsCount} disponível(is)
-                        </Badge>
-                      )}
+                      <div className="calendar-bars">
+                        {bookedCount > 0 && (
+                          <div className="calendar-bar bar-scheduled">
+                            {bookedCount} {bookedCount === 1 ? 'agendado' : 'agendados'}
+                          </div>
+                        )}
+                        {availableCount > 0 && (
+                          <div className="calendar-bar bar-available">
+                            {availableCount} {availableCount === 1 ? 'livre' : 'livres'}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </button>
                 );
@@ -192,19 +221,41 @@ const Agenda = () => {
           </CardContent>
         </Card>
 
-        <div className="flex items-start justify-center gap-2 mb-4">
-          <Button variant="ghost" size="sm" onClick={gotoPrevDay}>
-            <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-          </Button>
-          <div className="w-full max-w-xl">
-            <TimeSlotConfig selectedDate={selectedDate} />
+        <div className="flex items-start justify-center mb-4">
+          <div className="relative w-full max-w-[680px]">
+            <div className="absolute inset-y-0 left-0 w-12 flex">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={gotoPrevDay}
+                  aria-label="Dia anterior"
+                  className="w-full h-full p-0 rounded-md bg-transparent hover:bg-theme-hover/10 flex items-center justify-center"
+                >
+                  <ChevronLeft className={`h-8 w-8 ${arrowColorClass}`} />
+                </Button>
+              </div>
+            <div className="absolute inset-y-0 right-0 w-12 flex">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={gotoNextDay}
+                  aria-label="Próximo dia"
+                  className="w-full h-full p-0 rounded-md bg-transparent hover:bg-theme-hover/10 flex items-center justify-center"
+                >
+                  <ChevronRight className={`h-8 w-8 ${arrowColorClass}`} />
+                </Button>
+              </div>
+            <div className="px-14">
+                <TimeSlotConfig selectedDate={selectedDate} />
+            </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={gotoNextDay}>
-            Próximo <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
         </div>
 
-        <WeeklyTimeGrid selectedDate={selectedDate} />
+        <div className="space-y-3">
+          <TimeGridHeader />
+          <TimeGridControls />
+          <WeeklyTimeGrid selectedDate={selectedDate} />
+        </div>
       </div>
     </div>
   );

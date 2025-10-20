@@ -272,25 +272,56 @@ const Profile = () => {
    * Carregar perfil da API
    * Hook: Busca dados do perfil no backend
    */
-  const loadProfile = useCallback(async (abortSignal) => {
-    try {
-      setLoading(true);
-      const response = await throttledApi.get('/auth/profile', { signal: abortSignal });
-      const profileData = mapApiDataToProfile(response.data);
-      setProfile(profileData);
-      setEditProfile(profileData);
-    } catch (error) {
-      console.error('Erro ao carregar perfil:', error);
-      toast.error('Erro ao carregar perfil');
-      // Usar dados do usuário como fallback
+  const loadProfile = useCallback((abortSignal) => {
+    setLoading(true);
+    const LOAD_TIMEOUT_MS = 6000;
+    let timeoutId;
+    let fallbackApplied = false;
+  
+    const requestPromise = throttledApi.get('/auth/profile', { signal: abortSignal });
+  
+    const applyFallback = () => {
+      if (fallbackApplied) return;
+      fallbackApplied = true;
+      console.warn('Perfil: timeout ao carregar, aplicando fallback local');
+      toast.warning('Servidor lento. Exibindo perfil local temporariamente.');
       if (user) {
         const fallbackProfile = mapApiDataToProfile(user);
         setProfile(fallbackProfile);
         setEditProfile(fallbackProfile);
       }
-    } finally {
       setLoading(false);
-    }
+    };
+  
+    timeoutId = setTimeout(applyFallback, LOAD_TIMEOUT_MS);
+  
+    requestPromise
+      .then((response) => {
+        clearTimeout(timeoutId);
+        const profileData = mapApiDataToProfile(response.data);
+        setProfile(profileData);
+        setEditProfile(profileData);
+        if (!fallbackApplied) {
+          setLoading(false);
+        } else {
+          console.log('Perfil: dados da API chegaram após fallback; atualizando silenciosamente');
+        }
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        console.error('Erro ao carregar perfil:', error);
+        if (!fallbackApplied) {
+          toast.error('Erro ao carregar perfil');
+          if (user) {
+            const fallbackProfile = mapApiDataToProfile(user);
+            setProfile(fallbackProfile);
+            setEditProfile(fallbackProfile);
+          }
+          setLoading(false);
+        }
+      });
+  
+    return requestPromise;
   }, [user, mapApiDataToProfile]);
   
   // Carregar perfil ao montar o componente (evitar chamada duplicada no StrictMode)

@@ -84,7 +84,7 @@ Uma análise profunda do backend revelou débitos técnicos e inconsistências q
     npm start
     ```
 
-    A API estará disponível em `http://localhost:5000/api`.
+    A API estará disponível em `http://localhost:5001/api`.
 
 ## Ganchos de Integração
 
@@ -118,6 +118,6 @@ Uma análise profunda do backend revelou débitos técnicos e inconsistências q
 - **Portas permitidas atualmente**: 3000, 3001, 3002, 3003, 3004, 3005
 
 ### Erro 404 em Endpoints
-- Verifique se o servidor está rodando: `http://localhost:5000/api/health`
+- Verifique se o servidor está rodando: acesse `http://localhost:5001/api/health`.
 - Confirme se a rota existe em `src/routes/`
 - Verifique se o controlador está sendo importado corretamente

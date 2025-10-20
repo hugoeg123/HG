@@ -88,6 +88,16 @@ Prefixos conforme `backend/src/routes/index.js`:
 - `/ai`
   - `GET /` — placeholder funcional
 
+- `/agenda`
+  - `GET /slots` — lista slots do médico (query: `start`, `end`, `status`, `modality`)
+  - `POST /slots` — cria slot (body: `start_time`, `end_time`, `modality?`, `location?`, `notes?`)
+  - `PUT /slots/:id` — atualiza slot (body: `start_time?`, `end_time?`, `status?`, `modality?`, `location?`, `notes?`)
+  - `DELETE /slots/:id` — remove slot
+  - `GET /appointments` — lista agendamentos (query: `status?`, `patientId?`, `start?`, `end?`)
+  - `POST /appointments` — cria agendamento (body: `slot_id`, `patient_id`, `notes?`)
+  - `PUT /appointments/:id` — atualiza agendamento (body: `status?`, `notes?`)
+  - `DELETE /appointments/:id` — remove agendamento
+
 - `GET /health` — health check
 
 ## Controllers

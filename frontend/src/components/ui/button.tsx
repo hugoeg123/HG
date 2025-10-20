@@ -22,14 +22,14 @@ const buttonVariants = cva(
         destructive:
           "bg-theme-card text-muted-foreground hover:bg-destructive/20 hover:text-destructive border-theme-border hover:border-destructive/30 focus-visible:ring-destructive/50",
         outline:
-          // Themed outline: blue on light, green/teal on dark via accent token
-          "bg-transparent text-accent border-accent/40 hover:bg-accent/10 hover:text-accent focus-visible:ring-accent/50",
+          // Filled accent for outline variant: blue on light, green/teal on dark
+          "bg-accent text-accent-foreground hover:bg-accent/90 border-accent hover:border-accent focus-visible:ring-accent/50",
         secondary:
           "bg-theme-card text-muted-foreground hover:bg-accent/20 hover:text-accent border-theme-border hover:border-accent/40 focus-visible:ring-accent/50",
-        ghost: "bg-transparent text-muted-foreground hover:bg-theme-surface hover:text-foreground border-transparent",
+        ghost: "bg-transparent text-foreground hover:bg-theme-surface hover:text-foreground border-transparent focus-visible:ring-accent/50",
         link: "bg-transparent text-accent underline-offset-4 hover:underline border-transparent",
-        // Primary: translucent accent fill (blue on bright, green on dark)
-        primary: "bg-accent/20 hover:bg-accent/30 text-accent border-accent/30 hover:border-accent focus-visible:ring-accent/50"
+        // Primary: solid accent fill (blue on bright, green/teal on dark)
+        primary: "bg-accent text-accent-foreground hover:bg-accent/90 border-accent hover:border-accent focus-visible:ring-accent/50"
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -1,0 +1,48 @@
+/* slot-styles.css */
+@layer components {
+  .slot {
+    @apply relative rounded-md border box-border text-xs font-medium transition-all duration-200 cursor-pointer hover:opacity-80;
+  }
+
+  /* Estilos para slots agendados */
+  .slot-booked {
+    @apply 
+      bg-blue-900 border-blue-700 text-blue-100;
+  }
+
+  .dark-mode .slot-booked {
+    @apply 
+      bg-green-800 border-green-600 text-green-100;
+  }
+
+  /* Estilos para slots disponíveis */
+  .slot-available {
+    @apply 
+      bg-blue-200 border-blue-400 text-blue-800 hover:bg-blue-300;
+  }
+
+  .dark-mode .slot-available {
+    @apply 
+      bg-green-300 border-green-500 text-green-900 hover:bg-green-400;
+  }
+
+  /* Estilos para slots bloqueados */
+  .slot-blocked {
+    @apply 
+      bg-gray-300 border-gray-400 text-gray-600;
+  }
+
+  .dark-mode .slot-blocked {
+    @apply 
+      bg-gray-700 border-gray-500 text-gray-300;
+  }
+
+  /* Estilos para slots selecionados */
+  .slot-selected {
+    @apply ring-2 ring-blue-500 shadow-md;
+  }
+
+  .dark-mode .slot-selected {
+    @apply ring-2 ring-emerald-500 shadow-md;
+  }
+}

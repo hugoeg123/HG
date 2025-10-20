@@ -1,12 +1,15 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
+import { useThemeStore } from '@/store/themeStore.js';
 import { format, startOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useTimeSlotStore } from '@/stores/timeSlotStore.js';
 
 const TimeGridHeader = () => {
   const { selectedWeek, setSelectedWeek, viewMode, setViewMode } = useTimeSlotStore();
+  const { isDarkMode } = useThemeStore();
+  const arrowColorClass = isDarkMode ? 'text-emerald-500' : 'text-blue-600';
   
   const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 }); // Segunda-feira
   const weekEnd = new Date(weekStart);
@@ -62,34 +65,38 @@ const TimeGridHeader = () => {
       {/* Controles da semana */}
       <div className="flex items-center justify-between p-4 border-b border-theme-border">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handlePreviousWeek}
-            className="hover:bg-theme-hover"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleToday}
-            className="hover:bg-theme-hover"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Hoje
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleNextWeek}
-            className="hover:bg-theme-hover"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+          <div className="flex items-center gap-2">
+             <Button
+               variant="ghost"
+               size="sm"
+               onClick={handlePreviousWeek}
+               aria-label="Semana anterior"
+               className="hover:bg-theme-hover/20 h-9 w-9 p-0 rounded flex items-center justify-center"
+             >
+               <ChevronLeft className={`h-6 w-6 ${arrowColorClass}`} />
+             </Button>
+             
+             <Button
+               variant="ghost"
+               size="sm"
+               onClick={handleToday}
+               aria-label="Hoje"
+               className="hover:bg-theme-hover/20 h-9 w-9 p-0 rounded"
+             >
+               <Calendar className="h-6 w-6" />
+             </Button>
+             
+             <Button
+               variant="ghost"
+               size="sm"
+               onClick={handleNextWeek}
+               aria-label="Próxima semana"
+               className="hover:bg-theme-hover/20 h-9 w-9 p-0 rounded flex items-center justify-center"
+             >
+               <ChevronRight className={`h-6 w-6 ${arrowColorClass}`} />
+             </Button>
+           </div>
+         </div>
 
         <div className="text-center">
           <h3 className="text-lg font-semibold text-theme-text-primary">

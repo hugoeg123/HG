@@ -618,7 +618,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </h1>
                   <button
                     onClick={handleEditName}
-                    className="p-1 sm:p-2 text-gray-400 hover:text-teal-400 transition-colors"
+                    className="button-exception p-1 sm:p-2 text-foreground hover:text-foreground transition-colors"
                     title="Editar nome"
                   >
                     <Edit2 size={14} className="sm:w-4 sm:h-4" />
@@ -661,7 +661,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                   </h2>
                   <button
                     onClick={handleEditBirthDate}
-                    className="p-1 text-gray-400 hover:text-teal-400 transition-colors"
+                    className="button-exception p-1 text-foreground hover:text-foreground transition-colors"
                     title="Editar data de nascimento"
                   >
                     <Edit2 size={16} />

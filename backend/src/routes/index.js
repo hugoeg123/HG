@@ -17,14 +17,9 @@ const calculatorRoutes = require('./calculator.routes');
 const dynamicCalculatorRoutes = require('./dynamic-calculator.routes.js');
 const alertRoutes = require('./alert.routes');
 const fileRoutes = require('./file.routes');
+const agendaRoutes = require('./agenda.routes');
 
-// Middleware para logging de requests (desenvolvimento)
-if (process.env.NODE_ENV === 'development') {
-  router.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
-    next();
-  });
-}
+// Logging centralizado via morgan em src/index.js; removido logger duplicado nas rotas.
 
 // Middleware para headers de resposta padrão
 router.use((req, res, next) => {
@@ -33,9 +28,18 @@ router.use((req, res, next) => {
 });
 
 // Rota de health check
-router.get('/health', (req, res) => {
+const { sequelize } = require('../models/sequelize');
+router.get('/health', async (req, res) => {
+  let db = 'unknown';
+  try {
+    await sequelize.authenticate();
+    db = 'connected';
+  } catch (e) {
+    db = 'disconnected';
+  }
   res.json({
     status: 'ok',
+    db,
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0',
     environment: process.env.NODE_ENV || 'development'
@@ -52,6 +56,7 @@ router.use('/calculators', calculatorRoutes);
 router.use('/dynamic-calculators', dynamicCalculatorRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/files', fileRoutes);
+router.use('/agenda', agendaRoutes);
 
 // Rota 404 para endpoints não encontrados
 router.use('*', (req, res) => {

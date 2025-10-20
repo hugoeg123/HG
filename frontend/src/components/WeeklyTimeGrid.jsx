@@ -96,7 +96,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     ? (timeRanges[selectedDayOfWeek] || []).filter(r => r.isActive !== false)
     : [];
   // Fonte única de verdade para passo da grade
-  const GRID_STEP_MINUTES = Math.min(Math.max((availabilitySettings?.interval || 15), 5), 60);
+  const GRID_STEP_MINUTES = Math.min(Math.max((availabilitySettings?.timeStep || 15), 5), 60);
   const rowHeight = GRID_STEP_MINUTES * PIXELS_PER_MINUTE // Removido Math.round para precisão exata;
   const TIME_COL_PX = 76;
   const GAP_PX = 1;
@@ -130,34 +130,14 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     }
     return Math.max(GRID_START_MINUTES, Math.min(GRID_END_MINUTES, snapped));
   };
-  const getSlotStyle = (slot, isDarkMode, isSelected) => {
-    const baseClasses = 'relative rounded-md border box-border text-xs font-medium transition-all duration-200 cursor-pointer hover:opacity-80';
-    let statusClasses = '';
-    
-    if (slot.status === 'booked') {
-      statusClasses = `${isDarkMode 
-        ? 'bg-green-800 border-green-600 text-green-100' 
-        : 'bg-blue-900 border-blue-700 text-blue-100'
-      }`;
-    } else if (slot.status === 'available') {
-      statusClasses = `${isDarkMode 
-        ? 'bg-green-300 border-green-500 text-green-900 hover:bg-green-400' 
-        : 'bg-blue-200 border-blue-400 text-blue-800 hover:bg-blue-300'
-      }`;
-    } else if (slot.status === 'blocked') {
-      statusClasses = `${isDarkMode 
-        ? 'bg-gray-700 border-gray-500 text-gray-300' 
-        : 'bg-gray-300 border-gray-400 text-gray-600'
-      }`;
-    }
-
-    const selectedClasses = isSelected
-      ? (isDarkMode
-          ? 'ring-2 ring-emerald-500 shadow-md'
-          : 'ring-2 ring-blue-500 shadow-md')
-      : '';
-
-    return `${baseClasses} ${statusClasses} ${selectedClasses}`.trim();
+  const getSlotStyle = (slot, isSelected) => {
+    const base = 'slot';
+    const statusClass =
+      slot.status === 'booked' ? 'slot-booked' :
+      slot.status === 'available' ? 'slot-available' :
+      'slot-blocked';
+    const selectedClass = isSelected ? 'slot-selected' : '';
+    return `${base} ${statusClass} ${selectedClass}`.trim();
   };
 
   const timeToMinutes = (time) => {
@@ -372,76 +352,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
 
   return (
     <Card className="w-full bg-theme-card border-theme-border">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-theme-text">Grade Semanal de Horários</CardTitle>
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col items-start gap-1">
-            <button
-              type="button"
-              role="checkbox"
-              aria-label="Marcar disponibilidade"
-              aria-checked={markingMode === 'availability'}
-              className={`flex items-center gap-2 px-2 py-1 text-xs rounded border transition-colors whitespace-nowrap
-                ${markingMode === 'availability'
-                ? (isDarkModeUI
-                    ? 'border-emerald-600 bg-theme-card text-theme-text ring-1 ring-emerald-500'
-                    : 'border-blue-600 bg-theme-card text-theme-text ring-1 ring-blue-500')
-                : 'border-theme-border bg-theme-card text-theme-text hover:bg-theme-surface'}`}
-              onClick={() => {
-                setMarkingMode(markingMode === 'availability' ? null : 'availability');
-              }}
-            >
-              <span
-                className={`inline-flex h-3 w-3 items-center justify-center border rounded-sm text-[8px]
-                  ${markingMode === 'availability'
-                    ? (isDarkModeUI
-                        ? 'bg-emerald-600 border-emerald-600 text-white'
-                        : 'bg-blue-600 border-blue-600 text-white')
-                    : 'bg-transparent border-theme-border text-transparent'}`}
-                aria-hidden="true"
-              >
-                {markingMode === 'availability' ? '✓' : ''}
-              </span>
-              <span>Disponibilidade</span>
-            </button>
-            
-            <button
-              type="button"
-              role="checkbox"
-              aria-label="Marcar consulta"
-              aria-checked={markingMode === 'booking'}
-              className={`flex items-center gap-2 px-2 py-1 text-xs rounded border transition-colors whitespace-nowrap
-                ${markingMode === 'booking'
-                ? (isDarkModeUI
-                    ? 'border-emerald-600 bg-theme-card text-theme-text ring-1 ring-emerald-500'
-                    : 'border-blue-600 bg-theme-card text-theme-text ring-1 ring-blue-500')
-                : 'border-theme-border bg-theme-card text-theme-text hover:bg-theme-surface'}`}
-              onClick={() => {
-                setMarkingMode(markingMode === 'booking' ? null : 'booking');
-              }}
-            >
-              <span
-                className={`inline-flex h-3 w-3 items-center justify-center border rounded-sm text-[8px]
-                  ${markingMode === 'booking'
-                    ? (isDarkModeUI
-                        ? 'bg-emerald-600 border-emerald-600 text-white'
-                        : 'bg-blue-600 border-blue-600 text-white')
-                    : 'bg-transparent border-theme-border text-transparent'}`}
-                aria-hidden="true"
-              >
-                {markingMode === 'booking' ? '✓' : ''}
-              </span>
-              <span>Consulta</span>
-            </button>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-          >
-            Atualizar semana
-          </Button>
-        </div>
-      </CardHeader>
+
       <CardContent>
         <div 
           ref={gridRef}
@@ -450,23 +361,6 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {/* Cabeçalhos */}
-          <div 
-            ref={headerRef}
-            className="grid gap-px bg-theme-border"
-            style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: `${GAP_PX}px` }}
-          >
-            <div className="bg-theme-surface p-2 text-center text-sm font-medium text-theme-text">Horários</div>
-            {weekDays.map((day, index) => (
-              <div 
-                key={index}
-                ref={(el) => (dayHeaderRefs.current[index] = el)}
-                className="bg-theme-surface p-2 text-center text-sm font-medium text-theme-text"
-              >
-                {formatWeekDay(day)}
-              </div>
-            ))}
-          </div>
 
           {/* Linhas de vértice por step */}
           <div className="pointer-events-none absolute right-0" style={{ top: `${getOverlayOffsetTop()}px`, left: `${TIME_COL_PX + GAP_PX}px` }}>
@@ -555,31 +449,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                   bottom: 0,
                 }}
               >
-                {weekDays.map((day, dayIndex) => {
-                  const slots = getSlotsForDay(day);
-                  return slots.map((slot) => {
-                    const pos = getSlotGridPos(slot);
-                    const calculatedTop = (pos.sLine - 1) * rowHeight;
-                    const calculatedHeight = (pos.eLine - pos.sLine) * rowHeight;
-                    
-                    return (
-                      <div
-                        key={`marker-${slot.id}`}
-                        className="absolute border-2 border-blue-500 bg-blue-200 opacity-50"
-                        style={{
-                          left: `${TIME_COL_PX + GAP_PX + dayIndex * (100/7)}%`,
-                          width: `${100/7}%`,
-                          top: `${calculatedTop}px`,
-                          height: `${calculatedHeight}px`,
-                        }}
-                      >
-                        <div className="text-blue-800 text-xs font-bold p-1">
-                          {slot.startTime} → {slot.endTime}
-                        </div>
-                      </div>
-                    );
-                  });
-                })}
+                {/* Marcadores de debug removidos para evitar conflito visual com slots reais */}
               </div>
             </>
           )}
@@ -607,7 +477,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                 return (
                   <div
                     key={slot.id}
-                    className={`${getSlotStyle(slot, isDarkMode, isSelected)} pointer-events-auto`}
+                    className={`${getSlotStyle(slot, isSelected)} pointer-events-auto`}
                     style={{
                       gridColumn: dayIndex + 2, // 1 = horários, 2..8 = dias
                       gridRow: `${pos.sLine} / ${pos.eLine}`

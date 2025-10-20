@@ -12,6 +12,7 @@ const morgan = require('morgan');
 const http = require('http');
 const socketIo = require('socket.io');
 const dotenv = require('dotenv');
+const agendaRoutes = require('./routes/agenda.routes');
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -68,6 +69,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/agenda', agendaRoutes);
 
 // Rota de saúde
 app.get('/health', (req, res) => {
@@ -97,7 +99,12 @@ async function startServer() {
     });
   } catch (err) {
     console.error('Erro ao conectar ao PostgreSQL:', err.message);
-    process.exit(1);
+    console.error('⚠️ Iniciando servidor sem banco de dados (modo degradado).');
+
+    const PORT = process.env.PORT || 5001;
+    server.listen(PORT, () => {
+      console.log(`Servidor rodando na porta ${PORT} (DB offline)`);
+    });
   }
 }
 

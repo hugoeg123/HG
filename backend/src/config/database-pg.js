@@ -14,8 +14,12 @@ dotenv.config();
 
 // Verificar se as variáveis do banco de dados estão definidas
 if (!process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_USER) {
-  console.error('Erro: Variáveis de banco de dados (DB_HOST, DB_NAME, DB_USER) não estão definidas no arquivo .env');
-  process.exit(1);
+  console.warn('⚠️ Variáveis de banco de dados ausentes; usando configuração de desenvolvimento padrão e permitindo modo degradado.');
+  process.env.DB_HOST = process.env.DB_HOST || 'localhost';
+  process.env.DB_PORT = process.env.DB_PORT || '5432';
+  process.env.DB_NAME = process.env.DB_NAME || 'health_guardian';
+  process.env.DB_USER = process.env.DB_USER || 'postgres';
+  process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'postgres';
 }
 
 // Opções de conexão

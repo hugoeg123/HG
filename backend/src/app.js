@@ -332,7 +332,16 @@ const startServer = async () => {
     
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);
-    process.exit(1);
+    console.error('⚠️ Iniciando servidor sem banco de dados (modo degradado).');
+
+    const PORT = process.env.PORT || 5001;
+    const server = createServer(app);
+
+    server.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT} (DB offline)`);
+      console.log(`🔗 API: http://localhost:${PORT}/api`);
+      console.log(`❤️  Health: http://localhost:${PORT}/api/health`);
+    });
   }
 };
 
