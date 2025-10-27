@@ -211,7 +211,10 @@ export const useToast = () => {
  * Utility function for API error handling
  */
 export const handleApiError = (error, toast) => {
-  console.error('API Error:', error);
+  const DEBUG_API = Boolean(import.meta.env.VITE_DEBUG_API);
+  if (DEBUG_API && error?.response?.status !== 401) {
+    console.error('API Error:', error);
+  }
   
   if (error.response) {
     const { status, data } = error.response;
@@ -248,7 +251,7 @@ export const handleApiError = (error, toast) => {
     });
   } else {
     toast.error('Erro inesperado', {
-      description: error.message || 'Algo deu errado'
+      description: error.message
     });
   }
 };

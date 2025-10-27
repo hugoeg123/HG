@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useTimeSlotStore } from '../stores/timeSlotStore';
+import { useThemeStore } from '../store/themeStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Trash2, Clock, MapPin, Video, Home, Save as SaveIcon } from 'lucide-react';
+
 import { Badge } from '../components/ui/badge';
 
 const TimeSlotConfig = ({ selectedDate }) => {
   const { timeRanges, addTimeRange, removeTimeRange, generateSlotsFromRanges, createSlotsFromRangeInBackend } = useTimeSlotStore();
+  const { isDarkMode } = useThemeStore();
   
   const dayId = selectedDate ? selectedDate.getDay() : new Date().getDay();
   const selectedLabel = selectedDate ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dia selecionado';
@@ -35,9 +37,9 @@ const TimeSlotConfig = ({ selectedDate }) => {
   ];
 
   const modalityOptions = [
-    { id: 'presencial', label: 'Presencial', icon: MapPin, color: 'text-blue-600' },
-    { id: 'telemedicina', label: 'Telemedicina', icon: Video, color: 'text-green-600' },
-    { id: 'domiciliar', label: 'Domiciliar', icon: Home, color: 'text-purple-600' }
+    { id: 'presencial', label: 'Presencial' },
+    { id: 'telemedicina', label: 'Telemedicina' },
+    { id: 'domiciliar', label: 'Domiciliar' }
   ];
 
   const durationOptions = [15, 30, 45, 60, 90, 120, 180];
@@ -102,7 +104,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
   };
 
   return (
-    <Card className="w-full bg-theme-card border-theme-border">
+    <Card className={`w-full border-transparent ${isDarkMode ? 'bg-theme-card' : 'bg-[#F3F3F3]'}`}>
       <CardHeader>
         <CardTitle className="text-theme-text">Configuração de Faixas Horárias</CardTitle>
         <p className="text-sm text-theme-text opacity-70">
@@ -115,14 +117,14 @@ const TimeSlotConfig = ({ selectedDate }) => {
           const totalHours = getTotalHours(dayRanges);
           
           return (
-            <div key={day.id} className="border border-theme-border rounded-lg p-4">
+            <div key={day.id} className="border border-transparent rounded-lg p-4">
               <div 
                 className="flex items-center justify-between cursor-pointer hover:bg-theme-surface p-2 rounded transition-colors"
                 onClick={() => toggleDay(day.id)}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-8 h-8 bg-theme-surface rounded-full">
-                    <span className="text-sm font-medium text-theme-text">
+                    <span className={`text-sm font-medium ${isDarkMode ? 'text-theme-text' : 'text-black'}`}>
                       {day.short}
                     </span>
                   </div>
@@ -147,7 +149,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                       toggleDay(day.id);
                     }}
                   >
-                    <Plus className="h-4 w-4" />
+                    Abrir
                   </Button>
                 </div>
               </div>
@@ -162,8 +164,8 @@ const TimeSlotConfig = ({ selectedDate }) => {
                         <div key={range.id} className="flex items-center justify-between p-3 bg-theme-surface rounded-lg">
                           <div className="flex items-center gap-4 text-sm">
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-theme-text opacity-70" />
-                              <span className="font-mono text-theme-text">
+
+                              <span className={`font-mono ${isDarkMode ? 'text-theme-text' : 'text-black'}`}>
                                 {formatTime(range.startTime)} - {formatTime(range.endTime)}
                               </span>
                             </div>
@@ -177,7 +179,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                                 const Icon = option.icon;
                                 return (
                                   <Badge key={mod} variant="secondary" className="text-xs">
-                                    <Icon className={`h-3 w-3 mr-1 ${option.color}`} />
+  
                                     {option.label.substring(0, 3)}
                                   </Badge>
                                 );
@@ -190,7 +192,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                             onClick={() => handleRemoveRange(day.id, range.id)}
                             className="text-red-500 hover:text-red-700"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            Remover
                           </Button>
                         </div>
                       ))}
@@ -286,8 +288,8 @@ const TimeSlotConfig = ({ selectedDate }) => {
                                 onChange={() => {}} // Handled by parent click
                                 className="border-theme-border"
                               />
-                              <Icon className={`h-4 w-4 ${isSelected ? 'text-white' : option.color}`} />
-                              <span className={`text-sm ${isSelected ? 'text-white' : 'text-theme-text'}`}>
+
+                              <span className={`text-sm ${isDarkMode ? (isSelected ? 'text-white' : 'text-theme-text') : 'text-black'}`}>
                                 {option.label}
                               </span>
                             </div>
@@ -301,7 +303,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                         onClick={() => handleAddRange(day.id)}
                         className="flex-1"
                       >
-                        <SaveIcon className="h-4 w-4 mr-2" />
+
                         Salvar
                       </Button>
                       <Button

@@ -25,10 +25,19 @@ O Health Guardian é uma solução completa de EMR que oferece:
 
 - **Gestão de Pacientes**: Cadastro, histórico médico e acompanhamento
 - **Registros Médicos**: Anamnese, exames, prescrições e evoluções
+- **Sistema de Agenda Médica**: Grade de horários inteligente com drag-and-drop
 - **Calculadoras Médicas**: Mais de 50 calculadoras especializadas
 - **Dashboard Inteligente**: Visualização de dados e métricas
 - **Integração com IA**: Assistente para análise de registros
 - **Exportação FHIR**: Compatibilidade com padrões internacionais
+
+### 🆕 Novidades da Versão 1.0.0 - ComAgendaMedicaV1
+
+- **Sistema de Agenda Completo**: Grade temporal com visualização semanal centrada
+- **Criação Inteligente de Slots**: Drag-and-drop com configuração de duração e intervalos
+- **Sincronização Bidirecional**: Integração em tempo real entre frontend e backend
+- **Múltiplas Modalidades**: Suporte a consultas presenciais, telemedicina e domiciliares
+- **Validação de Conflitos**: Detecção automática de sobreposições de horários
 
 ## 🏗️ Arquitetura do Sistema
 

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Plus, Settings, Download, Upload, Trash2, RefreshCw, Filter, Search, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button.tsx';
-import { Input } from '@/components/ui/input.tsx';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select.tsx';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
   DialogTrigger 
-} from '@/components/ui/dialog.tsx';
+} from '@/components/ui/dialog';
 import { useTimeSlotStore } from '@/stores/timeSlotStore.js';
 import { toast } from 'sonner';
 
@@ -79,8 +79,10 @@ const TimeGridControls = () => {
   const bookedSlots = timeSlots.filter(slot => slot.status === 'booked').length;
   const blockedSlots = timeSlots.filter(slot => slot.status === 'blocked').length;
 
+  const isDarkModeUI = document.documentElement.classList.contains('dark-mode');
+
   return (
-    <div className="bg-theme-card border border-theme-border rounded-lg shadow-sm p-4">
+    <div className={`${isDarkModeUI ? 'bg-theme-card' : 'bg-[#DDDDDD]'} border border-theme-border rounded-lg shadow-sm p-4`}>
       <div className="flex flex-col gap-4">
         {/* Primeira linha - Ações principais */}
         <div className="flex items-center justify-between">

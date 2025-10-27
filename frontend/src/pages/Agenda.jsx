@@ -91,6 +91,16 @@ const Agenda = () => {
     loadSlotsForMonth(currentMonth);
   }, [currentMonth, loadSlotsForMonth]);
 
+  // Bidirectional sync: refresh month view when slots update elsewhere
+  useEffect(() => {
+    const handler = (e) => {
+      // Recarrega os slots do mês atual; evita custo alto se necessário
+      loadSlotsForMonth(currentMonth);
+    };
+    window.addEventListener('timeSlotsUpdated', handler);
+    return () => window.removeEventListener('timeSlotsUpdated', handler);
+  }, [currentMonth, loadSlotsForMonth]);
+
   const days = useMemo(() => buildMonthDays(currentMonth), [currentMonth]);
   const todayKey = formatDateKey(new Date());
   const selectedKey = formatDateKey(selectedDate);
@@ -252,7 +262,8 @@ const Agenda = () => {
         </div>
 
         <div className="space-y-3">
-          <TimeGridHeader />
+          {/* Removido header externo; agora o cabeçalho está dentro do WeeklyTimeGrid */}
+          {/* <TimeGridHeader /> */}
           <TimeGridControls />
           <WeeklyTimeGrid selectedDate={selectedDate} />
         </div>

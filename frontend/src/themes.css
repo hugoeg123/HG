@@ -14,6 +14,16 @@
   --primary-foreground: 0 0% 100%;
   /* Ring color used by ring utilities */
   --ring: 172 66% 40%;
+
+  /* Slot legend colors (dark mode) */
+  --slot-available-bg: hsl(var(--accent) / 0.30);
+  --slot-available-border: hsl(var(--accent));
+  /* Booked: darker accent tone for contrast in dark mode */
+  --slot-booked-bg: hsl(var(--accent) / 0.65);
+  --slot-booked-border: hsl(var(--accent) / 0.85);
+  /* Blocked: neutral grays */
+  --slot-blocked-bg: #4b5563; /* gray-600 */
+  --slot-blocked-border: #6b7280; /* gray-500 */
 }
 
 /* Light mode overrides */
@@ -27,4 +37,14 @@
   --primary: 217 91% 60%;
   --primary-foreground: 0 0% 100%;
   --ring: 217 91% 60%;
+
+  /* Slot legend colors (light mode) */
+  --slot-available-bg: hsl(var(--accent) / 0.30);
+  --slot-available-border: hsl(var(--accent));
+  /* Booked: darker blues for contrast in light mode */
+  --slot-booked-bg: #1e3a8a; /* blue-900 */
+  --slot-booked-border: #1d4ed8; /* blue-600 */
+  /* Blocked: neutral grays */
+  --slot-blocked-bg: #d1d5db; /* gray-300 */
+  --slot-blocked-border: #9ca3af; /* gray-400 */
 }

@@ -202,7 +202,7 @@ api.interceptors.response.use(
     }
     
     // Log error details for debugging (excluding expected cancellations)
-    if (DEBUG_API) {
+    if (DEBUG_API && error.response?.status !== 401) {
       console.error('API Error:', {
         url: error.config?.url,
         method: error.config?.method,

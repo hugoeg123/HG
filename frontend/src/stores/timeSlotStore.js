@@ -202,6 +202,8 @@ const generateSlotsFromRange = (range, date) => {
   return slots;
 };
 
+// removed duplicate stub for createSlotsFromRangeWithSettings
+
 // Initial state
 const initialTimeRanges = {
   0: [],
@@ -241,6 +243,10 @@ export const useTimeSlotStore = create((set, get) => ({
   availabilitySettings: initialAvailabilitySettings,
   settings: initialAvailabilitySettings,
   
+  // New properties for enhanced functionality
+  appointmentDuration: 30,
+  intervalBetween: 0,
+  
   // Computed values
   getWeekDays: () => {
     const weekStart = new Date(get().selectedWeek);
@@ -252,6 +258,18 @@ export const useTimeSlotStore = create((set, get) => ({
       date.setDate(diff + i);
       return date;
     });
+  },
+  
+  // New function for centered day navigation
+  getCenteredWeekDays: () => {
+    const centerDay = new Date(get().selectedWeek);
+    const days = [];
+    for (let i = -3; i <= 3; i++) {
+      const day = new Date(centerDay);
+      day.setDate(centerDay.getDate() + i);
+      days.push(day);
+    }
+    return days;
   },
   
   getSlotsForDay: (date) => {
@@ -360,6 +378,69 @@ export const useTimeSlotStore = create((set, get) => ({
     return { success: true, slot: newSlot };
   },
   
+  // New setter functions for appointment duration and interval
+  setAppointmentDuration: (duration) => {
+    set({ appointmentDuration: duration });
+  },
+  
+  setIntervalBetween: (interval) => {
+    set({ intervalBetween: interval });
+  },
+  
+  // Enhanced slot creation with duration and interval support
+  createSlotsFromRangeWithSettings: async (day, startDate, endDate, mode) => {
+    const { appointmentDuration, intervalBetween, timeSlots } = get();
+    const totalDuration = appointmentDuration + intervalBetween;
+    const totalMinutes = (endDate.getTime() - startDate.getTime()) / (60 * 1000);
+    
+    if (totalDuration === 0) return { created: [], errors: [] };
+    
+    const count = Math.floor(totalMinutes / totalDuration);
+    let currentStart = new Date(startDate);
+    const results = { created: [], errors: [] };
+    
+    // Remove conflicting slots if booking
+    if (mode === 'booked') {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const conflictingSlots = timeSlots.filter(slot => {
+        if (slot.date !== dayStr) return false;
+        const slotStart = timeToMinutes(slot.startTime);
+        const slotEnd = timeToMinutes(slot.endTime);
+        const rangeStart = timeToMinutes(startDate.toTimeString().slice(0, 5));
+        const rangeEnd = timeToMinutes(endDate.toTimeString().slice(0, 5));
+        return (slotStart < rangeEnd && slotEnd > rangeStart);
+      });
+      conflictingSlots.forEach(slot => get().removeSlot(slot.id));
+    }
+    
+    // Create slots with proper duration and intervals
+    for (let i = 0; i < count; i++) {
+      const appointmentEnd = new Date(currentStart.getTime() + appointmentDuration * 60 * 1000);
+      
+      const slotData = {
+        date: format(day, 'yyyy-MM-dd'),
+        startTime: currentStart.toTimeString().slice(0, 5),
+        endTime: appointmentEnd.toTimeString().slice(0, 5),
+        modality: ['presencial'],
+        status: mode,
+        type: 'manual',
+        createdBy: 'doctor',
+        booking: mode === 'booked' ? { patientName: 'Paciente', createdAt: new Date().toISOString() } : null
+      };
+      
+      const result = await get().createSlotInBackend(slotData);
+      if (result.success) {
+        results.created.push(result.slot);
+      } else {
+        results.errors.push({ slot: slotData, error: result.error });
+      }
+      
+      currentStart = new Date(appointmentEnd.getTime() + intervalBetween * 60 * 1000);
+    }
+    
+    return results;
+  },
+  
   // Backend integration: load week slots and create slot immediately
   loadSlotsForMonth: async (monthDate) => {
     try {
@@ -459,6 +540,12 @@ export const useTimeSlotStore = create((set, get) => ({
         createdAt: new Date(data.createdAt || Date.now()).toISOString(),
         booking: slot.booking || null
       };
+      
+      // Trigger external update event for bidirectional sync
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', {
+        detail: { action: 'create', slot: newSlot }
+      }));
+      
       const { timeSlots } = get();
       set({ timeSlots: [...timeSlots, newSlot] });
       get().saveToLocalStorage();
@@ -505,6 +592,11 @@ export const useTimeSlotStore = create((set, get) => ({
         booking: current.booking
       };
 
+      // Trigger external update event for bidirectional sync
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', {
+        detail: { action: 'update', slot: updatedSlot }
+      }));
+
       set({ timeSlots: timeSlots.map(s => s.id === slotId ? updatedSlot : s) });
       get().saveToLocalStorage();
       return { success: true, slot: updatedSlot };
@@ -547,6 +639,15 @@ export const useTimeSlotStore = create((set, get) => ({
   
   removeSlot: (slotId) => {
     const { timeSlots } = get();
+    const removedSlot = timeSlots.find(s => s.id === slotId);
+    
+    // Trigger external update event for bidirectional sync
+    if (removedSlot) {
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', {
+        detail: { action: 'delete', slot: removedSlot }
+      }));
+    }
+    
     set({ timeSlots: timeSlots.filter(slot => slot.id !== slotId) });
     get().saveToLocalStorage();
   },
@@ -590,7 +691,9 @@ export const useTimeSlotStore = create((set, get) => ({
   },
   
   setSelectedWeek: (week) => {
-    set({ selectedWeek: week });
+    // Garantir sempre um objeto Date válido
+    const next = week instanceof Date ? week : new Date(week);
+    set({ selectedWeek: next });
   },
   
   setViewMode: (mode) => {
@@ -643,8 +746,14 @@ export const useTimeSlotStore = create((set, get) => ({
   
   // Persistence
   saveToLocalStorage: () => {
-    const { timeRanges, timeSlots, availabilitySettings } = get();
-    localStorage.setItem('agendaTimeSlots', JSON.stringify({ timeRanges, timeSlots, availabilitySettings }));
+    const { timeRanges, timeSlots, availabilitySettings, appointmentDuration, intervalBetween } = get();
+    localStorage.setItem('agendaTimeSlots', JSON.stringify({ 
+      timeRanges, 
+      timeSlots, 
+      availabilitySettings,
+      appointmentDuration,
+      intervalBetween
+    }));
   },
   
   loadFromLocalStorage: () => {
@@ -657,6 +766,8 @@ export const useTimeSlotStore = create((set, get) => ({
           timeSlots: parsed.timeSlots || [],
           availabilitySettings: parsed.availabilitySettings || initialAvailabilitySettings,
           settings: parsed.availabilitySettings || initialAvailabilitySettings,
+          appointmentDuration: parsed.appointmentDuration || 30,
+          intervalBetween: parsed.intervalBetween || 0,
         });
       }
     } catch (error) {
@@ -668,11 +779,13 @@ export const useTimeSlotStore = create((set, get) => ({
 
   // Exportar dados
   exportData: () => {
-    const { timeRanges, timeSlots, availabilitySettings } = get();
+    const { timeRanges, timeSlots, availabilitySettings, appointmentDuration, intervalBetween } = get();
     return {
       timeRanges,
       timeSlots,
       availabilitySettings,
+      appointmentDuration,
+      intervalBetween,
       exportedAt: new Date().toISOString()
     };
   },
@@ -691,7 +804,11 @@ export const useTimeSlotStore = create((set, get) => ({
       settings: data.availabilitySettings
         ? { ...get().settings, ...data.availabilitySettings }
         : get().settings,
+      appointmentDuration: data.appointmentDuration || 30,
+      intervalBetween: data.intervalBetween || 0,
     });
     return { success: true };
   },
+  
+  // Removed duplicate createSlotsFromRangeWithSettings (array signature) to retain the correct (day, startDate, endDate, mode) version above.
 }));
