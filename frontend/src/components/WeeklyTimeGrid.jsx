@@ -1,12 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTimeSlotStore } from '../stores/timeSlotStore';
+import { usePatientStore } from '../store/patientStore.js';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+// Badge removido em favor de botões de ação no painel rápido
 import MarkingModeConfig from './MarkingModeConfig';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+/**
+ * WeeklyTimeGrid Component
+ *
+ * Integrates with:
+ * - stores/timeSlotStore.js for slots, duration/interval, appointments
+ * - store/patientStore.js for patient list and quick-create
+ * - LeftSidebar.jsx indirectly via patientStore state (no modifications here)
+ *
+ * Connector: Slot overlay panel adapts by slot status (available/booked)
+ */
 const WeeklyTimeGrid = ({ selectedDate }) => {
   const {
     timeSlots,
@@ -24,6 +36,11 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     createSlotInBackend,
     createSlotsFromRangeInBackend,
     createSlotsFromRangeWithSettings,
+    updateSlotInBackend,
+    deleteSlotInBackend,
+    createAppointmentForSlot,
+    confirmAppointmentPatientForSlot,
+    cancelAppointmentForSlot,
     markingMode,
     setMarkingMode,
     setAppointmentDuration,
@@ -33,6 +50,13 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     appointmentDuration,
     intervalBetween
   } = useTimeSlotStore();
+
+  // Pacientes para agendar
+  const { patients, fetchPatients, createPatient, currentPatient } = usePatientStore();
+  const navigate = useNavigate();
+  const [patientName, setPatientName] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+  useEffect(() => { fetchPatients?.(true); }, [fetchPatients]);
 
   // Use centered week days instead of traditional week view
   const weekDays = getCenteredWeekDays();
@@ -82,8 +106,18 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
   // Seleção de slots (sempre slot-a-slot)
   const [selectedSlotIds, setSelectedSlotIds] = useState(new Set());
   const [previewSlot, setPreviewSlot] = useState(null);
+  // Painel rápido: modos de exibição conforme status do slot
+  const [panelMode, setPanelMode] = useState('available'); // 'available' | 'booking'
   // Toggle do painel de Configurações de Marcação
   const [showMarkingConfig, setShowMarkingConfig] = useState(false);
+  // Sincronizar modo de marcação com a visibilidade do painel para evitar warnings
+  useEffect(() => {
+    if (showMarkingConfig) {
+      if (!markingMode) setMarkingMode('availability');
+    } else {
+      if (markingMode) setMarkingMode(null);
+    }
+  }, [showMarkingConfig]);
   // Seleção exclusiva quando em modo Agendar/Appointment
   useEffect(() => {
     if (markingMode === 'booking' || markingMode === 'appointment') {
@@ -112,6 +146,197 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     window.addEventListener('timeSlotsUpdated', handler);
     return () => window.removeEventListener('timeSlotsUpdated', handler);
   }, [loadSlotsForWeek]);
+
+  // Slot selecionado atual (primeiro da seleção)
+  const selectedSlot = React.useMemo(() => {
+    const firstId = selectedSlotIds && selectedSlotIds.size > 0 ? [...selectedSlotIds][0] : null;
+    return firstId ? timeSlots.find(s => s.id === firstId) : null;
+  }, [selectedSlotIds, timeSlots]);
+
+  // Ajustar modo do painel conforme status do slot
+  useEffect(() => {
+    if (selectedSlot) {
+      setPanelMode(selectedSlot.status === 'available' ? 'available' : 'booking');
+    }
+  }, [selectedSlot]);
+
+  // Handlers do painel rápido
+  const handleAgendarSelected = async () => {
+    if (!selectedSlot) return;
+    // No modo "booking" permitimos salvar o agendamento mesmo se o slot já estiver marcado como 'booked'
+    if (panelMode === 'available' && selectedSlot.status !== 'available') {
+      alert('Slot não está disponível para agendar.');
+      return;
+    }
+
+    try {
+      // Prioridade: importado > seleção > digitado
+      const imported = currentPatient && currentPatient.id ? currentPatient : null;
+      let patientId = null;
+      let notes = '';
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (imported) {
+        patientId = imported.id;
+        notes = imported?.name || '';
+      } else if (selectedPatientId) {
+        patientId = selectedPatientId;
+        const selectedPatient = Array.isArray(patients) ? patients.find(p => String(p.id) === String(selectedPatientId)) : null;
+        notes = selectedPatient?.name || (patientName || '').trim();
+      } else {
+        notes = (patientName || '').trim();
+        if (!notes) {
+          alert('Informe o nome ou selecione um paciente.');
+          return;
+        }
+        // Criar paciente rapidamente com o nome informado
+        const created = await createPatient({ 
+          name: notes,
+          dateOfBirth: todayStr,
+          gender: 'não informado'
+        });
+        if (!created?.id) {
+          alert('Falha ao criar paciente com o nome informado.');
+          return;
+        }
+        patientId = created.id;
+      }
+
+      const res = await createAppointmentForSlot(selectedSlot.id, patientId, notes);
+      if (!res?.success) {
+        alert(`Falha ao agendar: ${res?.error || 'erro desconhecido'}`);
+      } else {
+        // Limpar seleção e inputs
+        setSelectedSlotIds(new Set());
+        setPatientName('');
+        setSelectedPatientId('');
+      }
+    } catch (e) {
+      alert(`Erro ao agendar: ${e?.message || 'erro desconhecido'}`);
+    }
+  };
+  // Configurar consulta: atualiza duração/intervalo (endTime) sem alterar paciente
+  const handleConfirmSelected = async () => {
+    if (!selectedSlot) return;
+    try {
+      // Atualizar apenas endTime com base na duração atual
+      const [sh, sm] = (selectedSlot.startTime || '00:00').split(':').map(Number);
+      const startMinutes = sh * 60 + sm;
+      const newEndMinutes = startMinutes + Math.max(5, parseInt(appointmentDuration || 0, 10));
+      const eh = Math.floor(newEndMinutes / 60);
+      const em = newEndMinutes % 60;
+      const endTime = `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+
+      const res = await updateSlotInBackend(selectedSlot.id, { endTime });
+      if (!res?.success) {
+        alert(`Falha ao atualizar duração: ${res?.error || 'erro desconhecido'}`);
+        return;
+      }
+      // Ocultar painel
+      setSelectedSlotIds(new Set());
+    } catch (e) {
+      alert(`Erro ao confirmar: ${e?.message || 'erro desconhecido'}`);
+    }
+  };
+
+  // Confirmar Nome do paciente para slot agendado (atualiza appointment com paciente real)
+  const handleConfirmPatientName = async () => {
+    if (!selectedSlot || selectedSlot.status !== 'booked') return;
+    try {
+      // Prioridade: importado > seleção > digitado
+      const imported = currentPatient && currentPatient.id ? currentPatient : null;
+      let patientId = null;
+      let notes = '';
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (imported) {
+        patientId = imported.id;
+        notes = imported?.name || '';
+      } else if (selectedPatientId) {
+        patientId = selectedPatientId;
+        const selectedPatient = Array.isArray(patients) ? patients.find(p => String(p.id) === String(selectedPatientId)) : null;
+        notes = selectedPatient?.name || (patientName || '').trim();
+      } else {
+        notes = (patientName || '').trim();
+        if (!notes) {
+          alert('Informe o nome ou selecione um paciente.');
+          return;
+        }
+        // Criar paciente rapidamente com o nome informado
+        const created = await createPatient({ 
+          name: notes,
+          dateOfBirth: todayStr,
+          gender: 'não informado'
+        });
+        if (!created?.id) {
+          alert('Falha ao criar paciente com o nome informado.');
+          return;
+        }
+        patientId = created.id;
+      }
+
+      const res = await confirmAppointmentPatientForSlot(selectedSlot.id, patientId, notes);
+      if (!res?.success) {
+        alert(`Falha ao confirmar nome: ${res?.error || 'erro desconhecido'}`);
+      } else {
+        setSelectedSlotIds(new Set());
+        setPatientName('');
+        setSelectedPatientId('');
+      }
+    } catch (e) {
+      alert(`Erro ao confirmar nome: ${e?.message || 'erro desconhecido'}`);
+    }
+  };
+  // Iniciar fluxo de agendamento: marcar o slot como agendado e mostrar opções de paciente
+  const handleStartBookingMode = async () => {
+    if (!selectedSlot) return;
+    try {
+      // Fluxo corrigido: criar appointment primeiro quando o slot está disponível.
+      // O backend atualiza o slot para 'booked' automaticamente ao criar o appointment.
+      if (selectedSlot.status === 'available') {
+        try {
+          const placeholder = await createPatient({ name: 'Sem Nome', placeholder: true });
+          if (placeholder?.id) {
+            const appt = await createAppointmentForSlot(selectedSlot.id, placeholder.id, 'Sem Nome');
+            if (!appt?.success) {
+              alert(`Falha ao iniciar agendamento: ${appt?.error || 'erro desconhecido'}`);
+              return;
+            }
+          } else {
+            alert('Falha ao criar paciente placeholder');
+            return;
+          }
+        } catch (err) {
+          alert(`Erro ao preparar placeholder de agendamento: ${err?.message || 'erro desconhecido'}`);
+          return;
+        }
+      }
+      // Se já estiver 'booked', apenas entrar no modo de confirmação do paciente
+      setPanelMode('booking');
+    } catch (e) {
+      alert(`Erro ao alternar: ${e?.message || 'erro desconhecido'}`);
+    }
+  };
+  const handleExcluirSelected = async () => {
+    if (!selectedSlot) return;
+    if (!window.confirm('Tem certeza que deseja excluir este horário?')) return;
+    const res = await deleteSlotInBackend(selectedSlot.id);
+    if (!res?.success) {
+      alert(`Falha ao excluir: ${res?.error || 'erro desconhecido'}`);
+    } else {
+      setSelectedSlotIds(new Set());
+    }
+  };
+
+  const handleDisponibilizarSelected = async () => {
+    if (!selectedSlot) return;
+    const res = await cancelAppointmentForSlot(selectedSlot.id);
+    if (!res?.success) {
+      alert(`Falha ao disponibilizar: ${res?.error || 'erro desconhecido'}`);
+    } else {
+      setSelectedSlotIds(new Set());
+    }
+  };
 
   // Alinhamento vertical da overlay: iniciar no topo da grid (sem offset)
   useEffect(() => {
@@ -291,7 +516,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     setPreviewSlot(preview);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = async () => {
     if (!isDragging || !dragStart || !dragEnd) return;
     setIsDragging(false);
 
@@ -316,18 +541,34 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
       const endDateObj = new Date(`${dateStr}T${minutesToTime(eSnap)}:00`);
       createSlotsFromRangeWithSettings(weekDays[dragStart.dayIndex], startDateObj, endDateObj, 'available');
     } else if (markingMode === 'booking' || markingMode === 'appointment') {
-      // Create a single appointment slot via backend
-      const newSlot = {
-        date: dateStr,
-        startTime,
-        endTime,
-        status: 'booked',
-        type: 'manual',
-        createdBy: 'doctor',
-      };
-      const conflicts = checkConflicts(newSlot, timeSlots);
-      if (conflicts.length === 0) {
-        createSlotInBackend(newSlot);
+      // Correção: não marcar 'booked' sem appointment no backend.
+      // Criar appointment com placeholder se o slot estiver disponível.
+      const selectedId = [...selectedSlotIds][0];
+      const selected = timeSlots.find(s => s.id === selectedId);
+      if (selected && selected.date === dateStr) {
+        if (selected.status === 'available') {
+          try {
+            const placeholder = await createPatient({ 
+              name: 'Sem Nome', 
+              placeholder: true,
+              dateOfBirth: new Date().toISOString().split('T')[0],
+              gender: 'não informado'
+            });
+            if (placeholder?.id) {
+              const appt = await createAppointmentForSlot(selected.id, placeholder.id, 'Sem Nome');
+              if (!appt?.success) {
+                alert(`Falha ao agendar placeholder: ${appt?.error || 'erro desconhecido'}`);
+              }
+            } else {
+              alert('Falha ao criar paciente placeholder');
+            }
+          } catch (err) {
+            alert(`Erro ao preparar placeholder: ${err?.message || 'erro desconhecido'}`);
+          }
+        }
+        // Se já estiver 'booked', não fazer nada aqui; confirmações acontecem pelo painel
+      } else {
+        console.warn('Nenhum slot selecionado no dia para agendar.');
       }
     }
 
@@ -430,20 +671,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           <div className="flex items-center justify-center mb-2 px-4">
             <Button
               aria-expanded={showMarkingConfig}
-              onClick={() => {
-                setShowMarkingConfig(prev => {
-                  const next = !prev;
-                  // Connector: alterna modo de marcação quando painel é exibido/ocultado
-                  if (next && !markingMode) {
-                    setMarkingMode('availability');
-                  }
-                  if (!next) {
-                    setMarkingMode(null);
-                  }
-                  return next;
-                });
-              }}
-              className={`${isDarkModeUI ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} px-4 py-2 rounded-md font-medium shadow-sm`}
+              onClick={() => setShowMarkingConfig(prev => !prev)}
+        className={`${isDarkModeUI ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} px-4 py-2 rounded-md font-medium shadow-sm`}
             >
               Criar horário
             </Button>
@@ -507,22 +736,23 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             {weekDays.map((date, dayIndex) => {
               const isSelected = isSameDay(date, selectedWeek);
               const isToday = isSameDay(date, new Date());
-              const isCenterDay = dayIndex === 3; // Center day (index 3 in 7-day array)
               const isEvenCol = dayIndex % 2 === 0;
               
               let bgColor;
               let borderClass = '';
               
               if (isDarkModeUI) {
-                bgColor = isEvenCol ? 'var(--color-header-col-even-dark)' : 'var(--color-header-col-odd-dark)';
-                if (isCenterDay) {
-                  bgColor = '#16A34A'; // Green for center day in dark mode
-                  borderClass = 'ring-2 ring-green-400';
-                }
+        bgColor = isEvenCol ? 'var(--color-header-col-even-dark)' : 'var(--color-header-col-odd-dark)';
+        if (isToday) {
+          // Destaque para a coluna de Hoje em dark mode
+          bgColor = 'var(--color-header-col-center-dark)';
+          borderClass = 'ring-2 ring-theme-accent';
+        }
               } else {
                 bgColor = isEvenCol ? '#F3F3F3' : '#E9E9E9';
-                if (isCenterDay) {
-                  bgColor = '#2563EB'; // Blue for center day in light mode
+                if (isToday) {
+                  // Destaque para a coluna de Hoje em light mode
+                  bgColor = '#2563EB';
                   borderClass = 'ring-2 ring-blue-400';
                 }
               }
@@ -538,7 +768,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                     onClick={() => setSelectedWeek(date)}
                     className={`flex flex-col items-center justify-center px-3 py-2 h-16 rounded-none text-sm font-medium transition-all border-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-ring_outline focus:ring-offset-theme-background ${
                       isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'
-                    } ${isCenterDay ? 'text-white' : ''}`}
+                    } ${isToday ? 'text-white' : ''}`}
                     aria-pressed={isSelected}
                   >
                     <span className="text-xs leading-tight">
@@ -563,43 +793,123 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
         {selectedSlotIds && selectedSlotIds.size > 0 && (
           <div
             ref={adjacentPanelRef}
-            className={`${isDarkModeUI ? 'bg-theme-surface' : 'bg-white'} mx-4 mb-0 flex items-center gap-4 border border-theme-border rounded-md px-3 py-2`}
+            className={`${isDarkModeUI ? 'bg-theme-surface' : 'bg-white'} mx-auto mb-0 w-full max-w-[1100px] border border-theme-border rounded-md px-3 py-2 space-y-2`}
             style={{ pointerEvents: 'auto' }}
           >
-            <span className="text-sm font-medium text-theme-text">
-              Configurar duração da consulta e intervalo
-            </span>
-            <label className="text-sm text-theme-text">
-              Duração (min):
-              <input
-                type="number"
-                min={5}
-                step={5}
-                value={appointmentDuration ?? 30}
-                onChange={(e) => setAppointmentDuration(Math.max(5, parseInt(e.target.value || '0')))}
-                className={`ml-2 w-20 px-2 py-1 rounded border border-theme-border ${isDarkModeUI ? 'bg-theme-input text-theme-text' : 'bg-white text-black'}`}
-              />
-            </label>
-            <label className="text-sm text-theme-text">
-              Intervalo (min):
-              <input
-                type="number"
-                min={0}
-                step={5}
-                value={intervalBetween ?? 0}
-                onChange={(e) => setIntervalBetween(Math.max(0, parseInt(e.target.value || '0')))}
-                className={`ml-2 w-20 px-2 py-1 rounded border border-theme-border ${isDarkModeUI ? 'bg-theme-input text-theme-text' : 'bg-white text-black'}`}
-              />
-            </label>
-            <Badge variant="outline" className="text-xs">
-              {markingMode === 'availability' ? 'Disponibilizar' : 'Agendar'}
-            </Badge>
+            {/* Linha 1: duração/intervalo + Confirmar */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span className="text-sm font-medium text-theme-text">
+                Configurar duração da consulta e intervalo
+              </span>
+              <label className="text-sm text-theme-text">
+                Duração (min):
+                <input
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={appointmentDuration ?? 30}
+                  onChange={(e) => setAppointmentDuration(Math.max(5, parseInt(e.target.value || '0')))}
+                  className={`ml-2 w-20 px-2 py-1 rounded border border-theme-border ${isDarkModeUI ? 'bg-theme-input text-theme-text' : 'bg-white text-black'}`}
+                />
+              </label>
+              <label className="text-sm text-theme-text">
+                Intervalo (min):
+                <input
+                  type="number"
+                  min={0}
+                  step={5}
+                  value={intervalBetween ?? 0}
+                  onChange={(e) => setIntervalBetween(Math.max(0, parseInt(e.target.value || '0')))}
+                  className={`ml-2 w-20 px-2 py-1 rounded border border-theme-border ${isDarkModeUI ? 'bg-theme-input text-theme-text' : 'bg-white text-black'}`}
+                />
+              </label>
+              <Button
+                size="sm"
+                onClick={handleConfirmSelected}
+                disabled={!selectedSlot}
+                className="bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+              >
+                Configurar
+              </Button>
+            </div>
+
+            {/* Linha 2: dados do paciente (somente para slots agendados) */}
+            {selectedSlot?.status === 'booked' && (
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <label className="text-sm text-theme-text">
+                  Nome do paciente:
+                  <input
+                    type="text"
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value)}
+                    placeholder="Digite o nome"
+                    className={`ml-2 w-40 px-2 py-1 rounded border border-theme-border ${isDarkModeUI ? 'bg-theme-input text-theme-text' : 'bg-white text-black'}`}
+                  />
+                </label>
+
+                <label className="text-sm text-theme-text">
+                  Selecionar paciente:
+                  <select
+                    value={selectedPatientId}
+                    onChange={(e) => setSelectedPatientId(e.target.value)}
+                    className={`ml-2 w-44 px-2 py-1 rounded border border-theme-border ${isDarkModeUI ? 'bg-theme-input text-theme-text' : 'bg-white text-black'}`}
+                  >
+                    <option value="">—</option>
+                    {Array.isArray(patients) && patients.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <Button size="sm" variant="secondary" onClick={() => navigate('/patients/import')}>
+                  Importar Paciente
+                </Button>
+              </div>
+            )}
+
+            {/* Linha 3: ações */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {selectedSlot?.status === 'available' && (
+                <Button
+                  size="sm"
+                  onClick={handleStartBookingMode}
+                  disabled={!selectedSlot}
+                  className="bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                >
+                  Agendar
+                </Button>
+              )}
+
+              {selectedSlot?.status === 'booked' && (
+                <Button
+                  size="sm"
+                  onClick={handleConfirmPatientName}
+                  disabled={!selectedSlot || (!patientName.trim() && !selectedPatientId)}
+                  className="bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                >
+                  Confirmar Nome
+                </Button>
+              )}
+              {selectedSlot?.status === 'booked' && (
+                <Button
+                  size="sm"
+                  onClick={handleDisponibilizarSelected}
+                  disabled={!selectedSlot}
+                  className="bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                >
+                  Disponibilizar
+                </Button>
+              )}
+              <Button size="sm" variant="destructive" onClick={handleExcluirSelected} disabled={!selectedSlot}>
+                Excluir
+              </Button>
+            </div>
           </div>
         )}
 
         <div 
           ref={gridRef}
-          className="relative"
+          className="relative mx-auto max-w-[1200px]"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
@@ -623,27 +933,27 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
               {weekDays.map((day, dayIndex) => {
                 const isEvenRow = i % 2 === 0;
                 const isEvenCol = dayIndex % 2 === 0;
-                const isCenterDay = dayIndex === 3;
+                const isToday = isSameDay(day, new Date());
                 let bgColor;
                 
                 if (isDarkModeUI) {
-                  // Enhanced color system for dark mode
-                  if (isCenterDay) {
-                    // Center day gets special treatment
-                    bgColor = isEvenRow ? '#15803D' : '#166534'; // Green tones
+                  // Dark mode: unify palette using theme tokens and accent
+                  if (isToday) {
+                    // Coluna de Hoje usa accent tint (consistente com header)
+                    bgColor = 'var(--color-header-col-center-dark)';
                   } else {
-                    // Other days
-                    if (isEvenRow) {
-                      bgColor = isEvenCol ? '#2D2D2D' : '#252525';
+                    // Other days: even/odd columns use dark grid tokens
+                    if (isEvenCol) {
+                      bgColor = isEvenRow ? 'var(--color-header-col-even-dark)' : 'var(--color-header-col-odd-dark)';
                     } else {
-                      bgColor = isEvenCol ? '#252525' : '#2D2D2D';
+                      bgColor = isEvenRow ? 'var(--color-header-col-odd-dark)' : 'var(--color-header-col-even-dark)';
                     }
                   }
                 } else {
                   // Enhanced color system for light mode
-                  if (isCenterDay) {
-                    // Center day gets special treatment
-                    bgColor = isEvenRow ? '#DBEAFE' : '#BFDBFE'; // Blue tones
+                  if (isToday) {
+                    // Coluna de Hoje recebe tratamento especial
+                    bgColor = isEvenRow ? '#DBEAFE' : '#BFDBFE'; // Tons de azul
                   } else {
                     // Other days
                     if (isEvenRow) {
@@ -704,7 +1014,13 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                             {slot.startTime.substring(0,5)} - {slot.endTime.substring(0,5)}
                           </div>
                           {slot.status === 'booked' && (
-                            <div className="text-xs opacity-75">Agendado</div>
+                            <div className="text-xs opacity-75">
+                              {slot?.booking?.patientName ? (
+                                slot.booking.patientName
+                              ) : (
+                                'Agendado'
+                              )}
+                            </div>
                           )}
                           {slot.status === 'available' && (
                             <div className="text-xs opacity-75">Disponível</div>

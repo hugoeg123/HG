@@ -60,13 +60,24 @@ function applyThemeFillToContainer(container) {
   const targetSel = container.getAttribute('data-fill-target') || 'div';
   const count = parseInt(container.getAttribute('data-fill-count') || '4', 10);
   const disableInLight = container.hasAttribute('data-fill-disable-in-light');
+  const disableInDark = container.hasAttribute('data-fill-disable-in-dark');
   const isLight = document.documentElement.classList.contains('light-mode') || document.body.classList.contains('light-mode');
+  const isDark = document.documentElement.classList.contains('dark-mode') || document.body.classList.contains('dark-mode');
 
   // Pre-compute targets so we can also clear styles when needed
   const targets = Array.from(container.querySelectorAll(targetSel)).slice(0, Math.max(0, count));
 
   // If this container should not apply fills in light mode, clear and bail out
   if (disableInLight && isLight) {
+    for (const t of targets) {
+      t.style.removeProperty('background-color');
+      t.style.removeProperty('--theme-fill-derived-bg');
+    }
+    return;
+  }
+
+  // If this container should not apply fills in dark mode, clear and bail out
+  if (disableInDark && isDark) {
     for (const t of targets) {
       t.style.removeProperty('background-color');
       t.style.removeProperty('--theme-fill-derived-bg');

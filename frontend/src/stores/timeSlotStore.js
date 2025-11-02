@@ -262,14 +262,15 @@ export const useTimeSlotStore = create((set, get) => ({
   
   // New function for centered day navigation
   getCenteredWeekDays: () => {
-    const centerDay = new Date(get().selectedWeek);
-    const days = [];
-    for (let i = -3; i <= 3; i++) {
-      const day = new Date(centerDay);
-      day.setDate(centerDay.getDate() + i);
-      days.push(day);
-    }
-    return days;
+    // Adaptado: iniciar a partir de selectedWeek (primeira coluna)
+    // Connector: WeeklyTimeGrid utiliza esta função para montar as colunas
+    // Hook: Destaque visual será aplicado com base em isToday na grid
+    const startDay = new Date(get().selectedWeek);
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(startDay);
+      day.setDate(startDay.getDate() + i);
+      return day;
+    });
   },
   
   getSlotsForDay: (date) => {
@@ -399,8 +400,8 @@ export const useTimeSlotStore = create((set, get) => ({
     let currentStart = new Date(startDate);
     const results = { created: [], errors: [] };
     
-    // Remove conflicting slots if booking
-    if (mode === 'booked') {
+    // Optional: remove conflicting slots when marking as booking/appointment mode
+    if (mode === 'booked' || mode === 'appointment') {
       const dayStr = format(day, 'yyyy-MM-dd');
       const conflictingSlots = timeSlots.filter(slot => {
         if (slot.date !== dayStr) return false;
@@ -422,10 +423,11 @@ export const useTimeSlotStore = create((set, get) => ({
         startTime: currentStart.toTimeString().slice(0, 5),
         endTime: appointmentEnd.toTimeString().slice(0, 5),
         modality: ['presencial'],
-        status: mode,
+        // Correção: sempre criar como 'available'; backend define status inicial
+        status: 'available',
         type: 'manual',
         createdBy: 'doctor',
-        booking: mode === 'booked' ? { patientName: 'Paciente', createdAt: new Date().toISOString() } : null
+        booking: null
       };
       
       const result = await get().createSlotInBackend(slotData);
@@ -483,10 +485,44 @@ export const useTimeSlotStore = create((set, get) => ({
       start.setHours(0, 0, 0, 0);
       const end = new Date(weekDays[6]);
       end.setHours(23, 59, 59, 999);
+      // Connector: merge backend slots with appointments to preserve/display patient names
+      // Integrates with: agendaService.getSlots, agendaService.getAppointments
       const { data } = await agendaService.getSlots({ start: start.toISOString(), end: end.toISOString() });
+
+      // Fetch appointments in the same range to obtain patient names (patient.name or notes)
+      let apptMapBySlotId = new Map();
+      try {
+        const { data: apptData } = await agendaService.getAppointments({ start: start.toISOString(), end: end.toISOString() });
+        const appointments = Array.isArray(apptData) ? apptData : (Array.isArray(apptData?.appointments) ? apptData.appointments : []);
+        appointments.forEach(appt => {
+          const slotId = appt?.slot?.id;
+          if (!slotId) return;
+          // Prefer booked appointments for display
+          if (appt?.status !== 'booked') return;
+          const name = (appt?.patient?.name && String(appt.patient.name).trim().length > 0)
+            ? String(appt.patient.name).trim()
+            : (typeof appt?.notes === 'string' && appt.notes.trim().length > 0 ? appt.notes.trim() : null);
+          if (name && !apptMapBySlotId.has(slotId)) {
+            apptMapBySlotId.set(slotId, name);
+          }
+        });
+      } catch (_) {
+        // Ignore appointment load errors; fallback to preserving local booking below
+        apptMapBySlotId = new Map();
+      }
+
+      // Preserve existing booking info (names) when reloading the week
+      const existing = get().timeSlots;
+      const existingById = new Map(existing.map(s => [s.id, s]));
+
       const loaded = (data || []).map(apiSlot => {
         const startDate = new Date(apiSlot.start_time);
         const endDate = new Date(apiSlot.end_time);
+        const existingBooking = existingById.get(apiSlot.id)?.booking || null;
+        const nameFromBackend = apptMapBySlotId.get(apiSlot.id) || null;
+        const booking = existingBooking
+          ? existingBooking
+          : (nameFromBackend ? { patientName: nameFromBackend, createdAt: new Date().toISOString() } : null);
         return {
           id: apiSlot.id,
           date: format(startDate, 'yyyy-MM-dd'),
@@ -497,10 +533,9 @@ export const useTimeSlotStore = create((set, get) => ({
           type: 'manual',
           createdBy: 'doctor',
           createdAt: new Date(apiSlot.createdAt || startDate).toISOString(),
-          booking: null
+          booking
         };
       });
-      const existing = get().timeSlots;
       const weekDateKeys = weekDays.map(d => format(d, 'yyyy-MM-dd'));
       const keep = existing.filter(s => !weekDateKeys.includes(s.date));
       const byId = new Map(keep.map(s => [s.id, s]));
@@ -534,7 +569,8 @@ export const useTimeSlotStore = create((set, get) => ({
         startTime: isoToHHMM(data.start_time),
         endTime: isoToHHMM(data.end_time),
         modality: [data.modality],
-        status: slot.status || data.status,
+        // Correção: sempre usar o status retornado pelo backend
+        status: data.status,
         type: 'manual',
         createdBy: 'doctor',
         createdAt: new Date(data.createdAt || Date.now()).toISOString(),
@@ -602,6 +638,204 @@ export const useTimeSlotStore = create((set, get) => ({
       return { success: true, slot: updatedSlot };
     } catch (err) {
       const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || 'Falha ao atualizar slot';
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Excluir slot no backend e remover localmente
+  deleteSlotInBackend: async (slotId) => {
+    try {
+      const { timeSlots } = get();
+      const current = timeSlots.find(s => s.id === slotId);
+      if (!current) return { success: false, error: 'Slot não encontrado' };
+
+      await agendaService.deleteSlot(slotId);
+
+      // Disparar evento de atualização para sincronização bidirecional
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', {
+        detail: { action: 'delete', slot: current }
+      }));
+
+      set({ timeSlots: timeSlots.filter(s => s.id !== slotId) });
+      get().saveToLocalStorage();
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || 'Falha ao excluir slot';
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Criar agendamento para um slot disponível (backend + estado local)
+  /**
+   * Connector: Chamado pelo painel rápido em WeeklyTimeGrid.
+   * Restrição: somente slots 'available' podem receber novo agendamento (alinhado ao backend).
+   */
+  createAppointmentForSlot: async (slotId, patientId, notes = '') => {
+    try {
+      const { timeSlots } = get();
+      const current = timeSlots.find(s => s.id === slotId);
+      if (!current) return { success: false, error: 'Slot não encontrado' };
+      // Backend exige 'available' para criar novo agendamento
+      if (current.status !== 'available') {
+        return { success: false, error: 'Slot não está disponível para agendamento' };
+      }
+
+      // Criar agendamento no backend
+      const { data } = await agendaService.createAppointment({ slot_id: slotId, patient_id: patientId, notes });
+
+      // Atualizar estado local para refletir status "booked"
+      get().updateSlotStatus(slotId, 'booked');
+      // Guardar nome em booking para uso visual (se informado em notes)
+      const patientName = (typeof notes === 'string' && notes.trim().length > 0) ? notes.trim() : null;
+      if (patientName) {
+        get().updateSlotBooking(slotId, { patientName, createdAt: new Date().toISOString() });
+      }
+
+      // Disparar evento de atualização para sincronização
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', {
+        detail: { action: 'update', slot: { ...current, status: 'booked' } }
+      }));
+
+      return { success: true, appointment: data };
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || 'Falha ao criar agendamento';
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Cancelar agendamento do slot (disponibilizar horário)
+  /**
+   * Connector: Chamado pelo painel rápido em WeeklyTimeGrid (botão "Disponibilizar").
+   * Hook: Cancela o appointment (se existir) e atualiza o slot no backend para 'available'.
+   * Integrates with: agendaService.getAppointments, agendaService.updateAppointment, updateSlotInBackend → agendaService.updateSlot.
+   */
+  cancelAppointmentForSlot: async (slotId) => {
+    try {
+      const { timeSlots } = get();
+      const current = timeSlots.find(s => s.id === slotId);
+      if (!current) return { success: false, error: 'Slot não encontrado' };
+
+      // Buscar agendamentos no intervalo do slot para encontrar o correspondente
+      const startISO = combineDateAndTimeToISO(current.date, current.startTime);
+      const endISO = combineDateAndTimeToISO(current.date, current.endTime);
+      let target = null;
+      try {
+        const { data } = await agendaService.getAppointments({ start: startISO, end: endISO });
+        const appointments = Array.isArray(data) ? data : (Array.isArray(data?.appointments) ? data.appointments : []);
+        // Encontrar o agendamento atrelado ao slot selecionado e ativo
+        target = appointments.find(a => (a?.slot?.id === slotId) && (a?.status === 'booked')) || appointments.find(a => a?.slot?.id === slotId);
+      } catch (_) {
+        // Se a busca falhar, seguimos para disponibilizar o slot mesmo assim
+        target = null;
+      }
+
+      // Se houver agendamento, cancelar no backend
+      if (target?.id) {
+        await agendaService.updateAppointment(target.id, { status: 'cancelled' });
+      }
+
+      // Atualizar o slot no backend para 'available' para persistir estado
+      const res = await get().updateSlotInBackend(slotId, { status: 'available' });
+      if (!res?.success) {
+        // Fallback: atualizar somente localmente caso o backend rejeite
+        get().updateSlotStatus(slotId, 'available');
+      }
+      // Limpar qualquer informação de booking local
+      get().updateSlotBooking(slotId, null);
+      // Disparar evento para sincronização visual
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', { detail: { action: 'update', slot: { ...current, status: 'available' } } }));
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || 'Falha ao cancelar agendamento';
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  /**
+   * Confirmar/atualizar paciente do agendamento de um slot já agendado.
+   * 
+   * Connector: Chamado por WeeklyTimeGrid (botão "Confirmar Nome").
+   * Hook: Busca o appointment pelo intervalo do slot e atualiza patient_id/notes.
+   * Integrates with: agendaService.getAppointments, agendaService.updateAppointment.
+   */
+  confirmAppointmentPatientForSlot: async (slotId, patientId, notes = '') => {
+    try {
+      const { timeSlots } = get();
+      const current = timeSlots.find(s => s.id === slotId);
+      if (!current) return { success: false, error: 'Slot não encontrado' };
+      if (current.status !== 'booked') {
+        return { success: false, error: 'Slot não está agendado' };
+      }
+
+      // Buscar appointment do slot no intervalo
+      const startISO = combineDateAndTimeToISO(current.date, current.startTime);
+      const endISO = combineDateAndTimeToISO(current.date, current.endTime);
+      const { data } = await agendaService.getAppointments({ start: startISO, end: endISO });
+      const appointments = Array.isArray(data) ? data : (Array.isArray(data?.appointments) ? data.appointments : []);
+      const target = appointments.find(a => a?.slot?.id === slotId);
+      if (!target?.id) {
+        // Recuperação: sem appointment no backend, recriar diretamente com o paciente
+        try {
+          // Tentar liberar o slot no backend para permitir criação (se estiver inconsistente)
+          await get().updateSlotInBackend(slotId, { status: 'available' });
+        } catch (_) {
+          // Ignorar erro de liberação; seguimos com tentativa de criação
+        }
+        try {
+          const created = await agendaService.createAppointment({ slot_id: slotId, patient_id: patientId, notes });
+          // Refletir localmente
+          get().updateSlotStatus(slotId, 'booked');
+          const bookingName = (typeof notes === 'string' && notes.trim().length > 0) ? notes.trim() : null;
+          if (bookingName) {
+            get().updateSlotBooking(slotId, { patientName: bookingName, createdAt: new Date().toISOString() });
+          }
+          window.dispatchEvent(new CustomEvent('timeSlotsUpdated', { detail: { action: 'update', slot: { ...current, status: 'booked' } } }));
+          return { success: true, appointment: created?.data };
+        } catch (err) {
+          const errorMessage = err?.response?.data?.message || 'Falha ao recriar agendamento para o slot';
+          return { success: false, error: errorMessage };
+        }
+      }
+
+      // Se o paciente mudou, substituir o agendamento por um novo com o paciente atual
+      if (target?.patient?.id && target.patient.id !== patientId) {
+        try {
+          await agendaService.deleteAppointment(target.id);
+          const created = await agendaService.createAppointment({ slot_id: slotId, patient_id: patientId, notes });
+          // Refletir localmente
+          get().updateSlotStatus(slotId, 'booked');
+          const bookingName = (typeof notes === 'string' && notes.trim().length > 0) ? notes.trim() : null;
+          if (bookingName) {
+            get().updateSlotBooking(slotId, { patientName: bookingName, createdAt: new Date().toISOString() });
+          }
+          window.dispatchEvent(new CustomEvent('timeSlotsUpdated', { detail: { action: 'update', slot: { ...current, status: 'booked' } } }));
+          return { success: true, appointment: created?.data };
+        } catch (err) {
+          const errorMessage = err?.response?.data?.message || 'Falha ao atualizar paciente do agendamento';
+          return { success: false, error: errorMessage };
+        }
+      }
+
+      // Mesmo paciente: apenas atualizar notas se fornecidas
+      const payload = {};
+      if (typeof notes === 'string' && notes.trim().length > 0) payload.notes = notes.trim();
+      if (Object.keys(payload).length > 0) {
+        await agendaService.updateAppointment(target.id, payload);
+      }
+
+      const bookingName = (typeof notes === 'string' && notes.trim().length > 0)
+        ? notes.trim()
+        : get().timeSlots.find(s => s.id === slotId)?.booking?.patientName || null;
+      get().updateSlotBooking(slotId, bookingName ? { patientName: bookingName, createdAt: new Date().toISOString() } : get().timeSlots.find(s => s.id === slotId)?.booking);
+
+      window.dispatchEvent(new CustomEvent('timeSlotsUpdated', {
+        detail: { action: 'update', slot: { ...current } }
+      }));
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || 'Falha ao confirmar paciente do agendamento';
       return { success: false, error: errorMessage };
     }
   },

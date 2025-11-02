@@ -107,7 +107,7 @@ const TimeGridSlot = ({ slot, isDarkMode, onClick, onDelete }) => {
         {slot.status === 'booked' && (
           <>
             <User className="h-3 w-3" />
-            <span className="text-xs">Agendado</span>
+            <span className="text-xs">{slot?.booking?.patientName || 'Agendado'}</span>
           </>
         )}
         {slot.status === 'available' && (

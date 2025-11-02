@@ -38,7 +38,7 @@ const MainLayout = () => {
         data-fill-from=".left-pane .patient-list li .bg-theme-card"
         data-fill-target=".center-pane .stat-card, .center-pane .recent-patients"
         data-fill-count="4"
-        data-fill-disable-in-light="true"
+        data-fill-disable-in-dark="true"
       >
         {/* Left Sidebar */}
         <aside className={`transition-all duration-300 flex-shrink-0 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>

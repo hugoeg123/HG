@@ -44,8 +44,8 @@ const TimeGridHeader = () => {
     <div
       className={`border border-theme-border rounded-lg shadow-sm p-4 ${isDarkMode ? 'bg-theme-card' : 'bg-[#DDDDDD]'}`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -65,7 +65,7 @@ const TimeGridHeader = () => {
           </Button>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           {dayLabels}
         </div>
       </div>

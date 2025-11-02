@@ -75,7 +75,21 @@
   /* Global radius for shadcn/ui components */
   --radius: 0.75rem;
   color-scheme: dark;
+
+  /* Grid Agenda (Dark) — novos tokens
+   * Connector: usados por WeeklyTimeGrid.jsx e agenda-styles.css
+   */
+  --color-header-col-even-dark: #22262b;
+  --color-header-col-odd-dark: #1f2328;
+  --color-header-col-center-dark: hsl(var(--accent) / 0.22);
+  --grid-ring-color-dark: hsl(var(--accent));
 }
+
+/* Utilitário: ring com accent (dark/light)
+ * Connector: usado em WeeklyTimeGrid.jsx
+ */
+.dark-mode .ring-theme-accent { --tw-ring-color: hsl(var(--accent)) !important; }
+.light-mode .ring-theme-accent { --tw-ring-color: hsl(var(--accent)) !important; }
 
 /* Light theme - Complete bright mode implementation */
 .light-mode {

@@ -31,7 +31,7 @@ const LeftSidebar = ({ collapsed }) => {
   const { id: activePatientId, recordId: activeRecordId } = useParams(); // Get active patient and record IDs from URL
   
   // Usar o store para gerenciar pacientes
-  const { patients, isLoading, error, fetchPatients, setCurrentPatient, deletePatient, createPatient, setCurrentRecord, clearCurrentRecord, currentRecord } = usePatientStore();
+  const { patients, isLoading, error, fetchPatients, fetchPatientRecords, setCurrentPatient, deletePatient, createPatient, setCurrentRecord, clearCurrentRecord, currentRecord, currentPatient } = usePatientStore();
   const { isDarkMode } = useThemeStore(); // Connector: theme-aware styles for active/hover state
 
   // Carregar a lista de pacientes
@@ -41,7 +41,8 @@ const LeftSidebar = ({ collapsed }) => {
     if (didInit.current) return;
     didInit.current = true;
     if (!patients || patients.length === 0) {
-      fetchPatients();
+      // Desativar prefetch pesado de registros na carga inicial da sidebar
+      fetchPatients(true, { prefetchRecords: false });
     }
   }, []);
 
@@ -72,6 +73,10 @@ const LeftSidebar = ({ collapsed }) => {
       clearCurrentRecord();
       setCurrentPatient(patient);
       navigate(`/patients/${patient.id}`);
+      // Lazy load de registros ao expandir, evitando requisições desnecessárias
+      if ((!patient.records || patient.records.length === 0) && (typeof patient.recordCount === 'number' ? patient.recordCount > 0 : true)) {
+        fetchPatientRecords(patient.id);
+      }
     }
   };
 
@@ -264,11 +269,9 @@ const LeftSidebar = ({ collapsed }) => {
                     {/* Additional content */}
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        {patient.records && (
-                          <div className="text-teal-400 text-xs mt-1">
-                            {patient.records.length} registro(s)
-                          </div>
-                        )}
+                        <div className="text-teal-400 text-xs mt-1">
+                          {(typeof patient.recordCount === 'number' ? patient.recordCount : (patient.records ? patient.records.length : 0))} registro(s)
+                        </div>
                       </div>
                       <button
                         onClick={(e) => handleDeletePatient(patient, e)}
@@ -283,9 +286,9 @@ const LeftSidebar = ({ collapsed }) => {
                   </SidebarItem>
 
                   {/* Registros do paciente (expandidos) */}
-                  {expandedPatient === patientId && patient.records && patient.records.length > 0 ? (
+                  {expandedPatient === patientId && ((currentPatient?.id === patientId && currentPatient?.records && currentPatient.records.length > 0) || (patient.records && patient.records.length > 0)) ? (
                     <ul className="ml-6 mt-1 mb-2 space-y-1">
-                      {patient.records.map((record, recordIndex) => {
+                      {(((currentPatient?.id === patientId && currentPatient?.records) ? currentPatient.records : (patient.records || []))).map((record, recordIndex) => {
                         const recordTitle = record?.title || 'Consulta';
                         const recordId = record?.id || `temp-record-${patientId}-${recordIndex}-${Date.now()}`;
                         const recordDate = record?.date || new Date().toISOString();

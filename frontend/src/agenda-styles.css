@@ -42,11 +42,11 @@
   .light-mode .bar-available { @apply bg-blue-100 text-blue-900; }
 
   /* Dark mode cores */
-  .dark-mode .calendar-day.in-month { @apply bg-theme-background border-theme-border hover:border-emerald-400; }
+  .dark-mode .calendar-day.in-month { @apply bg-theme-background border-theme-border hover:border-teal-400; }
   .dark-mode .calendar-day.out-month { @apply bg-theme-background border-transparent opacity-60; }
-  .dark-mode .calendar-day.is-selected { @apply ring-1 ring-emerald-500 border-emerald-600 bg-emerald-500/10; }
+  .dark-mode .calendar-day.is-selected { @apply ring-1 ring-teal-500 border-teal-600 bg-teal-500/10; }
   .dark-mode .calendar-day.is-today { @apply shadow-inner; }
 
-  .dark-mode .bar-scheduled { @apply bg-emerald-900 text-emerald-100; }
-  .dark-mode .bar-available { @apply bg-emerald-100 text-emerald-900; }
+  .dark-mode .bar-scheduled { @apply bg-teal-900 text-teal-100; }
+  .dark-mode .bar-available { @apply bg-teal-100 text-teal-900; }
 }

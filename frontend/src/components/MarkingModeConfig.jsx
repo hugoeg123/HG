@@ -30,7 +30,7 @@ const MarkingModeConfig = ({
     
     if (isDarkModeUI) {
       return isActive 
-        ? `${baseClass} bg-green-600 text-white shadow-lg`
+        ? `${baseClass} bg-teal-600 text-white shadow-lg`
         : `${baseClass} bg-gray-700 text-gray-300 hover:bg-gray-600`;
     } else {
       return isActive 
@@ -40,7 +40,7 @@ const MarkingModeConfig = ({
   };
 
   return (
-    <Card className={`${isDarkModeUI ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <Card className={`${isDarkModeUI ? 'bg-theme-background border-theme-border' : 'bg-white border-gray-200'}`}>
       <CardHeader className="pb-3">
         <CardTitle className={`flex items-center gap-2 text-sm font-semibold ${
           isDarkModeUI ? 'text-gray-200' : 'text-gray-800'
@@ -129,11 +129,17 @@ const MarkingModeConfig = ({
         </div>
 
         {/* Mode Description */}
-        <div className={`p-3 rounded-lg text-sm ${
-          markingMode === 'availability'
-            ? (isDarkModeUI ? 'bg-green-900/20 text-green-300 border border-green-700/30' : 'bg-green-50 text-green-700 border border-green-200')
-            : (isDarkModeUI ? 'bg-blue-900/20 text-blue-300 border border-blue-700/30' : 'bg-blue-50 text-blue-700 border border-blue-200')
-        }`}>
+        {/* Connector: No modo dark, usar fundo padronizado igual à navbar (bg-theme-background) */}
+        <div
+          className={`p-3 rounded-lg text-sm border ${
+            isDarkModeUI
+              ? 'bg-theme-background text-gray-200 border-theme-border'
+              : (markingMode === 'availability'
+                  ? 'bg-green-50 text-green-700 border-green-200'
+                  : 'bg-blue-50 text-blue-700 border-blue-200')
+          }`}
+          
+        >
           <div className="flex items-center gap-2">
             {markingMode === 'availability' ? (
               <>

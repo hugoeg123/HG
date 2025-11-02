@@ -76,6 +76,8 @@ const usePatientStore = create((set, get) => ({
   currentPatient: null,
   currentRecord: null,
   dashboardData: null,
+  // Hook: Controlador de cancelamento para requisições do dashboard
+  dashboardAbortController: null,
   viewMode: 'dashboard',
   isLoading: false,
   error: null,
@@ -83,7 +85,7 @@ const usePatientStore = create((set, get) => ({
   maxRetries: 3,
   
   // Ações
-  fetchPatients: async (useCache = true) => {
+  fetchPatients: async (useCache = true, options = {}) => {
     set({ isLoading: true, error: null });
     
     // Tentar carregar do cache primeiro
@@ -123,35 +125,33 @@ const usePatientStore = create((set, get) => ({
         ...patient
       })) : [];
       
-      // Carregar registros para cada paciente que tem registros
-      // Hook: Carrega registros completos para exibição na sidebar
-      const patientsWithRecords = await Promise.all(
-        patients.map(async (patient) => {
-          if (patient.recordCount > 0) {
-            try {
-              // Verificar cache primeiro
-              const cachedRecords = get().loadRecordsFromCache(patient.id);
-              if (cachedRecords.length > 0) {
-                return { ...patient, records: cachedRecords };
+      // Carregar registros para cada paciente: agora opcional para performance
+      // Connector: Prefetch de registros desabilitado por padrão para reduzir carga na sidebar
+      const prefetchRecords = options?.prefetchRecords === true;
+      let patientsWithRecords = patients;
+      if (prefetchRecords) {
+        patientsWithRecords = await Promise.all(
+          patients.map(async (patient) => {
+            if (patient.recordCount > 0) {
+              try {
+                const cachedRecords = get().loadRecordsFromCache(patient.id);
+                if (cachedRecords.length > 0) {
+                  return { ...patient, records: cachedRecords };
+                }
+                if (recordService && recordService.getByPatient) {
+                  const recordsResponse = await recordService.getByPatient(patient.id);
+                  const records = Array.isArray(recordsResponse?.data?.records) ? recordsResponse.data.records : [];
+                  get().saveRecordsToCache(patient.id, records);
+                  return { ...patient, records };
+                }
+              } catch (error) {
+                console.warn(`Erro ao carregar registros do paciente ${patient.id}:`, error);
               }
-              
-              // Se não há cache, carregar da API
-              if (recordService && recordService.getByPatient) {
-                const recordsResponse = await recordService.getByPatient(patient.id);
-                const records = Array.isArray(recordsResponse?.data?.records) ? recordsResponse.data.records : [];
-                
-                // Salvar no cache
-                get().saveRecordsToCache(patient.id, records);
-                
-                return { ...patient, records };
-              }
-            } catch (error) {
-              console.warn(`Erro ao carregar registros do paciente ${patient.id}:`, error);
             }
-          }
-          return patient;
-        })
-      );
+            return patient;
+          })
+        );
+      }
       
       // Reset retry count on success
       set({ patients: patientsWithRecords, isLoading: false, retryCount: 0 });
@@ -887,10 +887,22 @@ const usePatientStore = create((set, get) => ({
     }
     
     set({ isLoading: true, error: null });
+
+    // Abort controller fallback: cancelar requisição anterior se nenhum sinal for fornecido
+    let requestOptions = { ...options };
+    if (!options.signal) {
+      const previousController = get().dashboardAbortController;
+      if (previousController) {
+        try { previousController.abort(); } catch {}
+      }
+      const controller = new AbortController();
+      set({ dashboardAbortController: controller });
+      requestOptions.signal = controller.signal;
+    }
     
     const requestPromise = (async () => {
       try {
-        const response = await api.get(`/patients/${patientId}/dashboard`, options);
+        const response = await api.get(`/patients/${patientId}/dashboard`, requestOptions);
         const dashboardData = response.data;
         
         const processedData = {
@@ -930,6 +942,10 @@ const usePatientStore = create((set, get) => ({
         const currentState = get();
         if (currentState.isLoading) {
           set({ isLoading: false });
+        }
+        // Limpar controlador de abort após finalizar
+        if (get().dashboardAbortController) {
+          set({ dashboardAbortController: null });
         }
       }
     })();

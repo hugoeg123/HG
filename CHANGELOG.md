@@ -5,6 +5,29 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.0.1] - 2025-01-27
+
+### 🐛 Correções
+
+#### Sistema de Agenda - Nomes de Pacientes
+- **Correção Crítica**: Nomes de pacientes agora persistem corretamente nos slots
+  - Problema: Slots exibiam apenas "Agendado" após recarregamentos da semana
+  - Solução: `loadSlotsForWeek` agora preserva bookings locais e mescla com dados do backend
+  - Integração: Busca appointments via `GET /agenda/appointments` para obter nomes de pacientes
+  - Resultado: Nomes de pacientes persistem entre navegações e recarregamentos
+
+### ✨ Melhorias
+
+#### Robustez do Sistema de Slots
+- **Merge Inteligente**: Estado local + dados do backend são mesclados corretamente
+- **Fallback Gracioso**: Sistema funciona mesmo com falhas na API de appointments
+- **Preservação de Estado**: Bookings locais não são perdidos durante recarregamentos
+- **Sincronização**: Dados de pacientes sincronizados entre frontend e backend
+
+### 📚 Documentação
+- Adicionada documentação detalhada da correção em `.trae/documents/correcao-nomes-pacientes-slots.md`
+- Mapeamento de integrações e fluxo de dados documentado
+
 ## [1.0.0] - ComAgendaMedicaV1 - 2024-01-27
 
 ### 🎉 Primeira Versão Estável - Sistema de Agenda Médica Completo

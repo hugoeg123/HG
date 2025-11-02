@@ -12,7 +12,7 @@
 
   .dark-mode .slot-booked {
     @apply 
-      bg-green-800 border-green-600 text-green-100;
+      bg-teal-900 border-teal-700 text-teal-100;
   }
 
   /* Estilos para slots disponíveis */
@@ -23,7 +23,7 @@
 
   .dark-mode .slot-available {
     @apply 
-      bg-green-300 border-green-500 text-green-900 hover:bg-green-400;
+      bg-teal-100 border-teal-400 text-teal-900 hover:bg-teal-200;
   }
 
   /* Estilos para slots bloqueados */
@@ -43,6 +43,6 @@
   }
 
   .dark-mode .slot-selected {
-    @apply ring-2 ring-emerald-500 shadow-md;
+    @apply ring-2 ring-teal-500 shadow-md;
   }
 }

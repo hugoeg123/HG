@@ -85,7 +85,7 @@ const TimeGridControls = () => {
     <div className={`${isDarkModeUI ? 'bg-theme-card' : 'bg-[#DDDDDD]'} border border-theme-border rounded-lg shadow-sm p-4`}>
       <div className="flex flex-col gap-4">
         {/* Primeira linha - Ações principais */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <div className="flex items-center gap-2">
             <Button
               onClick={handleGenerateSlots}
@@ -193,7 +193,7 @@ const TimeGridControls = () => {
         </div>
 
         {/* Segunda linha - Filtros e estatísticas */}
-        <div className="flex items-center justify-between border-t border-theme-border pt-4">
+        <div className="flex flex-wrap items-center justify-center gap-4 border-t border-theme-border pt-4">
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-theme-text-secondary" />
@@ -238,7 +238,7 @@ const TimeGridControls = () => {
             >
           </div>
 
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded bg-[var(--slot-available-bg)] border border-[var(--slot-available-border)]"></div>
               <span className="text-theme-text-secondary">

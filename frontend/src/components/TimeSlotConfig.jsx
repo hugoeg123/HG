@@ -104,9 +104,9 @@ const TimeSlotConfig = ({ selectedDate }) => {
   };
 
   return (
-    <Card className={`w-full border-transparent ${isDarkMode ? 'bg-theme-card' : 'bg-[#F3F3F3]'}`}>
+    <Card className={`w-full max-w-3xl mx-auto border-transparent ${isDarkMode ? 'bg-theme-card' : 'bg-[#F3F3F3]'}`}>
       <CardHeader>
-        <CardTitle className="text-theme-text">Configuração de Faixas Horárias</CardTitle>
+        <CardTitle className="text-theme-text text-center">Configuração de Faixas Horárias</CardTitle>
         <p className="text-sm text-theme-text opacity-70">
           Configure os horários de atendimento por dia da semana
         </p>
@@ -158,7 +158,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                 <div className="mt-4 space-y-4 border-t border-theme-border pt-4">
                   {/* Existing ranges */}
                   {dayRanges.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-w-2xl mx-auto">
                       <h4 className="text-sm font-medium text-theme-text">Faixas existentes:</h4>
                       {dayRanges.map(range => (
                         <div key={range.id} className="flex items-center justify-between p-3 bg-theme-surface rounded-lg">
@@ -200,7 +200,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                   )}
                   
                   {/* New range form */}
-                  <div className="space-y-4 p-4 bg-theme-card border border-theme-border rounded-lg">
+                  <div className="space-y-4 p-4 bg-theme-card border border-theme-border rounded-lg max-w-2xl mx-auto">
                     <h4 className="text-sm font-medium text-theme-text">Adicionar nova faixa:</h4>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -266,7 +266,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-w-md mx-auto">
                       <Label className="text-theme-text">Modalidades de atendimento</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {modalityOptions.map(option => {
@@ -298,10 +298,10 @@ const TimeSlotConfig = ({ selectedDate }) => {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-center">
                       <Button
                         onClick={() => handleAddRange(day.id)}
-                        className="flex-1"
+                        className=""
                       >
 
                         Salvar
