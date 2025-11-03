@@ -57,6 +57,20 @@ Patient.init({
     type: DataTypes.STRING,
     allowNull: true
   },
+  // Autenticação: hash de senha do paciente (bcrypt)
+  password_hash: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  // Demografia adicional
+  race_color: {
+    type: DataTypes.ENUM('branca', 'preta', 'parda', 'amarela', 'indigena', 'outra'),
+    allowNull: true
+  },
+  nationality: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   // Informações de contato - Contato de emergência (nome)
   emergencyContactName: {
     type: DataTypes.STRING,

@@ -7,7 +7,7 @@ module.exports = {
     if (dialect === 'postgres') {
       // Add new enum value for modality in Postgres
       await queryInterface.sequelize.query(
-        'ALTER TYPE "enum_availability_slots_modality" ADD VALUE IF NOT EXISTS \"domiciliar\";'
+        "ALTER TYPE \"enum_availability_slots_modality\" ADD VALUE IF NOT EXISTS 'domiciliar';"
       );
     } else {
       // For other dialects, change column to include the new value

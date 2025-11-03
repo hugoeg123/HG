@@ -19,10 +19,12 @@ import { ToastProvider } from './components/ui/Toast';
 // Layouts
 import MainLayout from './components/Layout/MainLayout';
 import AuthLayout from './components/Layout/AuthLayout';
+import PatientSidebar from './components/Layout/PatientSidebar';
 
 // Páginas
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import RegisterPatient from './components/auth/RegisterPatient';
 import Dashboard from './components/Dashboard';
 import PatientView from './components/PatientView';
 import NewPatient from './components/PatientView/NewPatient';
@@ -36,6 +38,8 @@ import McgKgMinGttMinPage from './pages/calculators/McgKgMinGttMinPage';
 // Página de Perfil
 import Profile from './pages/Profile';
 import Agenda from './pages/Agenda';
+import DoctorsList from './pages/Marketplace/DoctorsList';
+import PatientProfile from './pages/Patient/Profile';
 
 // Componente de rota protegida
 import ProtectedRoute from './components/ProtectedRoute';
@@ -87,8 +91,16 @@ function App() {
     <ErrorBoundary fallbackTitle="Erro na Aplicação">
       <ToastProvider>
         <Routes>
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
+          {/* Login Paciente (default) */}
+          <Route element={<AuthLayout role="patient" />}>
+            <Route path="/login" element={<Login role="patient" />} />
+            <Route path="/register-patient" element={<RegisterPatient />} />
+          </Route>
+
+        {/* Login Profissional (aliases) e Registro */}
+        <Route element={<AuthLayout role="medico" />}> 
+            <Route path="/loginpro" element={<Login role="medico" />} />
+            <Route path="/loginmed" element={<Login role="medico" />} />
             <Route path="/register" element={<Register />} />
           </Route>
           <Route element={
@@ -134,6 +146,20 @@ function App() {
               </ErrorBoundary>
             } />
           </Route>
+          {/* Agrupamento específico para perfil do paciente com sidebar customizada */}
+          <Route element={
+            <ProtectedRoute>
+              <MainLayout leftSidebarComponent={PatientSidebar} />
+            </ProtectedRoute>
+          }>
+            <Route path="/patient/profile" element={
+              <ErrorBoundary fallbackTitle="Erro no Perfil do Paciente" showDetails={true}>
+                <PatientProfile />
+              </ErrorBoundary>
+            } />
+          </Route>
+          {/* Marketplace Público */}
+          <Route path="/marketplace" element={<DoctorsList />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ToastProvider>

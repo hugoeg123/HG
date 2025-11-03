@@ -6,14 +6,19 @@ import { FaEnvelope, FaLock } from 'react-icons/fa';
 
 /**
  * Login component - Formulário de login
- * 
+ *
+ * Integrates with:
+ * - store/authStore.js para autenticação de médicos e pacientes (JWT)
+ * - services/api.js para requisições de login
+ * - pages/Marketplace/DoctorsList.jsx como landing após login de paciente
+ *
  * @component
  * @example
  * return (
  *   <Login />
  * )
  */
-const Login = () => {
+const Login = ({ role = 'medico' }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -54,12 +59,20 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const success = await login(formData.email, formData.password);
+      // Autenticação via API para ambos os perfis
+      const success = await login(formData.email, formData.password, role);
       if (success) {
-        toast.success('Login realizado com sucesso!', {
-          description: 'Redirecionando para o dashboard...'
-        });
-        navigate('/');
+        if (role === 'patient') {
+          toast.success('Login realizado com sucesso!', {
+            description: 'Redirecionando para o Marketplace...'
+          });
+          navigate('/marketplace');
+        } else {
+          toast.success('Login realizado com sucesso!', {
+            description: 'Redirecionando para o dashboard...'
+          });
+          navigate('/');
+        }
       } else {
         // Tratar diferentes tipos de erro
         if (error && error.includes('401')) {
@@ -103,7 +116,7 @@ const Login = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
+              required={role !== 'patient'}
               className="input"
               autoComplete="email"
               placeholder="Digite seu email"
@@ -143,10 +156,33 @@ const Login = () => {
       </form>
       
       <div className="mt-8 text-center text-sm text-gray-400">
-        Não é cadastrado?{' '}
-        <Link to="/register" className="text-teal-400 hover:text-teal-300 transition-colors duration-200 font-medium">
-          Cadastre-se como profissional
-        </Link>
+        {role === 'medico' ? (
+          <>
+            Não é cadastrado?{' '}
+            <Link to="/register" className="text-teal-400 hover:text-teal-300 transition-colors duration-200 font-medium">
+              Cadastre-se como profissional
+            </Link>
+            <div className="mt-2">
+              É paciente?{' '}
+              <Link to="/login" className="text-teal-400 hover:text-teal-300 transition-colors duration-200 font-medium">
+                Acesse aqui
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            Não tem conta?{' '}
+            <Link to="/register-patient" className="text-teal-400 hover:text-teal-300 transition-colors duration-200 font-medium">
+              Cadastre-se como paciente
+            </Link>
+            <div className="mt-2">
+              É profissional?{' '}
+              <Link to="/loginpro" className="text-teal-400 hover:text-teal-300 transition-colors duration-200 font-medium">
+                Acesse aqui
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ const authController = require('../controllers/auth.controller');
 
 // Middleware de autenticação
 const { authMiddleware } = require('../middleware/auth');
+const { authorize } = require('../middleware/authorize');
 
 // Rota de registro de médico
 router.post(
@@ -39,6 +40,45 @@ router.post(
   ],
   authController.login
 );
+
+// ================================
+// Rotas de Autenticação de Paciente
+// ================================
+
+// Registro de paciente
+router.post(
+  '/patient/register',
+  [
+    body('name').notEmpty().withMessage('Nome é obrigatório'),
+    body('dateOfBirth').isISO8601().withMessage('Data de nascimento inválida'),
+    body('gender').isIn(['masculino', 'feminino', 'outro', 'não informado']).withMessage('Gênero inválido'),
+    body('password').isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres'),
+    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email inválido'),
+    body('phone').optional({ checkFalsy: true }).isString().withMessage('Telefone inválido'),
+    body('race_color').optional({ checkFalsy: true }).isIn(['branca', 'preta', 'parda', 'amarela', 'indigena', 'outra']).withMessage('Raça/cor inválida'),
+    body('nationality').optional({ checkFalsy: true }).isString().withMessage('Nacionalidade inválida'),
+    body('street').optional({ checkFalsy: true }).isString().withMessage('Rua inválida'),
+    body('city').optional({ checkFalsy: true }).isString().withMessage('Cidade inválida'),
+    body('state').optional({ checkFalsy: true }).isString().withMessage('Estado inválido'),
+    body('zipCode').optional({ checkFalsy: true }).isString().withMessage('CEP inválido'),
+    body('country').optional({ checkFalsy: true }).isString().withMessage('País inválido')
+  ],
+  authController.registerPatient
+);
+
+// Login de paciente
+router.post(
+  '/patient/login',
+  [
+    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email inválido'),
+    body('phone').optional({ checkFalsy: true }).isString().withMessage('Telefone inválido'),
+    body('password').notEmpty().withMessage('Senha é obrigatória')
+  ],
+  authController.loginPatient
+);
+
+// Perfil do paciente autenticado
+router.get('/patient/me', authMiddleware, authorize(['patient']), authController.getCurrentPatient);
 
 // Rota para obter médico atual
 router.get('/me', authMiddleware, authController.getCurrentUser);

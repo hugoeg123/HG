@@ -6,7 +6,7 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { Medico } = require('../models/sequelize');
+const { Medico, Patient } = require('../models/sequelize');
 
 const DEBUG_AUTH_MIDDLEWARE = process.env.DEBUG_AUTH_MIDDLEWARE === 'true';
 
@@ -28,30 +28,56 @@ exports.authenticate = async (req, res, next) => {
       console.log('Decoded token:', decoded);
     }
 
-    // Verificar se o médico existe
-    const medico = await Medico.findByPk(decoded.sub || decoded.id, { 
-      attributes: ['id', 'email', 'nome'] 
-    });
-    if (DEBUG_AUTH_MIDDLEWARE) {
-      console.log('Medico found:', medico);
-    }
-    
-    if (!medico) {
-      if (DEBUG_AUTH_MIDDLEWARE) {
-        console.warn('Medico not found for ID:', decoded.sub || decoded.id);
-      }
-      return res.status(401).json({ message: 'Usuário não encontrado' });
-    }
+    const role = decoded.role || 'medico';
 
-    // Adicionar usuário à requisição
-    req.user = {
-      id: medico.id,
-      sub: medico.id,
-      name: medico.nome,
-      email: medico.email,
-      role: decoded.role || 'medico',
-      roles: decoded.roles || [decoded.role || 'medico']
-    };
+    if (role === 'patient') {
+      const patient = await Patient.findByPk(decoded.sub || decoded.id, {
+        attributes: ['id', 'email', 'name']
+      });
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.log('Patient found:', patient);
+      }
+      if (!patient) {
+        if (DEBUG_AUTH_MIDDLEWARE) {
+          console.warn('Patient not found for ID:', decoded.sub || decoded.id);
+        }
+        return res.status(401).json({ message: 'Usuário não encontrado' });
+      }
+
+      req.user = {
+        id: patient.id,
+        sub: patient.id,
+        name: patient.name,
+        email: patient.email,
+        role: 'patient',
+        roles: decoded.roles || ['patient']
+      };
+    } else {
+      // Verificar se o médico existe
+      const medico = await Medico.findByPk(decoded.sub || decoded.id, { 
+        attributes: ['id', 'email', 'nome'] 
+      });
+      if (DEBUG_AUTH_MIDDLEWARE) {
+        console.log('Medico found:', medico);
+      }
+      
+      if (!medico) {
+        if (DEBUG_AUTH_MIDDLEWARE) {
+          console.warn('Medico not found for ID:', decoded.sub || decoded.id);
+        }
+        return res.status(401).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Adicionar usuário à requisição
+      req.user = {
+        id: medico.id,
+        sub: medico.id,
+        name: medico.nome,
+        email: medico.email,
+        role: 'medico',
+        roles: decoded.roles || ['medico']
+      };
+    }
 
     next();
   } catch (error) {

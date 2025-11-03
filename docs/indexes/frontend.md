@@ -5,6 +5,7 @@ Este índice fornece navegação rápida por páginas, componentes, hooks, servi
 ## Páginas e Rotas
 - `/login` → `components/auth/Login.jsx`
 - `/register` → `components/auth/Register.jsx`
+- `/register-patient` → `components/auth/RegisterPatient.jsx`
 - `/` → `components/Dashboard.jsx`
 - `/patients/new` → `components/PatientView/NewPatient.jsx`
 - `/patients/:id` → `components/PatientView` (Dashboard do Paciente)

@@ -18,6 +18,7 @@ const dynamicCalculatorRoutes = require('./dynamic-calculator.routes.js');
 const alertRoutes = require('./alert.routes');
 const fileRoutes = require('./file.routes');
 const agendaRoutes = require('./agenda.routes');
+const marketplaceRoutes = require('./marketplace.routes');
 
 // Logging centralizado via morgan em src/index.js; removido logger duplicado nas rotas.
 
@@ -57,6 +58,7 @@ router.use('/dynamic-calculators', dynamicCalculatorRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/files', fileRoutes);
 router.use('/agenda', agendaRoutes);
+router.use('/marketplace', marketplaceRoutes);
 
 // Rota 404 para endpoints não encontrados
 router.use('*', (req, res) => {

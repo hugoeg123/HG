@@ -6,7 +6,7 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { Medico } = require('../models/sequelize');
+const { Medico, Patient } = require('../models/sequelize');
 const DEBUG_AUTH_MIDDLEWARE = process.env.DEBUG_AUTH_MIDDLEWARE === 'true';
 
 /**
@@ -76,32 +76,64 @@ const authMiddleware = async (req, res, next) => {
       throw jwtError;
     }
 
-    // Verificar se o médico ainda existe
-    const medico = await Medico.findByPk(decoded.sub, {
-      attributes: ['id', 'email', 'nome']
-    });
+    // Identificar role para buscar usuário correto
+    const role = decoded.role || 'medico';
 
-    if (!medico) {
-      if (DEBUG_AUTH_MIDDLEWARE) {
-        console.debug('Auth Middleware: User not found for decoded ID:', decoded.sub);
-      }
-      return res.status(401).json({
-        error: 'Usuário não encontrado',
-        code: 'USER_NOT_FOUND'
+    if (role === 'patient') {
+      // Verificar se o paciente existe
+      const patient = await Patient.findByPk(decoded.sub, {
+        attributes: ['id', 'email', 'name']
       });
-    }
 
-    // Adicionar informações do usuário ao request
-    req.user = {
-      id: medico.id,  // Adicionado para compatibilidade com controllers
-      sub: medico.id,
-      email: medico.email,
-      nome: medico.nome,
-      iat: decoded.iat,
-      exp: decoded.exp,
-      role: decoded.role || 'medico',
-      roles: decoded.roles || [decoded.role || 'medico']
-    };
+      if (!patient) {
+        if (DEBUG_AUTH_MIDDLEWARE) {
+          console.debug('Auth Middleware: Patient not found for decoded ID:', decoded.sub);
+        }
+        return res.status(401).json({
+          error: 'Usuário não encontrado',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+
+      // Adicionar informações do paciente ao request
+      req.user = {
+        id: patient.id,
+        sub: patient.id,
+        email: patient.email,
+        nome: patient.name,
+        iat: decoded.iat,
+        exp: decoded.exp,
+        role: 'patient',
+        roles: decoded.roles || ['patient']
+      };
+    } else {
+      // Verificar se o médico ainda existe
+      const medico = await Medico.findByPk(decoded.sub, {
+        attributes: ['id', 'email', 'nome']
+      });
+
+      if (!medico) {
+        if (DEBUG_AUTH_MIDDLEWARE) {
+          console.debug('Auth Middleware: User not found for decoded ID:', decoded.sub);
+        }
+        return res.status(401).json({
+          error: 'Usuário não encontrado',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+
+      // Adicionar informações do médico ao request
+      req.user = {
+        id: medico.id,  // Adicionado para compatibilidade com controllers
+        sub: medico.id,
+        email: medico.email,
+        nome: medico.nome,
+        iat: decoded.iat,
+        exp: decoded.exp,
+        role: 'medico',
+        roles: decoded.roles || ['medico']
+      };
+    }
     
     if (DEBUG_AUTH_MIDDLEWARE) {
       console.debug('Auth Middleware: req.user configurado com sucesso:', {

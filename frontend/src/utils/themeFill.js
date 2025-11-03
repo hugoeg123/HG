@@ -131,7 +131,19 @@ function setupObservers() {
   // Observe body subtree for content changes (route changes, components mount)
   const domObserver = new MutationObserver((mutations) => {
     for (const m of mutations) {
-      if (m.type === 'childList') {
+      if (m.type !== 'childList') continue;
+      // Only re-apply fills if the mutation affects containers that use data-fill-from
+      const target = m.target;
+      const targetAffects = target instanceof Element && (
+        target.matches('[data-fill-from]') || !!target.closest('[data-fill-from]')
+      );
+      const addedAffects = Array.from(m.addedNodes).some((n) => (
+        n instanceof Element && (n.matches('[data-fill-from]') || !!n.closest('[data-fill-from]'))
+      ));
+      const removedAffects = Array.from(m.removedNodes).some((n) => (
+        n instanceof Element && (n.matches('[data-fill-from]') || !!n.closest('[data-fill-from]'))
+      ));
+      if (targetAffects || addedAffects || removedAffects) {
         debouncedApply();
         break;
       }

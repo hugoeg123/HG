@@ -15,12 +15,18 @@ const useAuthStore = create(
       error: null,
       _tokenLoggedOnce: false,
 
-      login: async (email, password) => {
+      /**
+       * Login
+       * Connector: backend `/auth/login` (médico) e `/auth/patient/login` (paciente)
+       */
+      login: async (email, password, role = 'medico') => {
         set({ isLoading: true, error: null });
         console.log('AuthStore: Iniciando login para:', email);
         
         try {
-          const response = await api.post('/auth/login', { email, password });
+          const isPatient = role === 'patient';
+          const endpoint = isPatient ? '/auth/patient/login' : '/auth/login';
+          const response = await api.post(endpoint, { email, password });
           const { token, user } = response.data;
           
           console.log('AuthStore: Login bem-sucedido, configurando token');
@@ -196,6 +202,10 @@ const useAuthStore = create(
         set({ token: null, user: null, isAuthenticated: false });
       },
 
+      /**
+       * Verificar sessão autenticada
+       * Connector: backend `/auth/me` (médico) e `/auth/patient/me` (paciente)
+       */
       checkAuth: async () => {
         const { token, isAuthenticated } = get();
         
@@ -214,15 +224,20 @@ const useAuthStore = create(
         }
 
         try {
-          // Configurar o token no cabeçalho
           rawApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
-          // Verificar se o token é válido
-          const response = await api.get('/auth/me');
-          set({ user: response.data.user, isAuthenticated: true });
-          if (DEBUG_AUTH) {
-            console.log('checkAuth: Token valid, user authenticated');
+          let role = 'medico';
+          try {
+            const payloadBase64 = token.split('.')[1];
+            const payloadJson = atob(payloadBase64);
+            const payload = JSON.parse(payloadJson);
+            if (payload?.role) role = payload.role;
+          } catch (_) {
+            if (DEBUG_AUTH) console.warn('checkAuth: falha ao decodificar token, usando role padrão');
           }
+          const endpoint = role === 'patient' ? '/auth/patient/me' : '/auth/me';
+          const response = await api.get(endpoint);
+          set({ user: response.data.user, isAuthenticated: true });
+          if (DEBUG_AUTH) console.log('checkAuth: usuário autenticado como', role);
           return true;
         } catch (error) {
           // Se o token for inválido, fazer logout

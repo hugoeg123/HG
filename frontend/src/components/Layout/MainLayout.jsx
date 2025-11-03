@@ -5,7 +5,16 @@ import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
 
 
-const MainLayout = () => {
+/**
+ * MainLayout - Layout principal com Navbar, LeftSidebar e RightSidebar
+ * 
+ * Conectores:
+ * - Aceita `leftSidebarComponent` opcional para customizar a barra esquerda (ex.: paciente)
+ * - Integra com: Navbar.jsx, LeftSidebar.jsx, RightSidebar.jsx
+ * 
+ * Hook: Os toggles controlam colapso/expansão das barras laterais
+ */
+const MainLayout = ({ leftSidebarComponent: LeftSidebarComponent = LeftSidebar }) => {
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
   const [rightSidebarExpanded, setRightSidebarExpanded] = useState(false);
@@ -42,7 +51,7 @@ const MainLayout = () => {
       >
         {/* Left Sidebar */}
         <aside className={`transition-all duration-300 flex-shrink-0 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
-          <LeftSidebar collapsed={leftSidebarCollapsed} />
+          <LeftSidebarComponent collapsed={leftSidebarCollapsed} />
         </aside>
         
         {/* Main Content */}

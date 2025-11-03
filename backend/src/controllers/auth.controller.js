@@ -11,7 +11,7 @@ const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
-const { Medico } = require('../models/sequelize');
+const { Medico, Patient } = require('../models/sequelize');
 
 // Função auxiliar para gerar token JWT
 const generateToken = (medico, role = 'medico') => {
@@ -22,6 +22,21 @@ const generateToken = (medico, role = 'medico') => {
       nome: medico.nome,
       role: role,
       roles: [role],
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+  );
+};
+
+// Função auxiliar para gerar token JWT para paciente
+const generatePatientToken = (patient) => {
+  return jwt.sign(
+    {
+      sub: patient.id,
+      email: patient.email,
+      name: patient.name,
+      role: 'patient',
+      roles: ['patient']
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
@@ -396,5 +411,176 @@ exports.changePassword = async (req, res) => {
   } catch (error) {
     console.error('Erro ao alterar senha:', error);
     res.status(500).json({ message: 'Erro ao alterar senha' });
+  }
+};
+
+// =========================
+// Autenticação de Paciente
+// =========================
+
+// Registrar novo paciente
+exports.registerPatient = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
+      name,
+      dateOfBirth,
+      gender,
+      email,
+      phone,
+      password,
+      race_color,
+      nationality,
+      street,
+      city,
+      state,
+      zipCode,
+      country
+    } = req.body;
+
+    if (!name || !password || !dateOfBirth || !gender) {
+      return res.status(400).json({ message: 'Campos obrigatórios ausentes' });
+    }
+
+    if (!email && !phone) {
+      return res.status(400).json({ message: 'É necessário informar email ou telefone' });
+    }
+
+    // Verificar duplicidade
+    if (email) {
+      const existingByEmail = await Patient.findOne({ where: { email } });
+      if (existingByEmail) {
+        return res.status(409).json({ message: 'Email já cadastrado' });
+      }
+    }
+    if (phone) {
+      const existingByPhone = await Patient.findOne({ where: { phone } });
+      if (existingByPhone) {
+        return res.status(409).json({ message: 'Telefone já cadastrado' });
+      }
+    }
+
+    // Hash da senha
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    // Criar paciente
+    const patient = await Patient.create({
+      name,
+      dateOfBirth,
+      gender,
+      email,
+      phone,
+      password_hash,
+      race_color,
+      nationality,
+      street,
+      city,
+      state,
+      zipCode,
+      country
+    });
+
+    const token = generatePatientToken(patient);
+
+    res.status(201).json({
+      message: 'Paciente registrado com sucesso',
+      token,
+      user: {
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        role: 'patient'
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao registrar paciente:', error);
+    res.status(500).json({ message: 'Erro ao registrar paciente' });
+  }
+};
+
+// Login de paciente
+exports.loginPatient = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, phone, password } = req.body;
+
+    if (!password || (!email && !phone)) {
+      return res.status(400).json({ message: 'Informe email ou telefone e a senha' });
+    }
+
+    let patient = null;
+    if (email) {
+      patient = await Patient.findOne({ where: { email } });
+    }
+    if (!patient && phone) {
+      patient = await Patient.findOne({ where: { phone } });
+    }
+
+    if (!patient || !patient.password_hash) {
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+
+    const isMatch = await bcrypt.compare(password, patient.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+
+    const token = generatePatientToken(patient);
+
+    res.json({
+      message: 'Login de paciente realizado com sucesso',
+      token,
+      user: {
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        role: 'patient'
+      }
+    });
+  } catch (error) {
+    console.error('Erro no login de paciente:', error);
+    res.status(500).json({ message: 'Erro no login de paciente' });
+  }
+};
+
+// Obter paciente atual (self)
+exports.getCurrentPatient = async (req, res) => {
+  try {
+    const patient = await Patient.findByPk(req.user.sub, {
+      attributes: { exclude: ['password_hash'] }
+    });
+    if (!patient) {
+      return res.status(404).json({ message: 'Paciente não encontrado' });
+    }
+
+    res.json({
+      user: {
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        gender: patient.gender,
+        dateOfBirth: patient.dateOfBirth,
+        phone: patient.phone,
+        street: patient.street,
+        city: patient.city,
+        state: patient.state,
+        zipCode: patient.zipCode,
+        country: patient.country,
+        race_color: patient.race_color,
+        nationality: patient.nationality
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao obter paciente atual:', error);
+    res.status(500).json({ message: 'Erro ao obter paciente atual' });
   }
 };

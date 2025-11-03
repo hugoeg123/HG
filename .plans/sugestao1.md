@@ -1,799 +1,130 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Trash2, Edit2 } from 'lucide-react';
+Bora! 👇 Vou direto ao ponto com o que já existe, o que falta e a forma mais limpa/segura de implantar o login do paciente sem quebrar o que você tem hoje.
 
-// Mock do store para demonstração
-const useMockTimeSlotStore = () => {
-  const [selectedWeek, setSelectedWeek] = useState(new Date());
-  const [timeSlots, setTimeSlots] = useState([
-    { id: 1, date: '2025-10-20', startTime: '00:00', endTime: '00:30', status: 'available' },
-    { id: 2, date: '2025-10-20', startTime: '01:30', endTime: '02:30', status: 'available' },
-    { id: 3, date: '2025-10-21', startTime: '00:00', endTime: '00:30', status: 'available' },
-    { id: 4, date: '2025-10-21', startTime: '00:45', endTime: '02:15', status: 'booked', patientName: 'João Silva' },
-    { id: 5, date: '2025-10-22', startTime: '00:30', endTime: '02:00', status: 'available' },
-    { id: 6, date: '2025-10-22', startTime: '01:30', endTime: '01:45', status: 'available' },
-    { id: 7, date: '2025-10-23', startTime: '00:30', endTime: '01:00', status: 'available' },
-    { id: 8, date: '2025-10-23', startTime: '00:15', endTime: '00:45', status: 'available' },
-    { id: 9, date: '2025-10-23', startTime: '01:00', endTime: '02:00', status: 'available' },
-    { id: 10, date: '2025-10-24', startTime: '01:00', endTime: '03:00', status: 'booked', patientName: 'Maria Santos' },
-    { id: 11, date: '2025-10-26', startTime: '00:00', endTime: '02:15', status: 'available' },
-  ]);
+# Estado atual (o que vi no repo)
 
-  const getWeekDays = () => {
-    const start = new Date(selectedWeek);
-    // Centralizar: pegar 3 dias antes e 3 dias depois
-    start.setDate(start.getDate() - 3);
-    return Array.from({ length: 7 }, (_, i) => {
-      const day = new Date(start);
-      day.setDate(day.getDate() + i);
-      return day;
-    });
-  };
+* O **/login e /register** estão voltados ao **profissional** (“Acesso Profissional”, “Cadastro de Profissional”) e o link padrão “Faça login” aponta para `/login`. Não há telas para paciente ainda. 【】【】
+* O fluxo de autenticação do front chama **POST `/auth/login`** e grava o **token no localStorage** (e até exporta via `window.healthGuardianUtils.setToken`), o que funciona, mas é um **ponto de atenção em segurança (XSS/exfiltração)**. 【】【】
+* A **base de temas** (dark/bright) já está pronta, com tokens e utilitários (azul no claro; teal/verde no escuro). Dá para reaproveitar 100% nas telas do paciente. 【】【】
 
-  const createSlotInBackend = async (slotData) => {
-    const newSlot = {
-      id: Date.now() + Math.random(),
-      date: slotData.date.toISOString().split('T')[0],
-      startTime: slotData.start.toTimeString().slice(0, 5),
-      endTime: slotData.end.toTimeString().slice(0, 5),
-      status: slotData.status || 'available',
-      patientName: slotData.patientName || ''
-    };
-    setTimeSlots(prev => [...prev, newSlot]);
-    return newSlot;
-  };
+# Decisão de rotas (recomendação)
 
-  const deleteSlot = (slotId) => {
-    setTimeSlots(prev => prev.filter(s => s.id !== slotId));
-  };
+Para UX e SEO, deixe explícito quem é paciente e quem é pro — e faça o **default ser paciente**, como você sugeriu:
 
-  const updateSlot = (slotId, updates) => {
-    setTimeSlots(prev => prev.map(s => s.id === slotId ? { ...s, ...updates } : s));
-  };
+* **Paciente (default)**
+  `GET /login` · `GET /register`
+* **Profissional**
+  `GET /pro/login` · `GET /pro/register`
 
-  return {
-    selectedWeek,
-    setSelectedWeek,
-    timeSlots,
-    getWeekDays,
-    createSlotInBackend,
-    deleteSlot,
-    updateSlot,
-    availabilitySettings: { timeStep: 15 }
-  };
-};
+Na UI do paciente, um link “Sou profissional” leva a `/pro/login`. E nas telas do pro, “Sou paciente” leva a `/login`. Assim não quebramos seus links atuais (só revisar os que apontam para `/login` dentro do módulo do pro). 【】
 
-const WeeklyTimeGrid = () => {
-  const {
-    timeSlots,
-    selectedWeek,
-    getWeekDays,
-    setSelectedWeek,
-    createSlotInBackend,
-    deleteSlot,
-    updateSlot,
-    availabilitySettings
-  } = useMockTimeSlotStore();
+# Melhor abordagem técnica (MVP rápido e seguro)
 
-  const weekDays = getWeekDays();
-  const gridRef = useRef(null);
-  const headerRef = useRef(null);
-  const dayHeaderRefs = useRef([]);
-  
-  const [dragStart, setDragStart] = useState(null);
-  const [dragEnd, setDragEnd] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [timelineOffsetTop, setTimelineOffsetTop] = useState(0);
-  const [rowHeight, setRowHeight] = useState(30);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  // Configurações de marcação
-  const [markingMode, setMarkingMode] = useState(null); // null, 'available', 'booked'
-  const [appointmentDuration, setAppointmentDuration] = useState(30);
-  const [intervalBetween, setIntervalBetween] = useState(0);
-  const [editingPatient, setEditingPatient] = useState(null);
-  const [patientNameInput, setPatientNameInput] = useState('');
+## 1) Domínio de autenticação e papéis (RBAC)
 
-  const GRID_START_MINUTES = 0;
-  const GRID_END_MINUTES = 24 * 60;
-  const GRID_STEP_MINUTES = Math.min(Math.max((availabilitySettings?.timeStep || 15), 5), 60);
-  const CELL_ROWS = Math.ceil((GRID_END_MINUTES - GRID_START_MINUTES) / GRID_STEP_MINUTES);
-  const TIME_COL_PX = 60;
-  const GRID_TEMPLATE = `${TIME_COL_PX}px repeat(7, 1fr)`;
+* **Modelo de usuário único** com `role ∈ {patient, medico}` e **perfis tipados**:
 
-  const isSameDay = (a, b) => {
-    if (!(a instanceof Date) || !(b instanceof Date)) return false;
-    return a.getFullYear() === b.getFullYear() &&
-           a.getMonth() === b.getMonth() &&
-           a.getDate() === b.getDate();
-  };
+  * `users(id, email, password_hash, role, status, created_at, ...)`
+  * `patient_profiles(user_id, nome, nascimento, …)`
+  * `medico_profiles(user_id, crm/rqe, specialty, …)`
+* **JWT** com `sub`, `role` e escopos (ex.: `appointments:write`).
+* **Middlewares** que checam `role` por rota:
 
-  const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
-  };
+  * rotas `/pro/**` exigem `role=medico`
+  * rotas do app do paciente exigem `role=patient`
 
-  const toLabel = (minutes) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  };
+> Caso queira manter endpoints separados agora, tudo bem (ex.: `POST /auth/patient/login` e `POST /auth/pro/login`). A médio prazo é mais elegante **manter um único `/auth/login`** aceitando `role` no body e resolvendo o backend por role.
 
-  const timeToMinutes = (time) => {
-    if (typeof time !== 'string') return 0;
-    const [h, m] = time.split(':').map(Number);
-    return h * 60 + m;
-  };
+## 2) Telas mínimas (frontend) em concomitância com o tema
 
-  const minutesToTime = (minutes) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  };
+* **Paciente**
 
-  const snapToStep = (min, mode = 'start') => {
-    const step = GRID_STEP_MINUTES;
-    const base = GRID_START_MINUTES;
-    const delta = min - base;
-    if (mode === 'start') {
-      return base + Math.floor(delta / step) * step;
-    }
-    return base + Math.ceil(delta / step) * step;
-  };
+  * `/login` (email+senha, “Sou profissional” → `/pro/login`)
+  * `/register` (cadastro simples)
+  * **Explorar e agendar**: home → página do médico → slots → **checkout simples** (sem pagamento neste MVP)
+* **Profissional**
 
-  const getSlotPosition = (slot) => {
-    const startMinutes = timeToMinutes(slot.startTime);
-    const endMinutes = timeToMinutes(slot.endTime);
-    
-    const sSnap = snapToStep(startMinutes, 'start');
-    const eSnap = snapToStep(endMinutes, 'end');
-    
-    const startIdx = Math.floor((sSnap - GRID_START_MINUTES) / GRID_STEP_MINUTES);
-    const endIdx = Math.ceil((eSnap - GRID_START_MINUTES) / GRID_STEP_MINUTES);
-    
-    const top = startIdx * rowHeight;
-    const height = Math.max((endIdx - startIdx) * rowHeight, rowHeight);
-    
-    return { top, height };
-  };
+  * `/pro/login` e `/pro/register`
+  * **Disponibilidades e agenda** (você já tem boa base visual)
+* Reaproveite o **AuthLayout** e mude apenas o título/subtítulo conforme a rota (mostrar “Acesso Paciente” quando estiver em `/login`). Hoje ele está fixo no profissional. 【】
 
-  useEffect(() => {
-    const measureHeader = () => {
-      if (headerRef.current && gridRef.current) {
-        const headerRect = headerRef.current.getBoundingClientRect();
-        const gridRect = gridRef.current.getBoundingClientRect();
-        setTimelineOffsetTop(headerRect.bottom - gridRect.top);
-      }
-    };
+## 3) Rotas de API mínimas (backend)
 
-    measureHeader();
-    const ro = new ResizeObserver(measureHeader);
-    if (headerRef.current) ro.observe(headerRef.current);
-    if (gridRef.current) ro.observe(gridRef.current);
-    return () => ro.disconnect();
-  }, [selectedWeek]);
+* Público:
 
-  useEffect(() => {
-    const handleWheel = (e) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        setRowHeight(rh => Math.max(20, Math.min(60, rh + (e.deltaY > 0 ? -2 : 2))));
-      }
-    };
-    const gridEl = gridRef.current;
-    if (gridEl) {
-      gridEl.addEventListener('wheel', handleWheel, { passive: false });
-    }
-    return () => {
-      if (gridEl) gridEl.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
+  * `GET /doctors?specialty=&location=` – listar pros (para marketplace)
+  * `GET /doctors/:id` – perfil público
+  * `GET /doctors/:id/availability?from=&to=` – slots
+* Paciente:
 
-  const handleMouseDown = (dayIndex, e) => {
-    if (!markingMode) return;
-    
-    const rect = gridRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top - timelineOffsetTop;
-    const relY = Math.max(0, y);
-    const minutesFromStart = GRID_START_MINUTES + Math.floor(relY / rowHeight) * GRID_STEP_MINUTES;
-    
-    setDragStart({ dayIndex, minutes: minutesFromStart });
-    setDragEnd({ dayIndex, minutes: minutesFromStart });
-    setIsDragging(true);
-  };
+  * `POST /auth/login` (role=patient) · `POST /auth/register` (patient)
+  * `POST /appointments` (doctor_id, start, end)
+  * `GET /me/appointments`
+* Profissional:
 
-  const handleMouseMove = (e) => {
-    if (!isDragging || !dragStart) return;
-    
-    const rect = gridRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top - timelineOffsetTop;
-    const relY = Math.max(0, y);
-    const minutesFromStart = GRID_START_MINUTES + Math.floor(relY / rowHeight) * GRID_STEP_MINUTES;
-    
-    setDragEnd({ dayIndex: dragStart.dayIndex, minutes: minutesFromStart });
-  };
+  * `POST /auth/login` (role=medico) · `POST /auth/register` (medico)
+  * `GET /pro/appointments` · `POST /pro/availability` · `DELETE /pro/availability/:id`
+  * `PATCH /pro/appointments/:id/confirm|cancel`
 
-  const handleMouseUp = () => {
-    if (!isDragging || !dragStart || !dragEnd) return;
-    setIsDragging(false);
+# Problemas/ajustes a corrigir agora
 
-    const s = dragStart.minutes;
-    const e = dragEnd.minutes;
-    
-    if (Math.abs(e - s) < GRID_STEP_MINUTES) {
-      setDragStart(null);
-      setDragEnd(null);
-      return;
-    }
+1. **Token em `localStorage` e exposto em `window`**
+   Sugiro migrar para **cookies httpOnly + SameSite=Lax + Secure** e manter o Bearer só para chamadas WS, se necessário. No mínimo, **remova a exposição em `window.healthGuardianUtils`** e isole o uso de `localStorage` atrás de um serviço com revogação/rotatividade. 【】
+2. **AuthLayout** fixo para profissional → torná-lo **role-aware** (ou duplicar um `PatientAuthLayout` simples). 【】
+3. **Links internos** que assumem `/login` como profissional (ex.: “Faça login”) precisam ser atualizados para `/pro/login` quando dentro do fluxo de pro. 【】
 
-    const startMin = Math.min(s, e);
-    const endMin = Math.max(s, e);
-    const sSnap = snapToStep(startMin, 'start');
-    const eSnap = snapToStep(endMin, 'end');
+# Passo-a-passo executável (curto)
 
-    const day = weekDays[dragStart.dayIndex];
-    const startDate = new Date(day);
-    startDate.setHours(Math.floor(sSnap / 60), sSnap % 60, 0, 0);
-    
-    const endDate = new Date(day);
-    endDate.setHours(Math.floor(eSnap / 60), eSnap % 60, 0, 0);
+1. **Router (frontend)** – declare as novas rotas:
 
-    createSlotsFromSelection(day, startDate, endDate);
-    
-    setDragStart(null);
-    setDragEnd(null);
-  };
+```jsx
+// routes.jsx
+<Route path="/login" element={<AuthLayout role="patient" />}>
+  <Route index element={<PatientLogin />} />
+</Route>
+<Route path="/register" element={<AuthLayout role="patient" />}>
+  <Route index element={<PatientRegister />} />
+</Route>
 
-  const createSlotsFromSelection = async (day, startDate, endDate) => {
-    const totalDuration = appointmentDuration + intervalBetween;
-    const totalMinutes = (endDate.getTime() - startDate.getTime()) / (60 * 1000);
-    
-    if (totalDuration === 0) return;
-    
-    const count = Math.floor(totalMinutes / totalDuration);
+<Route path="/pro/login" element={<AuthLayout role="medico" />}>
+  <Route index element={<ProLogin />} />
+</Route>
+<Route path="/pro/register" element={<AuthLayout role="medico" />}>
+  <Route index element={<ProRegister />} />
+</Route>
+```
 
-    let currentStart = new Date(startDate);
-    
-    // Remover slots conflitantes se estiver agendando
-    if (markingMode === 'booked') {
-      const dayStr = formatDate(day);
-      const conflictingSlots = timeSlots.filter(slot => {
-        if (slot.date !== dayStr) return false;
-        const slotStart = timeToMinutes(slot.startTime);
-        const slotEnd = timeToMinutes(slot.endTime);
-        const rangeStart = timeToMinutes(startDate.toTimeString().slice(0, 5));
-        const rangeEnd = timeToMinutes(endDate.toTimeString().slice(0, 5));
-        return (slotStart < rangeEnd && slotEnd > rangeStart);
-      });
-      conflictingSlots.forEach(slot => deleteSlot(slot.id));
-    }
+E ajuste o `AuthLayout` para usar `role` e trocar título/subtítulo dinamicamente (hoje está fixo em “Acesso Profissional”). 【】
 
-    for (let i = 0; i < count; i++) {
-      const appointmentEnd = new Date(currentStart.getTime() + appointmentDuration * 60 * 1000);
-      
-      await createSlotInBackend({
-        date: day,
-        start: currentStart,
-        end: appointmentEnd,
-        status: markingMode,
-        patientName: markingMode === 'booked' ? 'Paciente' : ''
-      });
-      
-      currentStart = new Date(appointmentEnd.getTime() + intervalBetween * 60 * 1000);
-    }
-  };
+2. **Store de auth** – aceite `role` no login/registro:
 
-  const handleSlotClick = (slot, e) => {
-    e.stopPropagation();
-    if (markingMode) return;
-    setSelectedSlot(slot);
-  };
+```js
+// useAuthStore.login(email, password, role = 'patient')
+// no backend: valide o role e emita JWT com claim role
+```
 
-  const handleDeleteSlot = (slotId) => {
-    deleteSlot(slotId);
-    setSelectedSlot(null);
-  };
+Hoje ele chama `/auth/login` para qualquer coisa; mantenha isso, só passe `role` no body. 【】
 
-  const handleEditPatient = (slot) => {
-    setEditingPatient(slot.id);
-    setPatientNameInput(slot.patientName || '');
-  };
+3. **RBAC no backend** – proteja grupos de rotas:
 
-  const handleSavePatientName = (slotId) => {
-    updateSlot(slotId, { patientName: patientNameInput });
-    setEditingPatient(null);
-    setPatientNameInput('');
-  };
+```txt
+/pro/**           -> requireAuth(role='medico')
+/app/** (paciente)-> requireAuth(role='patient')
+```
 
-  const handleMarkBooked = (slotId) => {
-    updateSlot(slotId, { status: 'booked', patientName: 'Paciente' });
-    setSelectedSlot(null);
-  };
+E implemente guards de escopo para `appointments`, `availability` etc.
 
-  const getPreviewSlot = () => {
-    if (!dragStart || !dragEnd || !markingMode) return null;
-    
-    const s = dragStart.minutes;
-    const e = dragEnd.minutes;
-    
-    if (Math.abs(e - s) < GRID_STEP_MINUTES) return null;
+4. **Marketplace minimal**
 
-    const startMin = Math.min(s, e);
-    const endMin = Math.max(s, e);
-    const sSnap = snapToStep(startMin, 'start');
-    const eSnap = snapToStep(endMin, 'end');
+   * Página pública do médico (aproveite seu **Profile** em modo “Visão pública” e exponha uma versão readonly) 【】
+   * Endpoint para **consultar disponibilidade** e **criar agendamento** (status `pending/confirmed/cancelled`).
 
-    return { sSnap, eSnap, dayIndex: dragStart.dayIndex };
-  };
+# DoD (Definition of Done) — MVP “Paciente agenda médico”
 
-  const previewSlot = getPreviewSlot();
+* [ ] Paciente registra, loga e vê **lista de médicos** e **perfil público**
+* [ ] Paciente vê **slots disponíveis** e cria um **agendamento**
+* [ ] Profissional loga e **define disponibilidade** + **vê/gerencia agendamentos**
+* [ ] RBAC aplicado (rotas e UI)
+* [ ] Token **não** fica exposto em `window` e (ideal) sai do `localStorage`
+* [ ] Telas seguem **tema claro/escuro** padrão (azul/teal) — já temos tokens/utilitários prontos 【】【】
 
-  // Calcular previews de slots individuais
-  const getPreviewSlots = () => {
-    if (!previewSlot) return [];
-    
-    const slots = [];
-    const totalDuration = appointmentDuration + intervalBetween;
-    if (totalDuration === 0) return [];
-    
-    const totalMinutes = previewSlot.eSnap - previewSlot.sSnap;
-    const count = Math.floor(totalMinutes / totalDuration);
-    
-    let currentStart = previewSlot.sSnap;
-    
-    for (let i = 0; i < count; i++) {
-      const currentEnd = currentStart + appointmentDuration;
-      slots.push({
-        start: currentStart,
-        end: currentEnd,
-        gapEnd: currentEnd + intervalBetween
-      });
-      currentStart = currentEnd + intervalBetween;
-    }
-    
-    return slots;
-  };
-
-  const previewSlots = getPreviewSlots();
-
-  const getSlotColors = (status) => {
-    if (isDarkMode) {
-      return status === 'available' 
-        ? 'bg-green-500/40 border-green-400 text-green-100'
-        : 'bg-green-700/50 border-green-600 text-green-100';
-    } else {
-      return status === 'available'
-        ? 'bg-blue-300/50 border-blue-400 text-blue-900'
-        : 'bg-blue-600/60 border-blue-700 text-white';
-    }
-  };
-
-  const getPreviewColors = () => {
-    if (isDarkMode) {
-      return markingMode === 'available'
-        ? 'bg-green-400/30 border-green-300'
-        : 'bg-green-600/40 border-green-500';
-    } else {
-      return markingMode === 'available'
-        ? 'bg-blue-200/40 border-blue-300'
-        : 'bg-blue-500/50 border-blue-600';
-    }
-  };
-
-  return (
-    <div className="w-full space-y-4">
-      <Card className={`border-gray-200 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
-        <CardContent className="p-4">
-          <div ref={headerRef}>
-            {/* Barra de controles e navegação */}
-            <div className="flex items-center justify-between mb-4 gap-4">
-              {/* Navegação de Dias */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedWeek(prev => {
-                    const d = new Date(prev);
-                    d.setDate(d.getDate() - 1);
-                    return d;
-                  })}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                
-                <div className="flex items-center gap-1 px-2">
-                  {weekDays.map((date, idx) => {
-                    const isCenter = idx === 3; // Dia do meio sempre selecionado
-                    return (
-                      <div
-                        key={idx}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          isCenter 
-                            ? isDarkMode ? 'bg-green-500 w-3 h-3' : 'bg-blue-500 w-3 h-3'
-                            : isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedWeek(prev => {
-                    const d = new Date(prev);
-                    d.setDate(d.getDate() + 1);
-                    return d;
-                  })}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Modos de Marcação */}
-              <div className="flex gap-2">
-                <Button
-                  variant={markingMode === 'available' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMarkingMode(markingMode === 'available' ? null : 'available')}
-                  className={markingMode === 'available' ? (isDarkMode ? 'bg-green-600' : 'bg-blue-500') : ''}
-                >
-                  Abrir Horários
-                </Button>
-                <Button
-                  variant={markingMode === 'booked' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMarkingMode(markingMode === 'booked' ? null : 'booked')}
-                  className={markingMode === 'booked' ? (isDarkMode ? 'bg-green-700' : 'bg-blue-600') : ''}
-                >
-                  Agendar
-                </Button>
-              </div>
-
-              {/* Toggle Dark Mode */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDarkMode(!isDarkMode)}
-              >
-                {isDarkMode ? '☀️' : '🌙'}
-              </Button>
-            </div>
-
-            {/* Configurações de Duração */}
-            {markingMode && (
-              <div className="grid grid-cols-2 gap-4 p-3 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Duração da Consulta (min):</label>
-                  <input
-                    type="number"
-                    min="5"
-                    max="180"
-                    step="5"
-                    value={appointmentDuration}
-                    onChange={(e) => setAppointmentDuration(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 text-sm border rounded"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Intervalo Entre Consultas (min):</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="60"
-                    step="5"
-                    value={intervalBetween}
-                    onChange={(e) => setIntervalBetween(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 text-sm border rounded"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="grid mb-2" style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}>
-              <div className={`text-sm font-medium px-2 py-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Horário
-              </div>
-              {weekDays.map((date, dayIndex) => {
-                const isToday = isSameDay(date, new Date());
-                const bgColor = isDarkMode
-                  ? (dayIndex % 2 === 0 ? '#2D2D2D' : '#252525')
-                  : (dayIndex % 2 === 0 ? '#F3F3F3' : '#E9E9E9');
-                
-                return (
-                  <div
-                    key={`day-header-${dayIndex}`}
-                    ref={(el) => { dayHeaderRefs.current[dayIndex] = el; }}
-                    className="flex flex-col items-center justify-center px-2 py-2 rounded-t-lg"
-                    style={{ backgroundColor: bgColor }}
-                  >
-                    <span className={`text-xs capitalize ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                    </span>
-                    <span className={`text-lg font-bold ${isToday ? (isDarkMode ? 'text-green-400' : 'text-blue-600') : (isDarkMode ? 'text-gray-200' : 'text-gray-800')}`}>
-                      {date.getDate()}
-                    </span>
-                    <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                      {date.toLocaleDateString('pt-BR', { month: 'short' })}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div
-            ref={gridRef}
-            className={`relative border rounded-lg overflow-hidden ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            {Array.from({ length: CELL_ROWS }, (_, i) => (
-              <div key={`row-${i}`} className="grid" style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}>
-                <div
-                  className={`text-right text-xs flex items-center justify-end px-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} border-r`}
-                  style={{
-                    height: `${rowHeight}px`,
-                    backgroundColor: isDarkMode 
-                      ? (i % 2 === 0 ? '#1F1F1F' : '#171717')
-                      : (i % 2 === 0 ? '#F9F9F9' : '#FFFFFF'),
-                    color: isDarkMode ? '#9CA3AF' : '#6B7280'
-                  }}
-                >
-                  {toLabel(GRID_START_MINUTES + i * GRID_STEP_MINUTES)}
-                </div>
-                {weekDays.map((day, dayIndex) => {
-                  const isEvenRow = i % 2 === 0;
-                  const isEvenCol = dayIndex % 2 === 0;
-                  
-                  let bgColor;
-                  if (isDarkMode) {
-                    if (isEvenRow) {
-                      bgColor = isEvenCol ? '#1F1F1F' : '#171717';
-                    } else {
-                      bgColor = isEvenCol ? '#171717' : '#1F1F1F';
-                    }
-                  } else {
-                    if (isEvenRow) {
-                      bgColor = isEvenCol ? '#F9F9F9' : '#F3F3F3';
-                    } else {
-                      bgColor = isEvenCol ? '#F3F3F3' : '#F9F9F9';
-                    }
-                  }
-
-                  return (
-                    <div
-                      key={`${dayIndex}-${i}`}
-                      className={`relative transition-colors border-r border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-200'} ${
-                        markingMode ? 'cursor-crosshair' : 'cursor-default'
-                      } ${markingMode ? (isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-blue-50') : ''}`}
-                      style={{ height: `${rowHeight}px`, backgroundColor: bgColor }}
-                      onMouseDown={(e) => handleMouseDown(dayIndex, e)}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-
-            {/* Preview dos slots sendo criados */}
-            {previewSlot && previewSlots.length > 0 && (
-              <div
-                className="absolute z-20 pointer-events-none"
-                style={{
-                  left: `${TIME_COL_PX}px`,
-                  right: 0,
-                  top: `${timelineOffsetTop}px`
-                }}
-              >
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', columnGap: '0px' }}>
-                  {weekDays.map((day, dayIndex) => (
-                    <div key={`preview-${dayIndex}`} className="relative" style={{ height: `${CELL_ROWS * rowHeight}px` }}>
-                      {dayIndex === previewSlot.dayIndex && previewSlots.map((slot, idx) => (
-                        <React.Fragment key={idx}>
-                          {/* Slot da consulta */}
-                          <div
-                            className={`absolute border-2 rounded ${getPreviewColors()}`}
-                            style={{
-                              top: `${(slot.start - GRID_START_MINUTES) / GRID_STEP_MINUTES * rowHeight}px`,
-                              height: `${(slot.end - slot.start) / GRID_STEP_MINUTES * rowHeight}px`,
-                              left: '2px',
-                              right: '2px'
-                            }}
-                          >
-                            <div className="text-xs font-semibold text-center pt-1">
-                              {minutesToTime(slot.start)} - {minutesToTime(slot.end)}
-                            </div>
-                          </div>
-                          {/* Gap entre consultas */}
-                          {intervalBetween > 0 && (
-                            <div
-                              className={`absolute border-2 border-dashed rounded ${isDarkMode ? 'border-gray-600 bg-gray-800/20' : 'border-gray-400 bg-gray-300/20'}`}
-                              style={{
-                                top: `${(slot.end - GRID_START_MINUTES) / GRID_STEP_MINUTES * rowHeight}px`,
-                                height: `${intervalBetween / GRID_STEP_MINUTES * rowHeight}px`,
-                                left: '2px',
-                                right: '2px'
-                              }}
-                            />
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Overlay dos slots existentes */}
-            <div
-              className="absolute z-10"
-              style={{
-                left: `${TIME_COL_PX}px`,
-                right: 0,
-                top: `${timelineOffsetTop}px`,
-                pointerEvents: 'none'
-              }}
-            >
-              <div className="grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', columnGap: '0px' }}>
-                {weekDays.map((day, dayIndex) => {
-                  const dayStr = formatDate(day);
-                  const daySlots = timeSlots.filter(slot => slot.date === dayStr);
-
-                  return (
-                    <div key={`overlay-day-${dayIndex}`} className="relative" style={{ height: `${CELL_ROWS * rowHeight}px` }}>
-                      {daySlots.map((slot) => {
-                        const { top, height } = getSlotPosition(slot);
-                        const isSelected = selectedSlot?.id === slot.id;
-                        const isEditing = editingPatient === slot.id;
-
-                        return (
-                          <div
-                            key={slot.id}
-                            className={`absolute rounded shadow-md px-2 py-1 text-xs font-medium cursor-pointer transition-all border-2 ${getSlotColors(slot.status)} ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}`}
-                            style={{
-                              top: `${top}px`,
-                              height: `${height}px`,
-                              left: '2px',
-                              right: '2px',
-                              pointerEvents: 'auto'
-                            }}
-                            onClick={(e) => handleSlotClick(slot, e)}
-                            title={`${slot.startTime} - ${slot.endTime} ${slot.status === 'booked' ? `(${slot.patientName})` : ''}`}
-                          >
-                            <div className="flex flex-col justify-center h-full overflow-hidden">
-                              {isEditing ? (
-                                <input
-                                  type="text"
-                                  value={patientNameInput}
-                                  onChange={(e) => setPatientNameInput(e.target.value)}
-                                  onBlur={() => handleSavePatientName(slot.id)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleSavePatientName(slot.id);
-                                    if (e.key === 'Escape') { setEditingPatient(null); setPatientNameInput(''); }
-                                  }}
-                                  className="w-full px-1 py-0.5 text-xs bg-white text-black rounded"
-                                  autoFocus
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              ) : (
-                                <>
-                                  <div className="truncate font-semibold">
-                                    {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
-                                  </div>
-                                  {slot.status === 'booked' && slot.patientName && (
-                                    <div className="truncate text-xs opacity-90">
-                                      {slot.patientName}
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Painel de Ações do Slot Selecionado */}
-      {selectedSlot && !markingMode && (
-        <Card className={`${isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">
-                Slot Selecionado: {selectedSlot.startTime.substring(0, 5)} - {selectedSlot.endTime.substring(0, 5)}
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedSlot(null)}
-              >
-                ✕
-              </Button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {selectedSlot.status === 'available' && (
-                <>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleMarkBooked(selectedSlot.id)}
-                    className={isDarkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}
-                  >
-                    ✅ Marcar como Agendado
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteSlot(selectedSlot.id)}
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Deletar
-                  </Button>
-                </>
-              )}
-              
-              {selectedSlot.status === 'booked' && (
-                <>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleEditPatient(selectedSlot)}
-                    className={isDarkMode ? 'bg-green-700 hover:bg-green-800' : 'bg-blue-700 hover:bg-blue-800'}
-                  >
-                    <Edit2 className="w-4 h-4 mr-1" />
-                    Editar Paciente
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteSlot(selectedSlot.id)}
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Deletar
-                  </Button>
-                </>
-              )}
-            </div>
-            
-            {selectedSlot.status === 'booked' && selectedSlot.patientName && (
-              <div className={`mt-3 p-2 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                <p className="text-sm">
-                  <span className="font-medium">Paciente:</span> {selectedSlot.patientName}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Instruções */}
-      <Card className={`${isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}>
-        <CardContent className="p-4">
-          <h3 className="font-semibold mb-2">Instruções:</h3>
-          <ul className="text-sm space-y-1 list-disc list-inside">
-            <li>Selecione "Abrir Horários" ou "Agendar" para ativar o modo de marcação</li>
-            <li>Arraste na grade para criar múltiplos slots de uma vez</li>
-            <li>Configure a duração da consulta e intervalo entre consultas</li>
-            <li>Agendar substitui horários livres na área selecionada</li>
-            <li>Sem modo selecionado, clique nos slots para editar/deletar</li>
-            <li>Use Ctrl + Scroll para fazer zoom na grade</li>
-            <li>Use as setas ou os pontos para navegar entre dias</li>
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-export default WeeklyTimeGrid;
+Se quiser, já te entrego os componentes `PatientLogin`/`PatientRegister` prontos e o patch no `AuthLayout`/router para ficar plug-and-play com os estilos atuais.
