@@ -20,6 +20,8 @@ import { ToastProvider } from './components/ui/Toast';
 import MainLayout from './components/Layout/MainLayout';
 import AuthLayout from './components/Layout/AuthLayout';
 import PatientSidebar from './components/Layout/PatientSidebar';
+import PatientRightSidebar from './components/Layout/PatientRightSidebar';
+import PatientTopNav from './components/Layout/PatientTopNav';
 
 // Páginas
 import Login from './components/auth/Login';
@@ -36,9 +38,12 @@ import GotejamentoPage from './pages/calculators/GotejamentoPage';
 import McgKgMinGttMinPage from './pages/calculators/McgKgMinGttMinPage';
 
 // Página de Perfil
+import DoctorPublicProfile from './pages/Patient/DoctorPublicProfile';
+import AgendaPacienteMedico from './pages/Patient/AgendaPacienteMedico';
 import Profile from './pages/Profile';
 import Agenda from './pages/Agenda';
 import DoctorsList from './pages/Marketplace/DoctorsList';
+import MarketplaceSwitch from './pages/Marketplace/MarketplaceSwitch';
 import PatientProfile from './pages/Patient/Profile';
 
 // Componente de rota protegida
@@ -104,7 +109,7 @@ function App() {
             <Route path="/register" element={<Register />} />
           </Route>
           <Route element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["medico"]} roleRedirectTo="/patient/profile">
               <MainLayout />
             </ProtectedRoute>
           }>
@@ -120,6 +125,7 @@ function App() {
                 <PatientView />
               </ErrorBoundary>
             } />
+            {/* Rotas gerais protegidas mantidas aqui (sem customização de sidebars/topnav) */}
             <Route path="/profile" element={
               <ErrorBoundary fallbackTitle="Erro no Perfil" showDetails={true}>
                 <Profile />
@@ -146,10 +152,16 @@ function App() {
               </ErrorBoundary>
             } />
           </Route>
-          {/* Agrupamento específico para perfil do paciente com sidebar customizada */}
+          {/* Agrupamento específico para páginas do paciente com sidebars e top nav padronizados */}
           <Route element={
-            <ProtectedRoute>
-              <MainLayout leftSidebarComponent={PatientSidebar} />
+            <ProtectedRoute allowedRoles={["patient"]} roleRedirectTo="/">
+              <MainLayout 
+                leftSidebarComponent={PatientSidebar}
+                rightSidebarComponent={PatientRightSidebar}
+                topNavComponent={PatientTopNav}
+                initialLeftCollapsed={true}
+                initialRightCollapsed={true}
+              />
             </ProtectedRoute>
           }>
             <Route path="/patient/profile" element={
@@ -157,9 +169,21 @@ function App() {
                 <PatientProfile />
               </ErrorBoundary>
             } />
+            {/* Perfil público do médico na interface do paciente */}
+            <Route path="/patient/doctor/:id" element={
+              <ErrorBoundary fallbackTitle="Erro no Perfil Público do Médico" showDetails={true}>
+                <DoctorPublicProfile />
+              </ErrorBoundary>
+            } />
+            {/* Agenda do médico para paciente agendar */}
+            <Route path="/patient/doctor/:id/agenda" element={
+              <ErrorBoundary fallbackTitle="Erro na Agenda do Médico (Paciente)" showDetails={true}>
+                <AgendaPacienteMedico />
+              </ErrorBoundary>
+            } />
           </Route>
-          {/* Marketplace Público */}
-          <Route path="/marketplace" element={<DoctorsList />} />
+          {/* Marketplace com layout do paciente se logado */}
+          <Route path="/marketplace" element={<MarketplaceSwitch />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ToastProvider>

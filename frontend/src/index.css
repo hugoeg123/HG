@@ -1,6 +1,9 @@
+/* Imports devem vir antes de qualquer outra declaração CSS */
 @import './themes.css';
 @import './slot-styles.css';
 @import './agenda-styles.css';
+
+/* Diretivas do Tailwind em seguida */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
