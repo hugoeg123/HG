@@ -127,12 +127,20 @@ Patient.init({
     type: DataTypes.JSONB,
     defaultValue: []
   },
-  // Informações médicas - Medicamentos (array JSON)
   medications: {
     type: DataTypes.JSONB,
     defaultValue: []
   },
-  // Informações médicas - Histórico familiar (array JSON)
+  obstetricHistory: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: null
+  },
+  surgicalHistory: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: []
+  },
   familyHistory: {
     type: DataTypes.JSONB,
     defaultValue: []

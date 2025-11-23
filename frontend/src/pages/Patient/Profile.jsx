@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import throttledApi from '../../services/api';
+import throttledApi, { patientInputService } from '../../services/api';
 
 // UI Components
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
@@ -11,6 +11,9 @@ import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
+import AgendaSummary from '../../components/patient/AgendaSummary';
+import TagHistoryTimeline from '../../components/patient/TagHistoryTimeline';
+import PatientAgenda from './components/PatientAgenda';
 
 const PatientProfile = () => {
   const navigate = useNavigate();
@@ -35,6 +38,11 @@ const PatientProfile = () => {
     // Redirecionar se a role não for paciente
     if (user && user.role && user.role !== 'patient') {
       navigate('/profile');
+      return;
+    }
+    if (!token) {
+      setLoading(false);
+      setError('Sessão não autenticada. Faça login como paciente.');
       return;
     }
     let mounted = true;
@@ -64,9 +72,13 @@ const PatientProfile = () => {
   };
 
   const handleSaveHealthInputs = async () => {
-    // Placeholder: salvar inputs de saúde
-    // Connector: Enviar para backend (futuro) → records ou um endpoint dedicado
-    console.log('Salvar inputs de saúde', healthInputs);
+    try {
+      // Connector: Envia dados para backend via patientInputService
+      await patientInputService.create(healthInputs);
+      setHealthInputs({ weight: '', height: '', notes: '' });
+    } catch (err) {
+      console.error('Falha ao salvar inputs de saúde:', err);
+    }
   };
 
   const setTab = (tab) => setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('tab', tab); return p; });
@@ -118,10 +130,11 @@ const PatientProfile = () => {
               </div>
               <div className="md:col-span-3 flex gap-2 pt-2">
                 <Button onClick={() => navigate('/marketplace')} variant="default">Encontrar profissionais</Button>
-                <Button onClick={() => navigate('/agenda')} variant="outline">Ver minha agenda</Button>
               </div>
             </CardContent>
           </Card>
+
+          <AgendaSummary patientId={profile?.id || user?.id} />
 
           {/* Informações de Saúde */}
           <Card className="mb-4">
@@ -145,41 +158,22 @@ const PatientProfile = () => {
             </CardContent>
           </Card>
 
-          
         </TabsContent>
 
         {/* Editar Perfil */}
         <TabsContent value="edit">
-          <Card>
-            <CardHeader><CardTitle>Editar Perfil</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <label className="text-sm text-muted-foreground">Nome</label>
-                <Input defaultValue={profile?.name || user?.name || ''} />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">E-mail</label>
-                <Input defaultValue={profile?.email || user?.email || ''} />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Telefone</label>
-                <Input defaultValue={profile?.phone || ''} />
-              </div>
-              <div className="md:col-span-3 flex gap-2 pt-2">
-                <Button onClick={() => console.log('Salvar perfil')} variant="default">Salvar Alterações</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1">
+            <ContactCard patient={profile || user} />
+            <IdentificationCard patient={profile || user} />
+            <AnthropometricsCard />
+            <LifestyleCard />
+            <AntecedentsCard patient={profile || user} />
+          </div>
         </TabsContent>
 
         {/* Agenda */}
         <TabsContent value="agenda">
-          <Card>
-            <CardHeader><CardTitle>Minhas Consultas</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-sm">Em breve: integraremos suas consultas e horários aqui.</div>
-            </CardContent>
-          </Card>
+          <PatientAgenda />
         </TabsContent>
 
         {/* Histórico */}
@@ -187,7 +181,7 @@ const PatientProfile = () => {
           <Card>
             <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
             <CardContent>
-              <div className="text-sm">Em breve: registros de histórico e interações.</div>
+              <TagHistoryTimeline patientId={profile?.id || user?.id} tagKey="PESO" title="Histórico de Peso" />
             </CardContent>
           </Card>
         </TabsContent>
@@ -197,3 +191,8 @@ const PatientProfile = () => {
 };
 
 export default PatientProfile;
+import ContactCard from '../../components/PatientProfile/ContactCard'
+import IdentificationCard from '../../components/PatientProfile/IdentificationCard'
+import AnthropometricsCard from '../../components/PatientProfile/AnthropometricsCard'
+import LifestyleCard from '../../components/PatientProfile/LifestyleCard'
+import AntecedentsCard from '../../components/PatientProfile/AntecedentsCard'
