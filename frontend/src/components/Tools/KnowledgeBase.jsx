@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useKnowledgeSearch } from '../../hooks/useKnowledgeSearch';
+import { DrugMonographCard } from '../../components/DrugMonographCard';
+import { WikipediaCard } from '../../components/WikipediaCard';
 import { Badge } from '../ui/badge';
 import SidebarItem from '../ui/SidebarItem';
 import {
@@ -244,6 +246,19 @@ const KnowledgeBase = () => {
           </div>
         )}
 
+        {/* Wikipedia (Top Summary) */}
+        {wikiResults.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2 sticky top-0 bg-theme-background/95 backdrop-blur py-2 z-10">
+              <Globe size={14} /> Enciclopédia
+              <Badge variant="outline" className="text-[9px] ml-auto border-gray-700">Wikipedia</Badge>
+            </h3>
+            {wikiResults.map(wiki => (
+              <WikipediaCard key={wiki.id} wiki={wiki} />
+            ))}
+          </div>
+        )}
+
         {/* Community Notes */}
         {notes.length > 0 && (
           <div className="space-y-3">
@@ -266,28 +281,7 @@ const KnowledgeBase = () => {
           </div>
         )}
 
-        {/* Wikipedia (Encyclopedia) */}
-        {wikiResults.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2 sticky top-0 bg-theme-background/95 backdrop-blur py-2 z-10">
-              <Globe size={14} /> Enciclopédia
-              <Badge variant="outline" className="text-[9px] ml-auto border-gray-700">Wikipedia</Badge>
-            </h3>
-            {wikiResults.map(wiki => (
-              <div key={wiki.id} className="p-3 bg-theme-card border border-gray-700/50 rounded-lg hover:border-cyan-500/30 transition-colors">
-                <a
-                  href={wiki.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-cyan-400 hover:underline text-sm block mb-1"
-                >
-                  {wiki.title} <ExternalLink size={10} className="inline ml-1" />
-                </a>
-                <p className="text-xs text-gray-400 leading-relaxed">{wiki.description}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Wikipedia section moved to top */}
 
         {/* ICD-10 Diagnostics */}
         {diagnosticResults.length > 0 && (
@@ -298,11 +292,16 @@ const KnowledgeBase = () => {
             </h3>
             <div className="space-y-2">
               {diagnosticResults.map(d => (
-                <div key={d.code} className="flex justify-between items-center p-2 bg-theme-card border border-gray-700/50 rounded-lg">
-                  <span className="text-sm text-gray-200 truncate max-w-[70%]">{d.name}</span>
-                  <Badge className="bg-emerald-900/30 text-emerald-400 border-emerald-800 font-mono text-[10px]">
-                    {d.code}
-                  </Badge>
+                <div key={d.code} className="p-2 bg-theme-card border border-gray-700/50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-200 truncate max-w-[70%]">{d.title}</span>
+                    <Badge className="bg-emerald-900/30 text-emerald-400 border-emerald-800 font-mono text-[10px]">
+                      {d.code}
+                    </Badge>
+                  </div>
+                  {d.definition && (
+                    <p className="text-[10px] text-gray-500 mt-1">{d.definition}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -337,56 +336,9 @@ const KnowledgeBase = () => {
               <Pill size={14} /> Segurança Farmacológica
               <Badge variant="outline" className="text-[9px] ml-auto border-gray-700">OpenFDA</Badge>
             </h3>
-
-            {drugResults.map(drug => {
-              const isExpanded = expandedItems.has(drug.id);
-              return (
-                <SidebarItem
-                  key={drug.id}
-                  title={drug.brand_name}
-                  subtitle={drug.generic_name}
-                  isActive={isExpanded}
-                  onClick={() => toggleExpand(drug.id)}
-                  className="bg-theme-card border border-gray-700/50 hover:border-teal-500/30 transition-all duration-200"
-                >
-                  <div className="mt-2 space-y-2">
-                    <p className={`text-xs text-gray-400 ${isExpanded ? '' : 'line-clamp-2'}`}>
-                      {drug.description}
-                    </p>
-
-                    {drug.warnings && drug.warnings !== 'No specific warnings' && (
-                      <div className="bg-red-900/10 border border-red-900/30 rounded p-2 flex gap-2 items-start">
-                        <AlertTriangle size={12} className="text-red-400 shrink-0 mt-0.5" />
-                        <p className={`text-[10px] text-red-300 ${isExpanded ? '' : 'line-clamp-2'}`}>
-                          {drug.warnings}
-                        </p>
-                      </div>
-                    )}
-
-                    {isExpanded && (
-                      <div className="pt-2 space-y-2 border-t border-gray-800 mt-2">
-                        <div className="grid grid-cols-2 gap-2 text-[10px]">
-                          <div>
-                            <span className="text-gray-500 block">Fabricante</span>
-                            <span className="text-gray-300">{drug.manufacturer}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {!isExpanded && (
-                        <Badge variant="outline" className="text-[10px] border-gray-700 text-gray-400">
-                          {drug.manufacturer?.slice(0, 15)}...
-                        </Badge>
-                      )}
-                    </div>
-
-                    <SocialActions item={drug} />
-                  </div>
-                </SidebarItem>
-              );
-            })}
+            {drugResults.map(drug => (
+              <DrugMonographCard key={drug.id} drug={drug} />
+            ))}
           </div>
         )}
 

@@ -16,6 +16,25 @@ const getSocialStructure = () => ({
     is_verified: false
 });
 
+// Helper to clean and capitalize text
+// Helper to clean and capitalize text
+const cleanText = (textArray: string[] | undefined): string | undefined => {
+    if (!textArray || textArray.length === 0) return undefined;
+
+    // Join array if multiple lines (OpenFDA often returns arrays of paragraphs)
+    const text = Array.isArray(textArray) ? textArray.join(' ') : textArray;
+
+    if (!text) return undefined;
+
+    // Remove common ALL CAPS headers like "1 INDICATIONS AND USAGE", "DESCRIPTION", etc.
+    let cleaned = text
+        .replace(/^\s*(\d+\s*)?[A-Z\s\(\)-:]{3,}\s*/gm, '') // Remove obvious headers
+        .replace(/SPL UNCLASSIFIED SECTION/g, '')
+        .trim();
+
+    return cleaned;
+};
+
 // Proxy to OpenFDA
 app.get('/api/knowledge/drugs', async (req: express.Request, res: express.Response) => {
     const query = req.query.query as string;
@@ -24,28 +43,33 @@ app.get('/api/knowledge/drugs', async (req: express.Request, res: express.Respon
     }
 
     try {
-        // OpenFDA API for drug labeling
-        // Improved query: Search in brand_name OR generic_name using Solr syntax
-        // We treat the user query as a single phrase or simple terms
-        const safeQuery = query.replace(/[":]/g, ''); // Simple sanitization
+        const safeQuery = query.replace(/[":]/g, '');
+        // limit=1 to get the most relevant result (Monograph style) of branded or generic
+        // prioritize specific clinical fields
         const fdaQuery = `openfda.brand_name:"${safeQuery}"+OR+openfda.generic_name:"${safeQuery}"+OR+openfda.substance_name:"${safeQuery}"`;
 
-        const response = await axios.get(`https://api.fda.gov/drug/label.json?search=${fdaQuery}&limit=5`);
+        const response = await axios.get(`https://api.fda.gov/drug/label.json?search=${fdaQuery}&limit=1`);
 
         const results = response.data.results.map((item: any) => ({
             id: item.id || Math.random().toString(36).substr(2, 9),
             brand_name: item.openfda?.brand_name?.[0] || 'Unknown Brand',
             generic_name: item.openfda?.generic_name?.[0] || 'Unknown Generic',
             manufacturer: item.openfda?.manufacturer_name?.[0] || 'Unknown Manufacturer',
-            description: item.description?.[0] || item.indications_and_usage?.[0] || 'No description available',
-            warnings: item.warnings?.[0] || 'No specific warnings',
+            // Monograph fields cleaned and prioritized
+            boxed_warning: cleanText(item.boxed_warning),
+            indications: cleanText(item.indications_and_usage),
+            mechanism: cleanText(item.mechanism_of_action) || cleanText(item.clinical_pharmacology),
+            contraindications: cleanText(item.contraindications),
+            adverse_reactions: cleanText(item.adverse_reactions),
+            description: cleanText(item.description), // Fallback
             // Social structure (empty)
             ...getSocialStructure()
         }));
 
+        console.log(`[OpenFDA] Found ${results.length} items for "${query}". Top result: ${results[0]?.generic_name}`);
         res.json({ results });
     } catch (error) {
-        // console.error('OpenFDA Error:', error); // Silent fail or log
+        console.error('[OpenFDA] Error:', error);
         res.json({ results: [] });
     }
 });
@@ -59,7 +83,6 @@ app.get('/api/knowledge/papers', async (req: express.Request, res: express.Respo
 
     try {
         // Semantic Scholar API
-        // Using graph/v1/paper/search
         const response = await axios.get(`https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=5&fields=title,authors,year,abstract,url`);
 
         const results = response.data.data.map((paper: any) => ({
@@ -75,7 +98,6 @@ app.get('/api/knowledge/papers', async (req: express.Request, res: express.Respo
 
         res.json({ results });
     } catch (error) {
-        // console.error('Semantic Scholar Error:', error);
         res.json({ results: [] });
     }
 });
@@ -85,65 +107,82 @@ app.get('/api/knowledge/interactions', async (req: express.Request, res: express
     const query = req.query.query as string;
     if (!query) return res.json({ results: [] });
 
-    try {
-        // 1. Get RxNorm ID (rxcui)
-        const findRes = await axios.get(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${query}`);
-        const rxcui = findRes.data.idGroup?.rxnormId?.[0];
+    // Logic: Split query. If > 1 word, assume interaction check.
+    const terms = query.split(' ').filter(t => t.length > 2); // Filter small words
 
-        if (!rxcui) {
-            return res.json({ results: [], message: 'Drug not found in RxNorm' });
+    if (terms.length < 2) {
+        return res.json({ results: [] });
+    }
+
+    try {
+        // 1. Resolve RxCUIs for all terms
+        const rxcuiPromises = terms.map(term =>
+            axios.get(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${term}`)
+                .then(r => r.data.idGroup?.rxnormId?.[0])
+                .catch(() => null)
+        );
+
+        const rxcuis = (await Promise.all(rxcuiPromises)).filter(id => id);
+
+        if (rxcuis.length < 2) {
+            return res.json({ results: [] }); // Need at least 2 drugs identified
         }
 
-        // 2. Get Interactions
-        const interactRes = await axios.get(`https://rxnav.nlm.nih.gov/REST/interaction/interaction.json?rxcui=${rxcui}`);
+        // 2. Check interactions using list endpoint
+        const idsJoined = rxcuis.join('+');
+        const interactRes = await axios.get(`https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis=${idsJoined}`);
 
-        // Parse complex RxNav structure
-        const interactionTypeGroup = interactRes.data.interactionTypeGroup;
+        const fullInteractionTypeGroup = interactRes.data.fullInteractionTypeGroup;
         const results: any[] = [];
 
-        if (interactionTypeGroup) {
-            interactionTypeGroup.forEach((group: any) => {
-                group.interactionType?.forEach((type: any) => {
+        if (fullInteractionTypeGroup) {
+            fullInteractionTypeGroup.forEach((group: any) => {
+                group.fullInteractionType?.forEach((type: any) => {
                     type.interactionPair?.forEach((pair: any) => {
                         results.push({
                             id: Math.random().toString(36).substr(2, 9),
-                            description: pair.description,
+                            source: 'RxNav',
+                            type: 'interaction',
                             severity: pair.severity,
-                            drug_b: pair.interactionConcept?.[1]?.minConceptItem?.name || 'Unknown'
+                            description: pair.description,
+                            drug_a: pair.interactionConcept?.[0]?.minConceptItem?.name,
+                            drug_b: pair.interactionConcept?.[1]?.minConceptItem?.name
                         });
                     });
                 });
             });
         }
 
-        res.json({ results: results.slice(0, 10) }); // Limit to 10
+        res.json({ results });
     } catch (error) {
         // console.error('RxNav Error:', error);
         res.json({ results: [] });
     }
 });
 
-// Proxy to NLM Clinical Tables (ICD-10)
+// Proxy to ICD
 app.get('/api/knowledge/icd', async (req: express.Request, res: express.Response) => {
     const query = req.query.query as string;
     if (!query) return res.json({ results: [] });
 
     try {
-        // NLM Clinical Tables public API
-        // searching ICD-10-CM
+        // 1. Search NLM for codes
         const response = await axios.get(`https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search?sf=code,name&terms=${query}&maxList=5`);
-
-        // Response format: [total, codes[], null, [[code, name], ...]]
         const items = response.data[3] || [];
+
         const results = items.map((item: any[]) => ({
             code: item[0],
-            name: item[1],
+            title: item[1],
+            // Use title as definition for now, avoiding "Definição clínica:" prefix if it's just the name.
+            // Ideally we'd fetch a real definition, but NLM doesn't provide one easily.
+            definition: item[1],
             source: 'ICD-10-CM'
         }));
 
+        console.log(`[ICD] Found ${results.length} items for "${query}"`);
         res.json({ results });
     } catch (error) {
-        // console.error('ICD Error:', error);
+        console.error('[ICD] Error:', error);
         res.json({ results: [] });
     }
 });
@@ -185,28 +224,32 @@ app.get('/api/knowledge/pubmed', async (req: express.Request, res: express.Respo
     }
 });
 
-// Proxy to Wikipedia (General Info Fallback)
+// Proxy to Wikipedia (Summary REST API)
 app.get('/api/knowledge/wikipedia', async (req: express.Request, res: express.Response) => {
     const query = req.query.query as string;
     if (!query) return res.json({ results: [] });
 
     try {
-        // Wikipedia Opensearch
-        // Limit to 3 for brevity
-        const response = await axios.get(`https://pt.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=3&namespace=0&format=json`);
+        // Step 1: Opensearch to get best match title
+        const searchRes = await axios.get(`https://pt.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json`);
+        const bestTitle = searchRes.data?.[1]?.[0];
 
-        // Response: [query, [titles], [descriptions], [urls]]
-        const titles = response.data[1];
-        const descriptions = response.data[2];
-        const urls = response.data[3];
+        if (!bestTitle) {
+            return res.json({ results: [] });
+        }
 
-        const results = titles.map((title: string, index: number) => ({
-            id: `wiki-${index}`,
-            title: title,
-            description: descriptions[index] || 'Sem descrição disponível.',
-            url: urls[index],
+        // Step 2: Get Summary for best title
+        const summaryRes = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle)}`);
+        const data = summaryRes.data;
+
+        const results = [{
+            id: `wiki-${data.pageid}`,
+            title: data.title,
+            description: data.extract,
+            url: data.content_urls?.desktop?.page,
+            thumbnail: data.thumbnail?.source,
             source: 'Wikipedia (PT)'
-        }));
+        }];
 
         res.json({ results });
     } catch (error) {

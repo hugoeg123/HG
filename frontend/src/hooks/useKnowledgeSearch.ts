@@ -8,6 +8,13 @@ export interface DrugResult {
     manufacturer: string;
     description: string;
     warnings: string;
+    // New fields
+    boxed_warning?: string;
+    indications?: string;
+    mechanism?: string;
+    contraindications?: string;
+    adverse_reactions?: string;
+
     community_votes: number;
     comments: string[];
 }
@@ -28,11 +35,14 @@ export interface InteractionResult {
     description: string;
     severity: string;
     drug_b: string;
+    drug_a?: string;
+    source?: string;
 }
 
 export interface DiagnosticResult {
     code: string;
-    name: string;
+    title: string; // Changed from name
+    definition: string;
     source: string;
 }
 
@@ -50,6 +60,7 @@ export interface WikiResult {
     title: string;
     description: string;
     url: string;
+    thumbnail?: string;
     source: string;
 }
 

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { useKnowledgeSearch, DrugResult } from '../hooks/useKnowledgeSearch';
-import { Search, Pill, ChevronDown, ChevronUp, AlertTriangle, Activity, BookOpen, ExternalLink, Database, Globe, PenTool, Lock, Unlock, Plus } from 'lucide-react';
+import { useKnowledgeSearch } from '../hooks/useKnowledgeSearch';
+import { DrugMonographCard } from './DrugMonographCard';
+import { WikipediaCard } from './WikipediaCard';
+import { InteractionAlert } from './InteractionAlert';
+import { Search, PenTool, Database, Globe, Lock, Unlock, Plus, Activity, BookOpen, ExternalLink } from 'lucide-react';
 
 const KnowledgeSidebar: React.FC = () => {
     const [query, setQuery] = useState('');
@@ -20,12 +23,8 @@ const KnowledgeSidebar: React.FC = () => {
         addNote
     } = useKnowledgeSearch(query);
 
-    // Debugging data flow as requested
-    console.log('Knowledge Search Diagnostics:', { diagnosticResults, interactionResults });
-
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        // Search is now reactive via the hook's useEffect
     };
 
     const handleAddNote = async (e: React.FormEvent) => {
@@ -94,6 +93,34 @@ const KnowledgeSidebar: React.FC = () => {
             {/* Gadgets Container */}
             <div className="flex-1 overflow-y-auto p-3 space-y-4 bg-[var(--color-bg-dark)] custom-scrollbar">
 
+                {/* Wikipedia Card (Top Context) */}
+                {wikiResults.length > 0 && (
+                    <div className="mb-4">
+                        {wikiResults.map(wiki => (
+                            <WikipediaCard key={wiki.id} wiki={wiki} />
+                        ))}
+                    </div>
+                )}
+
+
+                {/* Interaction Alerts (Top Priority) */}
+                {interactionResults.length > 0 && (
+                    <div className="mb-4">
+                        {interactionResults.map(inter => (
+                            <InteractionAlert key={inter.id} interaction={inter} />
+                        ))}
+                    </div>
+                )}
+
+                {/* Drug Monographs */}
+                {drugResults.length > 0 && (
+                    <div className="mb-4">
+                        {drugResults.map(drug => (
+                            <DrugMonographCard key={drug.id} drug={drug} />
+                        ))}
+                    </div>
+                )}
+
                 {/* Gadget: Community Notes */}
                 {notes.length > 0 && (
                     <GadgetBox title="Notas da Comunidade" icon={<PenTool className="w-4 h-4 text-yellow-500" />} source="Health Guardian">
@@ -114,61 +141,20 @@ const KnowledgeSidebar: React.FC = () => {
                     </GadgetBox>
                 )}
 
-                {/* Gadget: Wikipedia (General Info) */}
-                {wikiResults.length > 0 && (
-                    <GadgetBox title="Enciclopédia" icon={<Globe className="w-4 h-4 text-cyan-500" />} source="Wikipedia">
-                        <div className="space-y-2">
-                            {wikiResults.map(wiki => (
-                                <div key={wiki.id} className="p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)]">
-                                    <h4 className="font-bold text-xs text-[var(--color-text-primary)] mb-1">
-                                        <a href={wiki.url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[var(--color-primary)]">
-                                            {wiki.title}
-                                        </a>
-                                    </h4>
-                                    <p className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed line-clamp-3">{wiki.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </GadgetBox>
-                )}
-
                 {/* Gadget: Diagnostics (ICD) */}
                 {diagnosticResults.length > 0 && (
-                    <GadgetBox title="Diagnósticos (ICD-10)" icon={<Activity className="w-4 h-4 text-emerald-500" />} source="NLM">
-                        <ul className="space-y-1">
+                    <GadgetBox title="Diagnósticos (ICD-10/11)" icon={<Activity className="w-4 h-4 text-emerald-500" />} source="NLM / OMS">
+                        <ul className="space-y-2">
                             {diagnosticResults.map((d) => (
-                                <li key={d.code} className="flex justify-between items-center p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)]">
-                                    <span className="text-xs text-[var(--color-text-primary)] font-medium truncate w-[70%]">{d.name}</span>
-                                    <span className="text-[10px] bg-[var(--color-bg-dark)] text-[var(--color-text-secondary)] px-1.5 py-0.5 rounded border border-[var(--color-border)] font-mono">{d.code}</span>
+                                <li key={d.code} className="p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)]">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-xs text-[var(--color-text-primary)] font-bold">{d.title}</span>
+                                        <span className="text-[10px] bg-[var(--color-bg-dark)] text-[var(--color-text-secondary)] px-1.5 py-0.5 rounded border border-[var(--color-border)] font-mono shrink-0 ml-2">{d.code}</span>
+                                    </div>
+                                    <p className="text-[10px] text-[var(--color-text-secondary)] italic">{d.definition}</p>
                                 </li>
                             ))}
                         </ul>
-                    </GadgetBox>
-                )}
-
-                {/* Gadget: Interactions (RxNav) */}
-                {interactionResults.length > 0 && (
-                    <GadgetBox title="Interações Medicamentosas" icon={<AlertTriangle className="w-4 h-4 text-amber-500" />} source="RxNav">
-                        <div className="space-y-2">
-                            {interactionResults.map((inter) => (
-                                <div key={inter.id} className="p-2 bg-amber-900/10 border border-amber-700/30 rounded text-xs">
-                                    <div className="flex justify-between font-bold text-amber-600 mb-1">
-                                        <span>{inter.drug_b}</span>
-                                        <span className="uppercase text-[10px]">{inter.severity}</span>
-                                    </div>
-                                    <p className="text-[var(--color-text-secondary)] leading-tight">{inter.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </GadgetBox>
-                )}
-
-                {/* Gadget: Pharmacology (OpenFDA) */}
-                {drugResults.length > 0 && (
-                    <GadgetBox title="Farmacologia" icon={<Pill className="w-4 h-4 text-blue-500" />} source="OpenFDA">
-                        {drugResults.map((drug) => (
-                            <DrugWidget key={drug.id} drug={drug} />
-                        ))}
                     </GadgetBox>
                 )}
 
@@ -204,6 +190,8 @@ const KnowledgeSidebar: React.FC = () => {
                     </GadgetBox>
                 )}
 
+
+
                 {!isLoading && !query && notes.length === 0 && (
                     <div className="flex flex-col items-center justify-center p-8 text-center text-[var(--color-text-muted)] space-y-4">
                         <Database className="w-12 h-12 opacity-20" />
@@ -230,34 +218,5 @@ const GadgetBox: React.FC<{ title: string, icon: React.ReactNode, source: string
         </div>
     </div>
 );
-
-// -- Widgets --
-const DrugWidget: React.FC<{ drug: DrugResult }> = ({ drug }) => {
-    const [expanded, setExpanded] = useState(false);
-
-    return (
-        <div className="bg-[var(--color-bg-light)] rounded border border-[var(--color-border)] p-2 mb-2 last:mb-0">
-            <div className="flex justify-between items-start cursor-pointer transition-opacity hover:opacity-80" onClick={() => setExpanded(!expanded)}>
-                <div>
-                    <h4 className="font-bold text-[var(--color-text-primary)] text-xs">{drug.brand_name}</h4>
-                    <p className="text-[10px] text-[var(--color-text-secondary)]">{drug.generic_name}</p>
-                </div>
-                {expanded ? <ChevronUp className="w-3 h-3 text-[var(--color-text-secondary)]" /> : <ChevronDown className="w-3 h-3 text-[var(--color-text-secondary)]" />}
-            </div>
-
-            {expanded && (
-                <div className="mt-2 pt-2 border-t border-[var(--color-border)] space-y-2 text-[11px] text-[var(--color-text-secondary)]">
-                    <p><strong className="text-[var(--color-text-primary)]">Fabricante:</strong> {drug.manufacturer}</p>
-                    <p className="line-clamp-4 leading-relaxed">{drug.description}</p>
-                    {drug.warnings !== 'No specific warnings' && (
-                        <div className="p-1.5 bg-red-900/20 text-red-200 border border-red-800/30 rounded">
-                            <strong>Alerta:</strong> {drug.warnings.slice(0, 150)}...
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
 
 export default KnowledgeSidebar;
