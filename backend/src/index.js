@@ -27,6 +27,7 @@ const alertRoutes = require('./routes/alert.routes');
 const templateRoutes = require('./routes/template.routes');
 const aiRoutes = require('./routes/ai.routes');
 const exportRoutes = require('./routes/export.routes');
+const patientInputRoutes = require('./routes/patient-input.routes');
 
 // Importar middleware de erro
 const { errorHandler } = require('./middleware/error.middleware');
@@ -70,6 +71,7 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/agenda', agendaRoutes);
+app.use('/api/patient-inputs', patientInputRoutes);
 
 // Rota de saúde
 app.get('/health', (req, res) => {

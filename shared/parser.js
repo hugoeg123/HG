@@ -377,7 +377,8 @@ function calculateStats(sections, tags) {
   return stats;
 }
 
-// Exportações ES6 para frontend
+// Exportações ES6 para frontend (Comentado para compatibilidade com Backend Node.js)
+/*
 export {
   parseSections,
   validateAndParse,
@@ -391,8 +392,9 @@ export {
   validateRequiredTags,
   calculateStats
 };
+*/
 
-// Exportações para compatibilidade CommonJS (Node.js)
+// Exportações para compatibilidade CommonJS (Node.js) e Frontend (via Vite/Webpack)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     parseSections,
@@ -407,4 +409,7 @@ if (typeof module !== 'undefined' && module.exports) {
     validateRequiredTags,
     calculateStats
   };
+} else {
+    // Fallback para ambiente browser sem module.exports (se necessário)
+    // window.Parser = { ... }
 }

@@ -18,6 +18,9 @@ const Template = require('./Template');
 const Alert = require('./Alert');
 const Calculator = require('./Calculator');
 const CalculatorTag = require('./CalculatorTag');
+const PatientAnthropometrics = require('./PatientAnthropometrics');
+const PatientLifestyle = require('./PatientLifestyle');
+const PatientCondition = require('./PatientCondition');
 
 // Novos modelos do sistema de tags dinâmicas
 const Medico = require('./Medico')(sequelize);
@@ -27,6 +30,8 @@ const Registro = require('./Registro')(sequelize);
 const SecaoRegistro = require('./SecaoRegistro')(sequelize);
 const AvailabilitySlot = require('./AvailabilitySlot')(sequelize);
 const Appointment = require('./Appointment')(sequelize);
+const PatientTagEntry = require('./PatientTagEntry')(sequelize);
+const Review = require('./Review')(sequelize);
 
 // Definir associações entre modelos legados
 
@@ -39,6 +44,13 @@ User.hasMany(Tag, { foreignKey: 'createdBy', as: 'tags' });
 // Associações de Patient
 Patient.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 Patient.hasMany(Record, { foreignKey: 'patientId', as: 'records' });
+Patient.hasMany(PatientAnthropometrics, { foreignKey: 'patient_id', as: 'anthropometrics' });
+Patient.hasMany(PatientLifestyle, { foreignKey: 'patient_id', as: 'lifestyles' });
+Patient.hasMany(PatientCondition, { foreignKey: 'patient_id', as: 'conditions' });
+
+PatientAnthropometrics.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
+PatientLifestyle.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
+PatientCondition.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
 // Associações de Record
 Record.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
@@ -85,7 +97,9 @@ const models = {
   SecaoRegistro,
   AvailabilitySlot,
   Appointment,
-  Patient
+  Patient,
+  PatientTagEntry,
+  Review
 };
 
 // Executar associações dos novos modelos
@@ -107,6 +121,9 @@ module.exports = {
   Alert,
   Calculator,
   CalculatorTag,
+  PatientAnthropometrics,
+  PatientLifestyle,
+  PatientCondition,
   // Novos modelos do sistema de tags dinâmicas
   Medico,
   Paciente,
@@ -114,5 +131,7 @@ module.exports = {
   Registro,
   SecaoRegistro,
   AvailabilitySlot,
-  Appointment
+  Appointment,
+  PatientTagEntry,
+  Review
 };

@@ -3,27 +3,21 @@ import { Plus, Settings, Download, Upload, Trash2, RefreshCw, Filter, Search, Cl
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { useTimeSlotStore } from '@/stores/timeSlotStore.js';
+import { useTimeSlotStore } from '../store/timeSlotStore';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const TimeGridControls = () => {
-  const { 
-    generateSlotsFromRanges, 
-    clearAllSlots, 
+  const {
+    clearAllSlots,
     timeSlots,
     exportData,
     importData,
     markingMode,
     setMarkingMode,
+    generateSlotsFromRanges
   } = useTimeSlotStore();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterModality, setFilterModality] = useState('all');
@@ -96,7 +90,7 @@ const TimeGridControls = () => {
               <RefreshCw className="h-4 w-4 mr-2" />
               Gerar Slots
             </Button>
-            
+
             <Button
               onClick={handleClearAll}
               variant="destructive"

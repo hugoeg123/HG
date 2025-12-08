@@ -19,6 +19,10 @@ const alertRoutes = require('./alert.routes');
 const fileRoutes = require('./file.routes');
 const agendaRoutes = require('./agenda.routes');
 const marketplaceRoutes = require('./marketplace.routes');
+const patientInputRoutes = require('./patient-input.routes');
+const tagHistoryRoutes = require('./tag-history.routes');
+const aiRoutes = require('./ai.routes');
+const profileRoutes = require('./profile.routes');
 
 // Logging centralizado via morgan em src/index.js; removido logger duplicado nas rotas.
 
@@ -59,6 +63,11 @@ router.use('/alerts', alertRoutes);
 router.use('/files', fileRoutes);
 router.use('/agenda', agendaRoutes);
 router.use('/marketplace', marketplaceRoutes);
+router.use('/patient-inputs', patientInputRoutes);
+router.use('/tag-history', tagHistoryRoutes);
+router.use('/tag-history', tagHistoryRoutes);
+router.use('/ai', aiRoutes);
+router.use('/', profileRoutes); // Profile routes are mounted at root level (e.g. /patients/:id/profile)
 
 // Rota 404 para endpoints não encontrados
 router.use('*', (req, res) => {
@@ -73,7 +82,7 @@ router.use('*', (req, res) => {
 // Middleware de tratamento de erros
 router.use((error, req, res, next) => {
   console.error('Erro na API:', error);
-  
+
   // Erro de validação do Sequelize
   if (error.name === 'SequelizeValidationError') {
     return res.status(400).json({
@@ -85,7 +94,7 @@ router.use((error, req, res, next) => {
       }))
     });
   }
-  
+
   // Erro de constraint do Sequelize
   if (error.name === 'SequelizeUniqueConstraintError') {
     return res.status(409).json({
@@ -96,7 +105,7 @@ router.use((error, req, res, next) => {
       }))
     });
   }
-  
+
   // Erro de foreign key
   if (error.name === 'SequelizeForeignKeyConstraintError') {
     return res.status(400).json({
@@ -104,7 +113,7 @@ router.use((error, req, res, next) => {
       details: 'O registro referenciado não existe'
     });
   }
-  
+
   // Erro de sintaxe JSON
   if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
     return res.status(400).json({
@@ -112,7 +121,7 @@ router.use((error, req, res, next) => {
       details: 'Verifique a sintaxe do JSON enviado'
     });
   }
-  
+
   // Erro genérico
   res.status(500).json({
     error: 'Erro interno do servidor',

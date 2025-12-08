@@ -489,7 +489,8 @@ export const useTimeSlotStore = create((set, get) => ({
       // Integrates with: agendaService.getSlots, agendaService.getAppointments
       const { data } = await agendaService.getSlots({ start: start.toISOString(), end: end.toISOString() });
 
-      // Fetch appointments in the same range to obtain patient names (patient.name or notes)
+      // Fetch appointments in the same range to obtain patient names and origin
+      // Connector: Used to display 'Marketplace' badge in TimeGridSlot when origin is patient_marketplace
       let apptMapBySlotId = new Map();
       try {
         const { data: apptData } = await agendaService.getAppointments({ start: start.toISOString(), end: end.toISOString() });
@@ -502,8 +503,9 @@ export const useTimeSlotStore = create((set, get) => ({
           const name = (appt?.patient?.name && String(appt.patient.name).trim().length > 0)
             ? String(appt.patient.name).trim()
             : (typeof appt?.notes === 'string' && appt.notes.trim().length > 0 ? appt.notes.trim() : null);
+          const origin = typeof appt?.origin === 'string' ? appt.origin : null;
           if (name && !apptMapBySlotId.has(slotId)) {
-            apptMapBySlotId.set(slotId, name);
+            apptMapBySlotId.set(slotId, { patientName: name, origin });
           }
         });
       } catch (_) {
@@ -519,10 +521,10 @@ export const useTimeSlotStore = create((set, get) => ({
         const startDate = new Date(apiSlot.start_time);
         const endDate = new Date(apiSlot.end_time);
         const existingBooking = existingById.get(apiSlot.id)?.booking || null;
-        const nameFromBackend = apptMapBySlotId.get(apiSlot.id) || null;
+        const bookingFromBackend = apptMapBySlotId.get(apiSlot.id) || null;
         const booking = existingBooking
           ? existingBooking
-          : (nameFromBackend ? { patientName: nameFromBackend, createdAt: new Date().toISOString() } : null);
+          : (bookingFromBackend ? { ...bookingFromBackend, createdAt: new Date().toISOString() } : null);
         return {
           id: apiSlot.id,
           date: format(startDate, 'yyyy-MM-dd'),
@@ -698,7 +700,10 @@ export const useTimeSlotStore = create((set, get) => ({
 
       return { success: true, appointment: data };
     } catch (err) {
-      const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || 'Falha ao criar agendamento';
+      const isCanceled = err?.code === 'ERR_CANCELED' || err?.message?.includes('canceled');
+      const errorMessage = err?.response?.data?.message || (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.map(e => e.msg).join('; ') : null) || (isCanceled ? 'Requisição cancelada' : 'Falha ao criar agendamento');
+      // Resincronizar semana após erro para evitar estado inconsistente
+      try { await get().loadSlotsForWeek(); } catch (_) {}
       return { success: false, error: errorMessage };
     }
   },
@@ -709,11 +714,19 @@ export const useTimeSlotStore = create((set, get) => ({
    * Hook: Cancela o appointment (se existir) e atualiza o slot no backend para 'available'.
    * Integrates with: agendaService.getAppointments, agendaService.updateAppointment, updateSlotInBackend → agendaService.updateSlot.
    */
-  cancelAppointmentForSlot: async (slotId) => {
+  // Cancelar agendamento do slot (disponibilizar horário)
+  /**
+   * Connector: Chamado pelo painel rápido em WeeklyTimeGrid (botão "Disponibilizar").
+   * Hook: Cancela o appointment (se existir) e atualiza o slot no backend para 'available'.
+   * Integrates with: agendaService.getAppointments, agendaService.updateAppointment, updateSlotInBackend → agendaService.updateSlot.
+   * Safety: Para origem 'patient_marketplace', exige allowMarketplace=true para evitar cancelamento sem confirmação explícita.
+   */
+  cancelAppointmentForSlot: async (slotId, options = {}) => {
     try {
       const { timeSlots } = get();
       const current = timeSlots.find(s => s.id === slotId);
       if (!current) return { success: false, error: 'Slot não encontrado' };
+      const { allowMarketplace } = options || {};
 
       // Buscar agendamentos no intervalo do slot para encontrar o correspondente
       const startISO = combineDateAndTimeToISO(current.date, current.startTime);
@@ -727,6 +740,12 @@ export const useTimeSlotStore = create((set, get) => ({
       } catch (_) {
         // Se a busca falhar, seguimos para disponibilizar o slot mesmo assim
         target = null;
+      }
+
+      // Verificar origem (do appointment ou do estado local) para aplicar segurança
+      const origin = (typeof target?.origin === 'string' ? target.origin : null) || (typeof current?.booking?.origin === 'string' ? current.booking.origin : null);
+      if (origin === 'patient_marketplace' && allowMarketplace !== true) {
+        return { success: false, error: 'Operação não confirmada para consulta do marketplace' };
       }
 
       // Se houver agendamento, cancelar no backend

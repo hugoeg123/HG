@@ -142,8 +142,13 @@ const TimeGridSlot = ({ slot, isDarkMode, onClick, onDelete }) => {
       {/* Patient info (if booked) */}
       {slot.booking && (
         <div className="mt-1 pt-1 border-t border-current border-opacity-20">
-          <div className="text-xs opacity-90">
-            {slot.booking.patientName}
+          <div className="flex items-center gap-1">
+            <div className="text-xs opacity-90">
+              {slot.booking.patientName}
+            </div>
+            {slot.booking.origin === 'patient_marketplace' && (
+              <Badge variant="secondary" className="text-[10px]">Marketplace</Badge>
+            )}
           </div>
           {slot.booking.status && (
             <Badge variant="secondary" className="text-xs mt-1">

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useTimeSlotStore } from '../stores/timeSlotStore';
+import { useTimeSlotStore } from '../store/timeSlotStore';
 import { usePatientStore } from '../store/patientStore.js';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from './ui/card';
@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import MarkingModeConfig from './MarkingModeConfig';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ConfirmDialog from './ui/ConfirmDialog';
 
 /**
  * WeeklyTimeGrid Component
@@ -84,7 +85,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
   const [dayColumns, setDayColumns] = useState([]);
   const [timelineOffsetTop, setTimelineOffsetTop] = useState(0);
   const [rowHeight, setRowHeight] = useState(22);
-  
+
   const PIXEL_NUDGE = 0.5;
   const getOverlayOffsetTop = () => timelineOffsetTop;
 
@@ -93,10 +94,10 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     const s = dragStart.minutes;
     const e = dragEnd.minutes;
     if (Math.abs(e - s) < GRID_STEP_MINUTES) return null;
-    
+
     const startMin = Math.min(s, e);
     const endMin = Math.max(s, e);
-    
+
     return {
       dayIndex: dragStart.dayIndex,
       sSnap: snapToStep(startMin, 'start'),
@@ -153,6 +154,12 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     return firstId ? timeSlots.find(s => s.id === firstId) : null;
   }, [selectedSlotIds, timeSlots]);
 
+  // Connector: origem do agendamento
+  // Integrates with: stores/timeSlotStore.js → loadSlotsForWeek() que popula booking.origin
+  // Hook: Usado para ocultar UI de confirmação/importação quando origin === 'patient_marketplace'
+  const bookingOrigin = selectedSlot?.booking?.origin || null;
+  const isMarketplaceBooking = bookingOrigin === 'patient_marketplace';
+
   // Ajustar modo do painel conforme status do slot
   useEffect(() => {
     if (selectedSlot) {
@@ -190,7 +197,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           return;
         }
         // Criar paciente rapidamente com o nome informado
-        const created = await createPatient({ 
+        const created = await createPatient({
           name: notes,
           dateOfBirth: todayStr,
           gender: 'não informado'
@@ -263,7 +270,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           return;
         }
         // Criar paciente rapidamente com o nome informado
-        const created = await createPatient({ 
+        const created = await createPatient({
           name: notes,
           dateOfBirth: todayStr,
           gender: 'não informado'
@@ -295,7 +302,12 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
       // O backend atualiza o slot para 'booked' automaticamente ao criar o appointment.
       if (selectedSlot.status === 'available') {
         try {
-          const placeholder = await createPatient({ name: 'Sem Nome', placeholder: true });
+          const placeholder = await createPatient({
+            name: 'Sem Nome',
+            placeholder: true,
+            dateOfBirth: new Date().toISOString().split('T')[0],
+            gender: 'não informado'
+          });
           if (placeholder?.id) {
             const appt = await createAppointmentForSlot(selectedSlot.id, placeholder.id, 'Sem Nome');
             if (!appt?.success) {
@@ -328,14 +340,49 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     }
   };
 
+  // Estado de confirmação explícita para marketplace (evita uso de window.confirm)
+  const [confirmMarketplaceOpen, setConfirmMarketplaceOpen] = useState(false);
+  const [confirmSlotId, setConfirmSlotId] = useState(null);
+
+  /**
+   * Connector: Acionado pelo botão "Disponibilizar" no painel rápido.
+   * Hook: Para origem marketplace, abre modal de confirmação controlado.
+   * Safety: Não chama cancelamento até usuário confirmar explicitamente.
+   */
   const handleDisponibilizarSelected = async () => {
     if (!selectedSlot) return;
+    if (isMarketplaceBooking) {
+      // Abrir modal controlado e salvar contexto do slot
+      setConfirmSlotId(selectedSlot.id);
+      setConfirmMarketplaceOpen(true);
+      return;
+    }
     const res = await cancelAppointmentForSlot(selectedSlot.id);
     if (!res?.success) {
       alert(`Falha ao disponibilizar: ${res?.error || 'erro desconhecido'}`);
     } else {
       setSelectedSlotIds(new Set());
     }
+  };
+
+  const handleConfirmMarketplaceOK = async () => {
+    if (!confirmSlotId) {
+      setConfirmMarketplaceOpen(false);
+      return;
+    }
+    const res = await cancelAppointmentForSlot(confirmSlotId, { allowMarketplace: true });
+    if (!res?.success) {
+      alert(`Falha ao disponibilizar: ${res?.error || 'erro desconhecido'}`);
+    } else {
+      setSelectedSlotIds(new Set());
+    }
+    setConfirmMarketplaceOpen(false);
+    setConfirmSlotId(null);
+  };
+
+  const handleConfirmMarketplaceCancel = () => {
+    setConfirmMarketplaceOpen(false);
+    setConfirmSlotId(null);
   };
 
   // Alinhamento vertical da overlay: iniciar no topo da grid (sem offset)
@@ -362,8 +409,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
   }, [selectedWeek, rowHeight]);
 
   const GRID_START_MINUTES = 0; // 00:00
-  const GRID_END_MINUTES   = 24 * 60; // 24:00
-  const GRID_STEP_MINUTES  = Math.min(Math.max((availabilitySettings?.timeStep || 30), 5), 60);
+  const GRID_END_MINUTES = 24 * 60; // 24:00
+  const GRID_STEP_MINUTES = Math.min(Math.max((availabilitySettings?.timeStep || 30), 5), 60);
   const CELL_ROWS = Math.ceil((GRID_END_MINUTES - GRID_START_MINUTES) / GRID_STEP_MINUTES);
   const LINE_COUNT = CELL_ROWS + 1; // linhas de vértice
 
@@ -446,17 +493,17 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
   const getSlotPosition = (slot) => {
     const startMinutes = timeToMinutes(slot.startTime);
     const endMinutes = timeToMinutes(slot.endTime);
-  
+
     const sSnap = snapToStep(startMinutes, 'start');
     const eSnap = snapToStep(endMinutes, 'end');
-  
+
     // SINCRONIZAR com sistema de grid: usar rowHeight em vez de PIXELS_PER_MINUTE
     const startIdx = Math.round((sSnap - GRID_START_MINUTES) / GRID_STEP_MINUTES);
     const endIdx = Math.round((eSnap - GRID_START_MINUTES) / GRID_STEP_MINUTES);
-    
+
     const top = startIdx * rowHeight; // Usar rowHeight real, não PIXELS_PER_MINUTE
     const height = Math.max(endIdx - startIdx, 1) * rowHeight;
-  
+
     return { top, height, sSnap, eSnap };
   };
 
@@ -467,17 +514,17 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     const endMin = timeToMinutes(slot.endTime);
     const sSnap = snapToStep(startMin, 'start');
     const eSnap = snapToStep(endMin, 'end');
-    
+
     // CORREÇÃO: usar os minutos snapped para calcular índices, não os originais
     const sIdx = Math.max(0, Math.min(CELL_ROWS - 1, Math.round((sSnap - GRID_START_MINUTES) / step)));
     const eIdx = Math.max(0, Math.min(CELL_ROWS, Math.round((eSnap - GRID_START_MINUTES) / step)));
     const span = Math.max(1, eIdx - sIdx);
-    
+
     // Retornar também as linhas do CSS grid (1-based)
     // CORREÇÃO: CSS Grid usa end exclusivo, então +1 para incluir a linha final
     const sLine = sIdx + 1;
     const eLine = eIdx + 2; // +2 porque eIdx já é +1 e precisamos de mais +1 para inclusão
-    
+
     return { sIdx, eIdx, span, sSnap, eSnap, sLine, eLine };
   };
 
@@ -510,7 +557,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     const relY = Math.max(0, y);
     const minutesFromStart = GRID_START_MINUTES + Math.floor(relY / rowHeight) * GRID_STEP_MINUTES;
     setDragEnd({ dayIndex: dragStart.dayIndex, minutes: minutesFromStart });
-    
+
     // Update preview slot
     const preview = getPreviewSlot();
     setPreviewSlot(preview);
@@ -525,15 +572,15 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     if (Math.abs(e - s) < GRID_STEP_MINUTES) return;
 
     const startMin = Math.min(s, e);
-    const endMin   = Math.max(s, e);
+    const endMin = Math.max(s, e);
 
     const sSnap = snapToStep(startMin, 'start');
-    const eSnap = snapToStep(endMin,   'end');
+    const eSnap = snapToStep(endMin, 'end');
 
     const startTime = minutesToTime(sSnap);
-    const endTime   = minutesToTime(eSnap);
-    const dayDate   = weekDays[dragStart.dayIndex];
-    const dateStr   = format(dayDate, 'yyyy-MM-dd');
+    const endTime = minutesToTime(eSnap);
+    const dayDate = weekDays[dragStart.dayIndex];
+    const dateStr = format(dayDate, 'yyyy-MM-dd');
 
     if (markingMode === 'availability') {
       // Use store helper to create multiple slots honoring duration/interval
@@ -548,8 +595,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
       if (selected && selected.date === dateStr) {
         if (selected.status === 'available') {
           try {
-            const placeholder = await createPatient({ 
-              name: 'Sem Nome', 
+            const placeholder = await createPatient({
+              name: 'Sem Nome',
               placeholder: true,
               dateOfBirth: new Date().toISOString().split('T')[0],
               gender: 'não informado'
@@ -619,8 +666,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
   };
 
   const formatWeekDay = (date) => {
-    return date.toLocaleDateString('pt-BR', { 
-      weekday: 'short', 
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'short',
       day: 'numeric',
       month: 'short'
     });
@@ -649,13 +696,13 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             >
               ←
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-theme-text">
                 {(() => { const sw = (selectedWeek instanceof Date) ? selectedWeek : new Date(selectedWeek); return !Number.isNaN(sw.getTime()) ? format(sw, 'MMMM yyyy', { locale: ptBR }) : ''; })()}
               </span>
             </div>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -672,7 +719,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             <Button
               aria-expanded={showMarkingConfig}
               onClick={() => setShowMarkingConfig(prev => !prev)}
-        className={`${isDarkModeUI ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} px-4 py-2 rounded-md font-medium shadow-sm`}
+              className={`${isDarkModeUI ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} px-4 py-2 rounded-md font-medium shadow-sm`}
             >
               Criar horário
             </Button>
@@ -737,17 +784,17 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
               const isSelected = isSameDay(date, selectedWeek);
               const isToday = isSameDay(date, new Date());
               const isEvenCol = dayIndex % 2 === 0;
-              
+
               let bgColor;
               let borderClass = '';
-              
+
               if (isDarkModeUI) {
-        bgColor = isEvenCol ? 'var(--color-header-col-even-dark)' : 'var(--color-header-col-odd-dark)';
-        if (isToday) {
-          // Destaque para a coluna de Hoje em dark mode
-          bgColor = 'var(--color-header-col-center-dark)';
-          borderClass = 'ring-2 ring-theme-accent';
-        }
+                bgColor = isEvenCol ? 'var(--color-header-col-even-dark)' : 'var(--color-header-col-odd-dark)';
+                if (isToday) {
+                  // Destaque para a coluna de Hoje em dark mode
+                  bgColor = 'var(--color-header-col-center-dark)';
+                  borderClass = 'ring-2 ring-theme-accent';
+                }
               } else {
                 bgColor = isEvenCol ? '#F3F3F3' : '#E9E9E9';
                 if (isToday) {
@@ -766,9 +813,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                 >
                   <button
                     onClick={() => setSelectedWeek(date)}
-                    className={`flex flex-col items-center justify-center px-3 py-2 h-16 rounded-none text-sm font-medium transition-all border-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-ring_outline focus:ring-offset-theme-background ${
-                      isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'
-                    } ${isToday ? 'text-white' : ''}`}
+                    className={`flex flex-col items-center justify-center px-3 py-2 h-16 rounded-none text-sm font-medium transition-all border-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-ring_outline focus:ring-offset-theme-background ${isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'
+                      } ${isToday ? 'text-white' : ''}`}
                     aria-pressed={isSelected}
                   >
                     <span className="text-xs leading-tight">
@@ -834,7 +880,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             </div>
 
             {/* Linha 2: dados do paciente (somente para slots agendados) */}
-            {selectedSlot?.status === 'booked' && (
+            {selectedSlot?.status === 'booked' && !isMarketplaceBooking && (
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <label className="text-sm text-theme-text">
                   Nome do paciente:
@@ -880,7 +926,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                 </Button>
               )}
 
-              {selectedSlot?.status === 'booked' && (
+              {selectedSlot?.status === 'booked' && !isMarketplaceBooking && (
                 <Button
                   size="sm"
                   onClick={handleConfirmPatientName}
@@ -907,7 +953,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           </div>
         )}
 
-        <div 
+        <div
           ref={gridRef}
           className="relative mx-auto max-w-[1200px]"
           onMouseMove={handleMouseMove}
@@ -915,14 +961,32 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           onMouseLeave={handleMouseUp}
         >
 
+          {/* Modal de confirmação para consultas marketplace */}
+          <ConfirmDialog
+            open={confirmMarketplaceOpen}
+            title="Confirmar disponibilização"
+            message="Esta consulta foi agendada pelo paciente via marketplace. Deseja disponibilizar o horário e notificar o paciente?"
+            confirmText="OK"
+            cancelText="Cancelar"
+            onConfirm={handleConfirmMarketplaceOK}
+            onCancel={handleConfirmMarketplaceCancel}
+            onOpenChange={(open) => {
+              if (!open) {
+                // Fechamento via overlay/esc — tratar como cancelamento seguro
+                setConfirmMarketplaceOpen(false);
+                setConfirmSlotId(null);
+              }
+            }}
+          />
+
           {/* Linhas de vértice por step - REMOVIDAS PARA O PADRÃO XADREZ */}
 
           {/* Linhas de tempo (background) */}
           {Array.from({ length: CELL_ROWS }, (_, i) => (
-            <div 
-              key={`row-${i}`} 
-              className="grid" 
-               style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}
+            <div
+              key={`row-${i}`}
+              className="grid"
+              style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}
             >
               <div
                 className="text-right text-xs text-theme-text opacity-70 flex items-center justify-end box-border"
@@ -935,7 +999,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                 const isEvenCol = dayIndex % 2 === 0;
                 const isToday = isSameDay(day, new Date());
                 let bgColor;
-                
+
                 if (isDarkModeUI) {
                   // Dark mode: unify palette using theme tokens and accent
                   if (isToday) {
@@ -996,8 +1060,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                       // Enhanced color system for slots
                       const statusClass =
                         slot.status === 'booked' ? 'slot slot-booked group' :
-                        slot.status === 'available' ? 'slot slot-available group' :
-                        'slot slot-blocked group';
+                          slot.status === 'available' ? 'slot slot-available group' :
+                            'slot slot-blocked group';
                       const selectedClass = selectedSlotIds.has(slot.id) ? 'slot-selected' : '';
                       return (
                         <div
@@ -1011,7 +1075,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                           title={`${slot.startTime} - ${slot.endTime}`}
                         >
                           <div className="font-medium">
-                            {slot.startTime.substring(0,5)} - {slot.endTime.substring(0,5)}
+                            {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
                           </div>
                           {slot.status === 'booked' && (
                             <div className="text-xs opacity-75">
@@ -1037,18 +1101,17 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           {previewSlot && (
             <div
               className="absolute z-20 pointer-events-none"
-              style={{ 
+              style={{
                 // dayColumns[].left já é relativo ao container da grid, não somar TIME_COL_PX novamente
-                left: `${(dayColumns[previewSlot.dayIndex]?.left ?? TIME_COL_PX)}px`, 
-                width: `${dayColumns[previewSlot.dayIndex]?.width || 0}px`, 
-                top: `${Math.round((previewSlot.sSnap - GRID_START_MINUTES) / GRID_STEP_MINUTES) * rowHeight}px`, 
-                height: `${Math.max(Math.round((previewSlot.eSnap - previewSlot.sSnap) / GRID_STEP_MINUTES), 1) * rowHeight}px` 
+                left: `${(dayColumns[previewSlot.dayIndex]?.left ?? TIME_COL_PX)}px`,
+                width: `${dayColumns[previewSlot.dayIndex]?.width || 0}px`,
+                top: `${Math.round((previewSlot.sSnap - GRID_START_MINUTES) / GRID_STEP_MINUTES) * rowHeight}px`,
+                height: `${Math.max(Math.round((previewSlot.eSnap - previewSlot.sSnap) / GRID_STEP_MINUTES), 1) * rowHeight}px`
               }}
             >
-              <div 
-                className={`w-full h-full slot ${
-                  markingMode === 'availability' ? 'slot-available' : 'slot-booked'
-                }`}
+              <div
+                className={`w-full h-full slot ${markingMode === 'availability' ? 'slot-available' : 'slot-booked'
+                  }`}
               />
             </div>
           )}

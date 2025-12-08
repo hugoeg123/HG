@@ -1,6 +1,16 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
+  /**
+   * Appointment model
+   *
+   * Connectors:
+   * - Referenced in controllers/agenda.controller.js for CRUD operations
+   * - Joined with AvailabilitySlot (as 'slot') and Patient (as 'patient')
+   *
+   * Hook: Creation via agenda.controller.createAppointment sets `origin`
+   * Context: `origin` indicates booking source for UI conditioning (doctor vs marketplace)
+   */
   const Appointment = sequelize.define('Appointment', {
     id: {
       type: DataTypes.UUID,
@@ -31,6 +41,13 @@ module.exports = (sequelize) => {
     notes: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    // Booking origin/source (kept as STRING to avoid enum migration complexity)
+    // Values used: 'doctor_manual' | 'patient_marketplace' | 'system'
+    origin: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'doctor_manual'
     }
   }, {
     tableName: 'appointments',
@@ -38,7 +55,8 @@ module.exports = (sequelize) => {
     indexes: [
       { fields: ['slot_id'] },
       { fields: ['patient_id'] },
-      { fields: ['status'] }
+      { fields: ['status'] },
+      { fields: ['origin'] }
     ]
   });
 

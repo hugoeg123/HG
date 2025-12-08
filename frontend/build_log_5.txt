@@ -1,0 +1,57 @@
+
+> health-guardian-frontend@1.0.0 build
+> vite build
+
+[36mvite v4.5.14 [32mbuilding for production...[36m[39m
+transforming...
+
+img.png referenced in C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/index.css didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+img@2x.png referenced in C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/index.css didn't resolve at build time, it will remain unchanged to be resolved at runtime
+src/components/ui/tabs.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/tabs.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/tabs.tsx" was ignored.
+node_modules/sonner/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/sonner/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-avatar/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-avatar/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-tabs/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-tabs/dist/index.mjs" was ignored.
+src/components/ui/select.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/select.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/select.tsx" was ignored.
+node_modules/@radix-ui/react-checkbox/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-checkbox/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-roving-focus/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-roving-focus/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-presence/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-presence/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-label/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-label/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-dialog/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-dialog/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-progress/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-progress/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-select/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-select/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-checkbox/node_modules/@radix-ui/react-presence/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-checkbox/node_modules/@radix-ui/react-presence/dist/index.mjs" was ignored.
+src/components/ui/tooltip.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/tooltip.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/tooltip.tsx" was ignored.
+node_modules/@radix-ui/react-collection/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-collection/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-focus-scope/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-focus-scope/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-focus-guards/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-focus-guards/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-portal/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-portal/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-popper/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-popper/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-tooltip/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-tooltip/dist/index.mjs" was ignored.
+[32mÔ£ô[39m 3890 modules transformed.
+[32mÔ£ô built in 16.18s[39m
+"usePatientStore" is not exported by "src/store/patientStore.js", imported by "src/components/Layout/LeftSidebar.jsx".
+file: C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/components/Layout/LeftSidebar.jsx:3:9
+1: import { useState, useEffect, useRef } from 'react';
+2: import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+3: import { usePatientStore } from '../../store/patientStore';
+            ^
+4: import { Users } from 'lucide-react'; // Importar o ├¡cone Users do lucide-react
+5: import { Plus } from 'lucide-react';
+
+error during build:
+RollupError: "usePatientStore" is not exported by "src/store/patientStore.js", imported by "src/components/Layout/LeftSidebar.jsx".
+    at error (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:2287:30)
+    at Module.error (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:13745:16)
+    at Module.traceVariable (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:14175:29)
+    at ModuleScope.findVariable (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:12615:39)
+    at ReturnValueScope.findVariable (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:7124:38)
+    at ChildScope.findVariable (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:7124:38)
+    at Identifier.bind (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:8319:40)
+    at CallExpression.bind (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5892:23)
+    at CallExpression.bind (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:9890:15)
+    at VariableDeclarator.bind (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5892:23)

@@ -76,6 +76,24 @@
   border-color: rgb(var(--accent-rgb) / 0.18) !important; /* blue tint */
 }
 
+/* 3.1) Bordas sutis só para cards no modo dark
+ * Hook: Alvo em wrappers shadcn/ui com `.bg-card.border`.
+ * Connector: Afeta cards/painéis (dashboard, perfil, reviews) sem tocar em inputs ou buttons.
+ */
+.dark-mode .bg-card.border {
+  border-color: rgb(var(--accent-rgb) / 0.22) !important; /* teal discreto */
+}
+
+/* 3.2) Exceção: buttons não devem herdar borda com cor do tema no dark
+ * Mantém contorno transparente para ações de toolbar; preserva btn-outline.
+ */
+.dark-mode button.rounded-lg.border:not(.btn-outline) {
+  border-color: transparent !important;
+}
+.dark-mode button.rounded-lg.border:not(.btn-outline):hover {
+  border-color: transparent !important;
+}
+
 /* Escopo específico: impedir borda branca em <div> da página de Perfil */
 .dark-mode .profile-page div.border {
   border-color: rgb(var(--accent-rgb) / 0.22) !important;
@@ -228,6 +246,8 @@
   color: #ffffff !important; /* dark mode: white */
   border-color: transparent !important;
 }
-/* Ensure SVG icons inherit the current text color without filling shapes */
+/* Ensure SVG icons inherit the current text color. Avoid forcing fill:none globally
+ * so components that need filled shapes (e.g., rating stars) can opt-in.
+ */
 .button-exception svg { stroke: currentColor; }
-.button-exception svg path { stroke: currentColor; fill: none; }
+.button-exception svg path { stroke: currentColor; }

@@ -1,155 +1,432 @@
-A ideia está **certa** e ataca o ponto que causava o 07:00→07:15: converter o `y` diretamente para minutos e aplicar `floor/ceil` conforme início/fim. Eu incorporaria **4 ajustes** para ficar à prova de erro e 100% consistente com a grid:
+Abaixo vou te dar **a resposta que um pesquisador, epidemiologista ou redator de guideline usaria**: quais **quantificações** de tabagismo, etilismo e exercício físico **têm validade científica consolidada**, isto é: **usadas em estudos de coorte, meta-análises, diretrizes internacionais e escalas validadas**, *com limites claros, operacionalizáveis, reproduzíveis* — exatamente o tipo de métrica que você quer para estruturar RAG, prontuário e pesquisa clínica.
 
 ---
 
-## 1) Use o MESMO offset do overlay
+# 1. TABAGISMO — QUANTIFICAÇÕES COM VALIDADE CIENTÍFICA
 
-O mesmo deslocamento vertical que você usa para posicionar o overlay deve ser usado para converter `clientY → y`. Centralize isso:
+## 1.1. *Pack-years* (maior evidência)
 
-```ts
-const getOverlayOffsetTop = () => timelineOffsetTop; // nada de nudge diferente
-```
+**Fórmula:**
+**pack-years = (nº de cigarros/dia ÷ 20) × anos de uso**
 
-E use em TODOS os lugares (linhas, overlay e cálculo do mouse).
+Por que é válido:
 
----
+* Métrica padrão em **Framingham**, **NHLBI**, **USPSTF**, **GOLD**, **ATS**, **ERS**, **PLCO**, **UK Biobank**.
+* Reproduz risco em curva dose–resposta para **DPOC**, **câncer de pulmão**, **IAM**, **AVC**, aneurisma, etc.
+* É comparável entre estudos.
 
-## 2) Trabalhe em **minutos** (número), não string
+Cutoffs com evidência:
 
-Deixe `getTimeFromPosition` retornar **minutos**; formate para HH:MM só na hora de exibir. Evita parse/round trip e micro-arredondamentos.
+* **≥ 20 pack-years**: risco significativamente aumentado para DPOC e câncer.
+* **≥ 30 pack-years**: critério clássico de rastreio de câncer de pulmão.
+* **≥ 40 pack-years**: mortalidade muito aumentada; estudos de curva dose-resposta mostram incremento quase exponencial.
 
-```ts
-const EPS = 1e-6; // evita “ceil” indevido por flutuante
+## 1.2. Status de fumante (validado em todos os grandes estudos)
 
-const pxToMinutes = (yPx: number) => (yPx / rowHeight) * GRID_STEP_MINUTES;
+* **Nunca fumou**
+* **Ex-fumante** (cessação ≥ 12 meses) — intervalo validado porque reduz risco de recaída.
+* **Fumante atual** — forte preditor independente, mesmo com pack-years baixo.
 
-const getMinutesFromPosition = (clientY: number, snap: 'start'|'end'|'nearest') => {
-  const rect = gridRef.current?.getBoundingClientRect();
-  if (!rect) return null;
+## 1.3. Tipo de produto (estratificações validadas)
 
-  const y = clientY - rect.top - getOverlayOffsetTop();
-  if (y < 0) return null;
+Modelos multivariados usam categorias:
 
-  const raw = GRID_START_MINUTES + pxToMinutes(y);
+* **Cigarro industrializado**
+* **Cigarro de palha**
+* **Charuto / cachimbo**
+* **Narguilé** (equivalência média: 1 sessão ≈ 100–200 cigarros — estudos variam muito)
+* **Vape / e-cig** (ainda sem equivalência absoluta; estudos usam: “usuário diário”, “usuário ocasional”, “nunca”)
 
-  let snapped: number;
-  if (snap === 'start') {
-    snapped = Math.floor((raw + EPS) / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  } else if (snap === 'end') {
-    snapped = Math.ceil((raw - EPS) / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  } else {
-    snapped = Math.round(raw / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  }
+## 1.4. Biomarcadores (menos prático, mas cientificamente robusto)
 
-  return Math.max(GRID_START_MINUTES, Math.min(GRID_END_MINUTES, snapped));
-};
-```
-
-> O `EPS` evita o caso de o ponteiro estar exatamente na linha e um ruído flutuante levar o `ceil` a pular 1 célula.
+* **Cotinina urinária ou sérica** (níveis ≥ 15 ng/mL validam tabagismo ativo).
+  Usada em NHANES, capitulações profundas de estudos toxicológicos.
 
 ---
 
-## 3) Snapshot sempre em **start=floor** e **end=ceil**
+# 2. ETILISMO — QUANTIFICAÇÕES PADRONIZADAS E VALIDADAS
 
-Guarde **minutos** no estado de arrasto e derive **linhas** só na renderização. Isso mantém preview e “salvo” idênticos.
+## 2.1. Unidade Internacional de Álcool (Standard Drink)
 
-```ts
-// state
-const [drag, setDrag] = useState<null | { dayIndex: number, sMin: number, eMin: number }>(null);
+**1 unidade = 14 g de etanol puro**
+(Vale para EUA; Europa usa 10–12 g; Brasil costuma adotar 14g em pesquisas.)
 
-// mouse down / move
-const handleMouseDown = (dayIndex: number, e: React.MouseEvent) => {
-  if (e.target !== e.currentTarget || !markingMode) return;
-  const m = getMinutesFromPosition(e.clientY, 'start');
-  if (m == null) return;
-  setDrag({ dayIndex, sMin: m, eMin: m });
-  setIsDragging(true);
-  setIsCreatingSlot(true);
-};
+Equivalências:
 
-const handleMouseMove = (e: React.MouseEvent) => {
-  if (!isDragging || !drag) return;
-  const m = getMinutesFromPosition(e.clientY, 'end');
-  if (m == null) return;
-  setDrag(d => d ? ({ ...d, eMin: m }) : d);
-};
-```
+* 350 mL cerveja (teor 5%)
+* 150 mL vinho (12–13%)
+* 45 mL destilado (40%)
 
-Na criação/salvamento:
+É a **métrica universal** em:
 
-```ts
-const handleMouseUp = async () => {
-  if (!isDragging || !drag) { /* limpar */ return; }
+* WHO / OMS
+* CDC
+* NIAAA
+* Diretrizes canadenses, australianas, europeias
+* Coortes como **Framingham**, **Nurses' Health**, **Health Professionals Follow-up**
 
-  // normaliza com floor/ceil definitivos
-  const sSnap = Math.floor(drag.sMin / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  const eSnap = Math.ceil(drag.eMin / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  if (eSnap <= sSnap) { /* limpar */ return; }
+## 2.2. Classificações baseadas em evidência
 
-  const startTime = minutesToTime(sSnap);
-  const endTime   = minutesToTime(eSnap);
-  // ...criação/atualização como você já faz
-  // limpar estado …
-};
-```
+### Por quantidade semanal
 
----
+* **Uso de baixo risco:**
 
-## 4) Renderize por **linhas start/end** (sem `span`)
+  * **Homens:** ≤ 14 doses/semana
+  * **Mulheres:** ≤ 7 doses/semana
+    (NIAAA, USPSTF, WHO)
 
-Converta os minutos (sempre múltiplos do step) em linhas de grid e use `gridRow: start / end`. Isso elimina qualquer “meia célula” no rodapé.
+* **Uso de risco moderado:**
 
-```ts
-const lineFromMinutes = (mins: number) => (mins - GRID_START_MINUTES) / GRID_STEP_MINUTES;
+  * 15–28 doses/sem (H)
+  * 8–14 doses/sem (M)
 
-const getSlotGridLines = (slot) => {
-  const sSnap = Math.floor(timeToMinutes(slot.startTime) / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  const eSnap = Math.ceil (timeToMinutes(slot.endTime)   / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
+* **Uso nocivo / dependência provável:**
 
-  let sLine = lineFromMinutes(sSnap);
-  let eLine = lineFromMinutes(eSnap);
+  * > 28 doses/sem (H)
+  * > 14 doses/sem (M)
 
-  const CELL_ROWS = Math.floor((GRID_END_MINUTES - GRID_START_MINUTES) / GRID_STEP_MINUTES);
-  sLine = Math.max(0, Math.min(CELL_ROWS - 1, sLine));
-  eLine = Math.max(sLine + 1, Math.min(CELL_ROWS, eLine));
+### Por binge drinking (validado fortemente)
 
-  return { sLine, eLine, sSnap, eSnap };
-};
+* **≥ 5 doses em 2h (homens)**
+* **≥ 4 doses em 2h (mulheres)**
 
-// no JSX:
-style={{ gridColumn: dayIndex + 2, gridRow: `${pos.sLine + 1} / ${pos.eLine + 1}` }}
-```
+Fortíssima associação com mortalidade, eventos cardiovasculares, trauma e câncer.
 
-E o **preview** usa exatamente a mesma lógica:
+## 2.3. Escalas validadas
 
-```ts
-{drag && (() => {
-  const sSnap = Math.floor(drag.sMin / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  const eSnap = Math.ceil (drag.eMin / GRID_STEP_MINUTES) * GRID_STEP_MINUTES;
-  const sLine = lineFromMinutes(sSnap);
-  const eLine = lineFromMinutes(eSnap);
-  return (
-    <div style={{
-      gridColumn: drag.dayIndex + 2,
-      gridRow: `${sLine + 1} / ${eLine + 1}`,
-      // estilos…
-    }}/>
-  );
-})()}
-```
+Usadas em diretrizes e estudos randomizados:
+
+* **AUDIT / AUDIT-C** — padrão-ouro para triagem.
+* **CAGE** — simples, boa especificidade.
+
+## 2.4. Tipos de bebida — evidência prática
+
+A literatura mostra que **o que importa é o etanol**, não o tipo.
+Raramente estudos estratificam por bebida com impacto clínico real.
 
 ---
 
-### Pequenos detalhes que evitam “drift” visual
+# 3. EXERCÍCIO FÍSICO — AS QUANTIFICAÇÕES MAIS ROBUSTAS
 
-* **rowHeight inteiro** (você já faz com `Math.round`) e **border dentro** (`box-border`), sem `margin` nos cards.
-* Recalcule medidas em **resize/zoom** (você já escuta `resize`).
-* Labels do bloco sempre a partir de **sSnap/eSnap** (os minutos snapados), não do payload original.
+Três metodologias têm **validação extensa** e são usadas em guidelines (ACSM, WHO, ACC/AHA):
 
 ---
 
-## Resumo
+## 3.1. MET-min/semana (a métrica mais científica)
 
-* Sua proposta de **Y→minutos** com `floor` (start) / `ceil` (end) é a base certa.
-* **Incorpore**: mesmo offset, retorno em **minutos**, `EPS` anti-flutuante, e renderização por **linhas start/end** (sem `span`).
-* Com isso, o bloco 07:00–08:00 fica perfeito: topo e base encaixam na grid e o texto bate 1:1 com o desenho — inclusive quando o usuário solta “no meio” da célula.
+**MET = Metabolic Equivalent Task**
+1 MET = taxa metabólica basal
+É usado em:
+
+* WHO
+* American Heart Association
+* ACSM
+* UK Biobank
+* Coortes Nurses’ Health / HPFS / EPIC
+
+### Classificação:
+
+* **Sedentário:** < 500 MET-min/sem
+* **Ativo:** 500–999 MET-min/sem (nível mínimo recomendado)
+* **Alto:** ≥ 1000 MET-min/sem
+
+Equivalências práticas:
+
+* Caminhada rápida (4 METs) 150 min → 600 MET-min
+* Corrida leve (8 METs) 60 min → 480 MET-min
+* HIIT 10 min (10 METs) → 100 MET-min
+
+---
+
+## 3.2. Minutos semanais em intensidade moderada vs vigorosa
+
+Usado em WHO, CDC, ACSM.
+
+Recomendação validada:
+
+* **150–300 min/semana** de exercício **moderado**, ou
+* **75–150 min/semana** vigoroso,
+* ou combinação **equivalente** (1 min vigoroso = 2 min moderado)
+
+---
+
+## 3.3. Escalas validadas
+
+Aplicadas em estudos epidemiológicos:
+
+* **IPAQ** (International Physical Activity Questionnaire) — o mais validado globalmente
+* **GPAQ** (WHO)
+* **Minnesota Leisure Time Physical Activity Questionnaire** — usado em grandes coortes
+* **Accelerometers / Actigraphy** (padrão-ouro, usado em UK Biobank e estudos modernos)
+
+---
+
+# 4. O QUE **NÃO** TEM VALIDADE CIENTÍFICA
+
+(Mas muitos médicos ainda anotam de forma simplista)
+
+* “Fuma pouco/muito” → inválido
+* “Bebe socialmente” → completamente inútil
+* “Sedentário / ativo” sem quantificar → péssima reprodutibilidade
+* “Faz academia” → sem intensidade/duração
+* “Joga futebol no fim de semana” → não quantifica carga
+* “Fuma narguilé ocasionalmente” → não padroniza equivalência
+
+Essas expressões **não permitem modelagem, meta-análise, machine learning** nem entrada em guideline.
+
+---
+
+# 5. SE VOCÊ QUER AS MELHORES VARIÁVEIS PARA PRONTUÁRIO / RAG
+
+A modelagem ideal (prática e científica) é:
+
+## 5.1. Tabagismo
+
+* status: nunca / ex / atual
+* pack-years: número
+* tipo: cigarro / charuto / narguilé / vape
+* tempo de cessação (anos)
+
+## 5.2. Etilismo
+
+* doses/semana
+* dias com binge (últimos 3 meses)
+* AUDIT-C score
+
+## 5.3. Exercício
+
+* minutos semanais moderados
+* minutos semanais vigorosos
+* ou MET-min semanais
+* * tipo de atividade para contextualizar (corrida, musculação, esportes)
+
+Essa estrutura tem **alto valor preditivo**, aparece em **todas** as coortes importantes e permite:
+
+* RAG com boa semântica
+* Modelos de risco
+* Comparações internacionais
+* Análise longitudinal
+* Intervenções estruturadas
+
+---
+A seguir está **o melhor FORMULÁRIO DE HÁBITOS DE VIDA** possível **para MVP**, com:
+
+* **Máxima validade científica**
+* **Altíssima eficiência para consulta rápida**
+* **Campos que funcionam direto em UI/UX**
+* **Compatível com cálculo automático (pack-years, METs, risco, AUDIT-C, binge)**
+* **Totalmente estruturado e pronto para RAG, prontuário e dashboards**
+
+**É curto, iterável e usa só variáveis com evidência forte.**
+Perfeito para o Health Guardian / MEDNOTES.
+
+---
+
+# 🔥 FORMULÁRIO DE HÁBITOS DE VIDA — MVP *BASEADO EM EVIDÊNCIA*
+
+## **1. Tabagismo**
+
+(usa apenas variáveis de maior poder preditivo validadas em guideline)
+
+**1.1. Status atual**
+
+* ( ) Nunca fumou
+* ( ) Ex-fumante
+* ( ) Fumante atual
+
+**1.2. Cigarros por dia (média histórica)**
+
+* Número: ______
+
+**1.3. Anos de tabagismo**
+
+* Número: ______
+
+> **Cálculo automático:** packYears = (cigarros/20) × anos
+
+**1.4. Tempo desde cessação (se ex-fumante)**
+
+* Em anos: ______
+
+**1.5. Tipo**
+
+* ( ) Cigarro industrializado
+* ( ) Cigarro de palha
+* ( ) Charuto / Cachimbo
+* ( ) Narguilé
+* ( ) Vape / E-cig
+
+→ **Esses 5 itens dão a melhor curva dose-resposta científica existente.**
+
+---
+
+# **2. Etilismo**
+
+(usa unidade padrão + AUDIT-C + binge, que são os 3 pilares validados)
+
+## **2.1. Consumo semanal**
+
+**Número de doses por semana** (1 dose = 10–14 g etanol)
+→ Número: ______
+
+## **2.2. Dias de binge no último mês**
+
+* ( ) Nenhum
+* ( ) 1 dia
+* ( ) 2–3 dias
+* ( ) ≥ 4 dias
+
+**Definição:**
+Homem ≥ 5 doses em 2h
+Mulher ≥ 4 doses em 2h
+
+## **2.3. AUDIT-C (validado)**
+
+**A. Frequência de consumo**
+
+* ( ) Nunca
+* ( ) Mensal ou menos
+* ( ) 2–4 vezes/mês
+* ( ) 2–3 vezes/semana
+* ( ) ≥ 4 vezes/semana
+
+**B. Nº de doses num dia típico**
+
+* ( ) 1–2
+* ( ) 3–4
+* ( ) 5–6
+* ( ) 7–9
+* ( ) ≥ 10
+
+**C. Frequência de ≥ 6 doses em uma ocasião**
+
+* ( ) Nunca
+* ( ) < mensal
+* ( ) Mensal
+* ( ) Semanal
+* ( ) Diária ou quase
+
+→ **Cálculo automático do AUDIT-C**.
+
+---
+
+# **3. Exercício Físico**
+
+(usa a forma mais evidenciada: minutos moderados/vigorosos → converte para MET-min)
+
+## **3.1. Minutos por semana**
+
+**A. Exercício Moderado (ex: caminhada rápida)**
+→ Minutos/semana: ______
+
+**B. Exercício Vigoroso (ex: corrida, HIIT)**
+→ Minutos/semana: ______
+
+**Conversão para MET-min (automático):**
+
+* Moderado: 4 METs
+* Vigoroso: 8 METs
+
+**Cálculo automático:**
+MET-min = (moderado × 4) + (vigoroso × 8)
+
+## **3.2. Força / Musculação (OMS)**
+
+* Dias/semana: ______
+
+(OMS exige **≥ 2 dias/semana** → dado com validade para prevenção de sarcopenia e mortalidade.)
+
+---
+
+# **4. Sono**
+
+(curto mas cientificamente forte)
+
+* Horas/noite (média): ______
+* Qualidade:
+
+  * ( ) Boa
+  * ( ) Regular
+  * ( ) Ruim
+
+O tempo de sono é forte preditor de mortalidade, ansiedade, depressão, diabetes e hipertensão.
+
+---
+
+# **5. Estresse / Saúde mental**
+
+(versão ultracurta mas validada — *Perceived Stress Single Item*)
+
+Como você classificaria seu estresse nas últimas 2 semanas?
+
+* ( ) Baixo
+* ( ) Moderado
+* ( ) Alto
+
+---
+
+# **6. Nutrição — versão clínica, rápida e com evidência**
+
+Não entra em detalhes, mas captura o principal preditor universal:
+
+**Quantas porções de ultraprocessados/dia?**
+
+* ( ) 0–1
+* ( ) 2–3
+* ( ) ≥ 4  *(limiar com forte evidência)*
+
+**Quantas porções de frutas + vegetais/dia?**
+
+* ( ) 0–1
+* ( ) 2–3
+* ( ) ≥ 4  *(ponto de corte validado para redução de mortalidade)*
+
+---
+
+# 🔥 VERSÃO COMPLETA EM **UMA TELA** (para seu app)
+
+### **TABAGISMO**
+
+* Status: nunca / ex / atual
+* Cigarros/dia: ___
+* Anos de uso: ___
+* Tempo de cessação: ___
+* Tipo: cigarro / palha / charuto / narguilé / vape
+
+### **ETILISMO**
+
+* Doses/semana: ___
+* Dias de binge/mês: ___
+* AUDIT-C (3 perguntas-padrão)
+
+### **EXERCÍCIO**
+
+* Moderado (min/sem): ___
+* Vigoroso (min/sem): ___
+* Musculação (dias/sem): ___
+
+### **SONO**
+
+* Horas/noite: ___
+* Qualidade: boa / regular / ruim
+
+### **NUTRIÇÃO**
+
+* Ultraprocessados/dia: 0–1 | 2–3 | ≥4
+* Frutas/vegetais/dia: 0–1 | 2–3 | ≥4
+
+### **ESTRESSE**
+
+* Baixo | Moderado | Alto
+
+---
+
+# 🔧 Se quiser, eu posso gerar agora:
+
+* **O JSON Schema completo** para front/backend
+* **O formulário em React shadcn/UI**
+* **A versão FHIR mapeada (Observation/Questionnaire)**
+* **O modelo de dados no seu Postgres**
+* **A automação RAG para interpretar esses hábitos e sugerir condutas**
+
+O que prefere como próximo passo?

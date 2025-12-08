@@ -1,0 +1,51 @@
+
+> health-guardian-frontend@1.0.0 build
+> vite build
+
+[36mvite v4.5.14 [32mbuilding for production...[36m[39m
+transforming...
+src/components/ui/tabs.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/tabs.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/tabs.tsx" was ignored.
+
+img.png referenced in C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/index.css didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+img@2x.png referenced in C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/index.css didn't resolve at build time, it will remain unchanged to be resolved at runtime
+node_modules/sonner/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/sonner/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-tabs/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-tabs/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-avatar/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-avatar/dist/index.mjs" was ignored.
+src/components/ui/select.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/select.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/select.tsx" was ignored.
+node_modules/@radix-ui/react-checkbox/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-checkbox/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-roving-focus/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-roving-focus/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-presence/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-presence/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-progress/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-progress/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-select/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-select/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-checkbox/node_modules/@radix-ui/react-presence/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-checkbox/node_modules/@radix-ui/react-presence/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-label/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-label/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-dialog/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-dialog/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-collection/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-collection/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-focus-guards/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-focus-guards/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-popper/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-popper/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-focus-scope/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-focus-scope/dist/index.mjs" was ignored.
+node_modules/@radix-ui/react-portal/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-portal/dist/index.mjs" was ignored.
+src/components/ui/tooltip.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/tooltip.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/tooltip.tsx" was ignored.
+node_modules/@radix-ui/react-tooltip/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/@radix-ui/react-tooltip/dist/index.mjs" was ignored.
+[32mÔ£ô[39m 3890 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                               [39m[1m[2m    0.84 kB[22m[1m[22m[2m Ôöé gzip:   0.48 kB[22m
+
+[2mdist/[22m[35massets/index-b1eff28d.css                [39m[1m[2m  138.13 kB[22m[1m[22m[2m Ôöé gzip:  19.65 kB[22m
+(!) Some chunks are larger than 500 kBs after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[2mdist/[22m[36massets/gasa_calculator-a3b5b0f1.js       [39m[1m[2m    4.61 kB[22m[1m[22m[2m Ôöé gzip:   2.06 kB[22m
+[2mdist/[22m[36massets/map_calculator-0c3553e7.js        [39m[1m[2m    4.62 kB[22m[1m[22m[2m Ôöé gzip:   1.92 kB[22m
+[2mdist/[22m[36massets/cage_calculator-b9c0286f.js       [39m[1m[2m    5.22 kB[22m[1m[22m[2m Ôöé gzip:   2.35 kB[22m
+[2mdist/[22m[36massets/hba1c_eag_calculator-9a40a1d2.js  [39m[1m[2m    6.28 kB[22m[1m[22m[2m Ôöé gzip:   2.54 kB[22m
+[2mdist/[22m[36massets/ist_calculator-a301e84f.js        [39m[1m[2m    7.21 kB[22m[1m[22m[2m Ôöé gzip:   2.78 kB[22m
+[2mdist/[22m[36massets/index-0eb427be.js                 [39m[1m[33m1,934.35 kB[39m[22m[2m Ôöé gzip: 520.08 kB[22m
+[32mÔ£ô built in 1m 8s[39m

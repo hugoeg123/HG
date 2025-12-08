@@ -1,0 +1,41 @@
+
+> health-guardian-frontend@1.0.0 build
+> vite build
+
+[36mvite v4.5.14 [32mbuilding for production...[36m[39m
+transforming...
+
+img.png referenced in C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/index.css didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+img@2x.png referenced in C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/index.css didn't resolve at build time, it will remain unchanged to be resolved at runtime
+src/components/ui/tabs.tsx (1:0) Error when using sourcemap for reporting an error: Can't resolve original location of error.
+src/components/ui/tabs.tsx (1:0) Module level directives cause errors when bundled, "use client" in "src/components/ui/tabs.tsx" was ignored.
+node_modules/sonner/dist/index.mjs (1:0) Module level directives cause errors when bundled, "use client" in "node_modules/sonner/dist/index.mjs" was ignored.
+[32mÔ£ô[39m 1751 modules transformed.
+[32mÔ£ô built in 12.77s[39m
+[vite:esbuild] Transform failed with 1 error:
+C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/components/TimeGridControls.jsx:249:0: ERROR: Unexpected "}"
+file: C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/components/TimeGridControls.jsx:249:0
+
+Unexpected "}"
+246|      </div>
+247|    </div>
+248|  );
+   |     ^
+249|  };
+   |  ^
+250|  
+
+error during build:
+Error: Transform failed with 1 error:
+C:/Users/hgari/OneDrive/├ürea de Trabalho/HG1/frontend/src/components/TimeGridControls.jsx:249:0: ERROR: Unexpected "}"
+    at failureErrorWithLog (C:\Users\hgari\OneDrive\├ürea de Trabalho\HG1\frontend\node_modules\esbuild\lib\main.js:1649:15)
+    at C:\Users\hgari\OneDrive\├ürea de Trabalho\HG1\frontend\node_modules\esbuild\lib\main.js:847:29
+    at responseCallbacks.<computed> (C:\Users\hgari\OneDrive\├ürea de Trabalho\HG1\frontend\node_modules\esbuild\lib\main.js:703:9)
+    at handleIncomingPacket (C:\Users\hgari\OneDrive\├ürea de Trabalho\HG1\frontend\node_modules\esbuild\lib\main.js:762:9)
+    at Socket.readFromStdout (C:\Users\hgari\OneDrive\├ürea de Trabalho\HG1\frontend\node_modules\esbuild\lib\main.js:679:7)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:190:23)

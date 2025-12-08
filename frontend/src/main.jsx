@@ -11,6 +11,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
+import './lib/i18n';
 import './overrides.css'; // UI theme overrides: subtle outlines and no yellow/amber
 import './utils/clearStorage.js'; // Utilitários de limpeza de storage
 import { initThemeFill } from './utils/themeFill'; // Hook: Applies background fill from nested elements to target divs

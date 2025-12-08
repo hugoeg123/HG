@@ -34,18 +34,20 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
 
   // Handle sending content to chat
   const handleSendToChat = (content, sectionName = '') => {
-    const message = sectionName ? `${sectionName}:\n\n${content}` : content;
-    
+    const contextObj = {
+      type: sectionName ? 'segment' : 'record',
+      id: sectionName ? `segment-${Date.now()}` : (record.id || Date.now()),
+      title: sectionName || record.title || record.type || 'Registro',
+      content: content
+    };
+
     // Set chat context in store
-    setChatContext(message);
+    setChatContext(contextObj);
     
     // Call parent callback if provided
     if (onSendToChat) {
-      onSendToChat(message);
+      onSendToChat(contextObj);
     }
-    
-    // Navigate to chat (assuming there's a chat route)
-    // navigate('/chat');
   };
 
   // Handle copying content to clipboard

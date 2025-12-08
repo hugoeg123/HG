@@ -6,16 +6,21 @@
 
 const express = require('express');
 const router = express.Router();
+const aiController = require('../controllers/ai.controller');
 
 // Middleware de autenticação
 const { authMiddleware } = require('../middleware/auth');
 
-// Controlador de IA (será implementado posteriormente)
-const aiController = {};
+// Todas as rotas requerem autenticação
+router.use(authMiddleware);
 
-// Rota temporária para evitar erros
-router.get('/', authMiddleware, (req, res) => {
-  res.json({ message: 'Rota de IA funcionando' });
-});
+// Rotas de Contexto
+router.get('/context', aiController.getContext);
+router.post('/context', aiController.addContext);
+router.delete('/context/:id', aiController.removeContext);
+router.delete('/context', aiController.clearContext);
+
+// Rota de Chat
+router.post('/chat', aiController.chat);
 
 module.exports = router;

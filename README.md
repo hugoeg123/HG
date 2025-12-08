@@ -514,10 +514,211 @@ npm run test:e2e
 
 ### 🔗 Links Úteis
 
+# Adicione ao .env do backend
+echo "JWT_SECRET=seu_jwt_secret_muito_seguro_aqui" >> backend/.env
+echo "JWT_REFRESH_SECRET=seu_refresh_secret_muito_seguro_aqui" >> backend/.env
+```
+
+#### Token Expirado
+```
+Unauthorized: Token expired
+```
+
+**Soluções:**
+1. Faça login novamente
+2. Implemente refresh token (já configurado)
+3. Ajuste tempo de expiração no backend
+
+### 🔄 Problemas de Build/Desenvolvimento
+
+#### Dependências Desatualizadas
+```bash
+# Limpar cache e reinstalar
+rm -rf node_modules package-lock.json
+npm install
+
+# Ou usar npm ci para instalação limpa
+npm ci
+```
+
+#### Hot Reload Não Funciona
+```bash
+# Vite - adicione ao vite.config.js
+export default {
+  server: {
+    watch: {
+      usePolling: true
+    }
+  }
+}
+```
+
+### 📱 Problemas de Interface
+
+#### Estilos Não Carregam
+1. Verifique se o Tailwind está configurado
+2. Confirme imports CSS no `main.jsx`
+3. Limpe cache do navegador (Ctrl+F5)
+
+#### Componentes Não Renderizam
+1. Verifique console do navegador (F12)
+2. Confirme imports/exports dos componentes
+3. Verifique sintaxe JSX
+
+### 🆘 Comandos de Diagnóstico
+
+```bash
+# Verificar versões
+node --version
+npm --version
+psql --version
+
+# Status dos serviços
+npm run health-check  # (se implementado)
+curl http://localhost:5001/api/health
+
+# Logs detalhados
+DEBUG=* npm run dev  # Backend com logs verbosos
+```
+
+### Erro de autenticação
+**Solução**: Crie um médico de teste:
+```bash
+cd backend
+curl -X POST http://localhost:5001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"medico@teste.com","senha":"123456","nome":"Dr. Teste"}'
+```
+
+## 🚀 Roadmap e Próximos Passos
+
+### 📋 Funcionalidades Planejadas
+
+#### Curto Prazo (Sprint Atual)
+- [ ] **Sistema de Tags Avançado**: Autocomplete e validação
+- [ ] **Calculadoras Médicas**: Interface melhorada com histórico
+- [ ] **Filtros Inteligentes**: Por data, tipo, paciente
+- [ ] **Busca Global**: Pesquisa em registros e pacientes
+
+#### Médio Prazo (Próximas 2-3 Sprints)
+- [ ] **Dashboard Analytics**: Gráficos e métricas
+- [ ] **Exportação FHIR**: Padrão de interoperabilidade
+- [ ] **Notificações**: Sistema de alertas e lembretes
+- [ ] **Backup Automático**: Sincronização de dados
+
+#### Longo Prazo (Roadmap Futuro)
+- [ ] **IA/LLM Integration**: Análise automática de registros
+- [ ] **Mobile App**: Aplicativo React Native
+- [ ] **Multi-tenant**: Suporte a múltiplas clínicas
+- [ ] **Telemedicina**: Integração com videochamadas
+
+### 🛠️ Melhorias Técnicas
+
+#### Performance
+- [ ] **Lazy Loading**: Componentes e rotas
+- [ ] **Caching**: Redis para sessões e dados frequentes
+- [ ] **CDN**: Assets estáticos
+- [ ] **Database Indexing**: Otimização de queries
+
+#### Segurança
+- [ ] **2FA**: Autenticação de dois fatores
+- [ ] **Audit Logs**: Rastreamento de ações
+- [ ] **Rate Limiting**: Proteção contra ataques
+- [ ] **HTTPS**: Certificados SSL/TLS
+
+#### DevOps
+- [ ] **CI/CD Pipeline**: GitHub Actions
+- [ ] **Docker**: Containerização
+- [ ] **Monitoring**: Logs e métricas
+- [ ] **Testing**: Cobertura de testes > 80%
+
+## 👥 Desenvolvimento e Contribuição
+
+### 🔄 Workflow de Desenvolvimento
+
+1. **Criar Branch**:
+   ```bash
+   git checkout -b feature/nome-da-feature
+   ```
+
+2. **Desenvolver e Testar**:
+   ```bash
+   # Fazer alterações
+   npm test
+   npm run lint
+   ```
+
+3. **Commit Semântico**:
+   ```bash
+   git add .
+   git commit -m "feat: adiciona sistema de notificações"
+   ```
+
+4. **Push e Pull Request**:
+   ```bash
+   git push origin feature/nome-da-feature
+   # Criar PR no GitHub
+   ```
+
+### 📝 Padrões de Commit
+
+- `feat:` Nova funcionalidade
+- `fix:` Correção de bug
+- `docs:` Documentação
+- `style:` Formatação (sem mudança de lógica)
+- `refactor:` Refatoração de código
+- `test:` Adição/correção de testes
+- `chore:` Tarefas de manutenção
+
+### 🧪 Testes
+
+```bash
+# Backend
+cd backend
+npm test
+npm run test:coverage
+
+# Frontend
+cd frontend
+npm test
+npm run test:e2e
+```
+
+### 📚 Documentação
+
+- **API**: Swagger/OpenAPI em `/api/docs`
+- **Componentes**: Storybook em desenvolvimento
+- **Arquitetura**: Diagramas em `/docs/architecture`
+- **Changelog**: Histórico de versões em `CHANGELOG.md`
+
+## 📖 Recursos Adicionais
+
+### 📁 Estrutura de Documentação
+
+```
+├── README.md              # Este arquivo
+├── README-MVP.md          # Documentação do MVP
+├── docs/
+│   ├── api/              # Documentação da API
+│   ├── frontend/         # Guias do frontend
+│   ├── backend/          # Guias do backend
+│   └── deployment/       # Guias de deploy
+└── .trae/
+    └── documents/        # Documentos do projeto
+```
+
+### 🔗 Links Úteis
+
 - **Repositório**: [GitHub](https://github.com/seu-usuario/health-guardian)
 - **Issues**: [Bug Reports & Feature Requests](https://github.com/seu-usuario/health-guardian/issues)
 - **Wiki**: [Documentação Técnica](https://github.com/seu-usuario/health-guardian/wiki)
 - **Releases**: [Changelog e Downloads](https://github.com/seu-usuario/health-guardian/releases)
+
+### 🔧 Scripts de Desenvolvimento
+
+Scripts auxiliares para testes e debug foram movidos para a pasta `scripts/dev/`.
+- `scripts/dev/test-api.bat`: Teste rápido da API
+- `scripts/dev/debug-login.js`: Script para diagnosticar problemas de login
 
 ---
 

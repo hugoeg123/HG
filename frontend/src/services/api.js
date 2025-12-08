@@ -374,6 +374,34 @@ export const aiService = {
   getSuggestions: (patientId) => throttledApi.get(`/ai/suggestions/${patientId}`),
 };
 
+// Patient Input Service
+// Connector: Integrates with /api/patient-inputs endpoints for patient self-reported data
+export const patientInputService = {
+  listMy: (params) => throttledApi.get('/patient-inputs', { params }),
+  getById: (id) => throttledApi.get(`/patient-inputs/${id}`),
+  create: (data) => throttledApi.post('/patient-inputs', data),
+};
+
+/**
+ * Profile Service
+ * Connector: Integrates with /api/patients/:id/profile endpoints
+ */
+export const profileService = {
+  getProfile: (patientId) => throttledApi.get(`/patients/${patientId}/profile`),
+  addAnthropometrics: (patientId, data) => throttledApi.post(`/patients/${patientId}/anthropometrics`, data),
+  addLifestyle: (patientId, data) => throttledApi.post(`/patients/${patientId}/lifestyle`, data),
+  addCondition: (patientId, data) => throttledApi.post(`/patients/${patientId}/conditions`, data),
+  updateCondition: (patientId, conditionId, data) => throttledApi.put(`/patients/${patientId}/conditions/${conditionId}`, data),
+};
+
+/**
+ * Tag History Service
+ * Connector: Consumes `/tag-history/:tagKey` for aggregated timeline
+ */
+export const tagHistoryService = {
+  get: (tagKey, params = {}) => throttledApi.get(`/tag-history/${encodeURIComponent(tagKey)}`, { params })
+};
+
 export const exportService = {
   exportToPdf: (patientId) => throttledApi.get(`/export/pdf/${patientId}`, { responseType: 'blob' }),
   exportToCsv: (patientId) => throttledApi.get(`/export/csv/${patientId}`, { responseType: 'blob' }),

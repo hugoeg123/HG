@@ -3,34 +3,25 @@ import { Settings, Save, RotateCcw, AlertCircle, Clock, MapPin, Video, Home } fr
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
-  CardDescription 
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription
 } from '@/components/ui/card.tsx';
-import { 
-  Alert, 
-  AlertDescription 
+import {
+  Alert,
+  AlertDescription
 } from '@/components/ui/alert.tsx';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select.tsx';
-import { 
-  Checkbox 
-} from '@/components/ui/checkbox.tsx';
-import { useTimeSlotStore } from '@/stores/timeSlotStore.js';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx';
+import { useTimeSlotStore } from '../store/timeSlotStore';
 
-const AvailabilitySettings = ({ open, onOpenChange }) => {
-  const { 
-    settings, 
+const AvailabilitySettings = ({ onOpenChange }) => {
+  const {
+    settings,
     updateSettings,
-    resetSettings 
+    resetSettings
   } = useTimeSlotStore();
 
   const toTimeString = (hour) => `${String(hour).padStart(2, '0')}:00`;
@@ -294,8 +285,8 @@ const AvailabilitySettings = ({ open, onOpenChange }) => {
                   />
                   <div className="flex items-center gap-2 flex-1">
                     <Icon className="h-4 w-4 text-theme-text-secondary" />
-                    <Label 
-                      htmlFor={modality.id} 
+                    <Label
+                      htmlFor={modality.id}
                       className="text-theme-text-primary cursor-pointer flex-1"
                     >
                       {modality.label}

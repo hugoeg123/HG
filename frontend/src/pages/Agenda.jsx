@@ -3,7 +3,7 @@ import { useThemeStore } from '../store/themeStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { 
+import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight
@@ -15,7 +15,8 @@ import TimeSlotConfig from '../components/TimeSlotConfig';
 import TimeGridHeader from '../components/TimeGridHeader';
 import TimeGridControls from '../components/TimeGridControls';
 
-import { useTimeSlotStore } from '../stores/timeSlotStore';
+import { useTimeSlotStore } from '../store/timeSlotStore';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Página de Agenda (Calendário Mensal + Grid Visual)
@@ -35,39 +36,10 @@ const formatDateKey = (d) => {
   return `${y}-${m}-${day}`;
 };
 
-const monthLabel = (date) => {
-  return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-};
-
-const buildMonthDays = (current) => {
-  const year = current.getFullYear();
-  const month = current.getMonth();
-  const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 0);
-  const days = [];
-  // Offset for week start (Sunday=0)
-  const offset = start.getDay();
-  // Previous month days to fill leading cells
-  const prevMonth = new Date(year, month, 0);
-  for (let i = offset - 1; i >= 0; i--) {
-    const d = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevMonth.getDate() - i);
-    days.push({ date: d, inMonth: false });
-  }
-  // Current month days
-  for (let day = 1; day <= end.getDate(); day++) {
-    days.push({ date: new Date(year, month, day), inMonth: true });
-  }
-  // Fill trailing cells to reach 6 weeks (42 cells)
-  const trailing = 42 - days.length;
-  for (let i = 1; i <= trailing; i++) {
-    days.push({ date: new Date(year, month + 1, i), inMonth: false });
-  }
-  return days;
-};
-
 const Agenda = () => {
+  const { t, i18n } = useTranslation();
   const { isDarkMode } = useThemeStore();
-  const { 
+  const {
     setSelectedWeek,
     timeRanges,
     timeSlots,
@@ -75,7 +47,7 @@ const Agenda = () => {
     loadFromLocalStorage,
     loadSlotsForMonth
   } = useTimeSlotStore();
-  
+
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -101,12 +73,40 @@ const Agenda = () => {
     return () => window.removeEventListener('timeSlotsUpdated', handler);
   }, [currentMonth, loadSlotsForMonth]);
 
+  const buildMonthDays = (current) => {
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0);
+    const days = [];
+    // Offset for week start (Sunday=0)
+    const offset = start.getDay();
+    // Previous month days to fill leading cells
+    const prevMonth = new Date(year, month, 0);
+    for (let i = offset - 1; i >= 0; i--) {
+      const d = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevMonth.getDate() - i);
+      days.push({ date: d, inMonth: false });
+    }
+    // Current month days
+    for (let day = 1; day <= end.getDate(); day++) {
+      days.push({ date: new Date(year, month, day), inMonth: true });
+    }
+    // Fill trailing cells to reach 6 weeks (42 cells)
+    const trailing = 42 - days.length;
+    for (let i = 1; i <= trailing; i++) {
+      days.push({ date: new Date(year, month + 1, i), inMonth: false });
+    }
+    return days;
+  };
+
   const days = useMemo(() => buildMonthDays(currentMonth), [currentMonth]);
   const todayKey = formatDateKey(new Date());
   const selectedKey = formatDateKey(selectedDate);
   const arrowColorClass = isDarkMode ? 'text-emerald-500' : 'text-blue-600';
 
-
+  const monthLabel = (date) => {
+    return date.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' });
+  };
 
   const gotoPrevMonth = () => {
     setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -119,7 +119,7 @@ const Agenda = () => {
     setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1));
     setSelectedDate(d);
   };
-  
+
   const gotoPrevDay = () => {
     setSelectedDate(prev => {
       const d = new Date(prev);
@@ -138,19 +138,16 @@ const Agenda = () => {
     });
   };
 
-
-
-
   return (
     <div className="min-h-screen p-6 bg-theme-background">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Agenda</h1>
-            <p className="text-sm text-muted-foreground">Gerencie sua disponibilidade e horários</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('agenda.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('agenda.subtitle')}</p>
           </div>
-          
+
         </div>
 
         {/* Página única: calendário, configuração do dia e grid */}
@@ -214,12 +211,12 @@ const Agenda = () => {
                       <div className="calendar-bars">
                         {bookedCount > 0 && (
                           <div className="calendar-bar bar-scheduled">
-                            {bookedCount} {bookedCount === 1 ? 'agendado' : 'agendados'}
+                            {bookedCount} {t('agenda.scheduled', { count: bookedCount })}
                           </div>
                         )}
                         {availableCount > 0 && (
                           <div className="calendar-bar bar-available">
-                            {availableCount} {availableCount === 1 ? 'livre' : 'livres'}
+                            {availableCount} {t('agenda.free', { count: availableCount })}
                           </div>
                         )}
                       </div>
@@ -234,29 +231,29 @@ const Agenda = () => {
         <div className="flex items-start justify-center mb-4">
           <div className="relative w-full max-w-[680px]">
             <div className="absolute inset-y-0 left-0 w-12 flex">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={gotoPrevDay}
-                  aria-label="Dia anterior"
-                  className="w-full h-full p-0 rounded-md bg-transparent hover:bg-theme-hover/10 flex items-center justify-center"
-                >
-                  <ChevronLeft className={`h-8 w-8 ${arrowColorClass}`} />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={gotoPrevDay}
+                aria-label="Dia anterior"
+                className="w-full h-full p-0 rounded-md bg-transparent hover:bg-theme-hover/10 flex items-center justify-center"
+              >
+                <ChevronLeft className={`h-8 w-8 ${arrowColorClass}`} />
+              </Button>
+            </div>
             <div className="absolute inset-y-0 right-0 w-12 flex">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={gotoNextDay}
-                  aria-label="Próximo dia"
-                  className="w-full h-full p-0 rounded-md bg-transparent hover:bg-theme-hover/10 flex items-center justify-center"
-                >
-                  <ChevronRight className={`h-8 w-8 ${arrowColorClass}`} />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={gotoNextDay}
+                aria-label="Próximo dia"
+                className="w-full h-full p-0 rounded-md bg-transparent hover:bg-theme-hover/10 flex items-center justify-center"
+              >
+                <ChevronRight className={`h-8 w-8 ${arrowColorClass}`} />
+              </Button>
+            </div>
             <div className="px-14">
-                <TimeSlotConfig selectedDate={selectedDate} />
+              <TimeSlotConfig selectedDate={selectedDate} />
             </div>
           </div>
         </div>

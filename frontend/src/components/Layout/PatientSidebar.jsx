@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, UserCog, CalendarDays, History, Search } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import SidebarItem from '../ui/SidebarItem';
+import { useTranslation } from 'react-i18next';
 
 /**
  * PatientSidebar - Barra lateral de navegação/busca para o perfil do paciente
@@ -15,6 +16,7 @@ import SidebarItem from '../ui/SidebarItem';
  * Hook: Usa useNavigate/useLocation para manter URL e estado de seleção
  */
 const PatientSidebar = ({ collapsed }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,10 +32,12 @@ const PatientSidebar = ({ collapsed }) => {
   };
 
   const actions = [
-    { key: 'dashboard', title: 'Dashboard do Paciente', icon: <Home className="h-4 w-4" />, onClick: () => goToTab('dashboard') },
-    { key: 'edit', title: 'Editar Perfil', icon: <UserCog className="h-4 w-4" />, onClick: () => goToTab('edit') },
-    { key: 'agenda', title: 'Agenda', icon: <CalendarDays className="h-4 w-4" />, onClick: () => goToTab('agenda') },
-    { key: 'history', title: 'Histórico', icon: <History className="h-4 w-4" />, onClick: () => goToTab('history') },
+    { key: 'dashboard', title: t('layout.patientDashboard'), icon: <Home className="h-4 w-4" />, onClick: () => goToTab('dashboard') },
+    { key: 'edit', title: t('profile.editProfile'), icon: <UserCog className="h-4 w-4" />, onClick: () => goToTab('edit') },
+    { key: 'agenda', title: t('agenda.title'), icon: <CalendarDays className="h-4 w-4" />, onClick: () => goToTab('agenda') },
+    { key: 'history', title: t('layout.history'), icon: <History className="h-4 w-4" />, onClick: () => goToTab('history') },
+    // Connector: Acesso rápido ao Marketplace (médicos e serviços)
+    { key: 'marketplace', title: t('layout.marketplace'), icon: <Search className="h-4 w-4" />, onClick: () => navigate('/marketplace') },
   ];
 
   return (
@@ -41,7 +45,7 @@ const PatientSidebar = ({ collapsed }) => {
       <div className="p-4 pb-20">
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Navegação
+            {t('layout.navigation')}
           </h2>
         </div>
 
@@ -49,7 +53,7 @@ const PatientSidebar = ({ collapsed }) => {
         <div className="relative mb-4">
           <input
             type="text"
-            placeholder="Buscar serviços, médicos, especialidades..."
+            placeholder={t('layout.searchServices')}
             className="w-full pl-10 pr-4 py-2 bg-theme-card border border-theme-border rounded-lg text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -62,7 +66,7 @@ const PatientSidebar = ({ collapsed }) => {
           {actions.map(({ key, title, icon, onClick }) => (
             <SidebarItem
               key={key}
-              isActive={activeTab === key}
+              isActive={key === 'marketplace' ? location.pathname.startsWith('/marketplace') : activeTab === key}
               title={title}
               icon={icon}
               onClick={onClick}

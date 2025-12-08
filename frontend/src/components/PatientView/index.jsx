@@ -28,7 +28,6 @@ const PatientView = () => {
   const navigate = useNavigate();
   const { 
     currentPatient, 
-    records,
     isLoading, 
     error, 
     fetchPatientById, 
@@ -60,25 +59,30 @@ const PatientView = () => {
   // Hook: Removed store functions from dependencies to prevent infinite loop
   // since Zustand functions are recreated on each render
   useEffect(() => {
-    if (id) {
-      console.log('PatientView: Carregando dados do paciente:', id);
-      // Clear current record when navigating to a different patient
-      clearCurrentRecord();
-      
-      // Fetch patient data
-      fetchPatientById(id).then(() => {
-        console.log('PatientView: Paciente carregado, buscando registros...');
-      }).catch(error => {
-        console.error('PatientView: Erro ao carregar paciente:', error);
-      });
-      
-      // Fetch patient records
-      fetchPatientRecords(id).then((records) => {
-        console.log('PatientView: Registros carregados:', records?.length || 0);
-      }).catch(error => {
-        console.error('PatientView: Erro ao carregar registros:', error);
-      });
+    if (!id) return;
+    console.log('PatientView: Carregando dados do paciente:', id);
+    
+    // Clear current record when navigating to a different patient
+    clearCurrentRecord();
+    
+    // Clear current patient if we are switching patients to avoid stale data
+    // and ensure the loading spinner is shown correctly
+    if (currentPatient?.id !== id) {
+      clearCurrentPatient();
     }
+
+    // Sequenciar chamadas para evitar condição de corrida
+    const load = async () => {
+      try {
+        await fetchPatientById(id);
+        console.log('PatientView: Paciente carregado, buscando registros...');
+        const recs = await fetchPatientRecords(id);
+        console.log('PatientView: Registros carregados:', recs?.length || 0);
+      } catch (error) {
+        console.error('PatientView: Erro ao carregar paciente/records:', error);
+      }
+    };
+    load();
   }, [id]);
 
   // Hook: Validate currentPatient to prevent rendering crashes
@@ -89,23 +93,18 @@ const PatientView = () => {
     }
   }, [currentPatient, clearCurrentPatient]);
 
-  // Hook: Detect if patient is new (no records) and set appropriate view
+  // Hook: Detect if patient is new (no records)
   useEffect(() => {
-    if (currentPatient && records !== undefined) {
-      const hasNoRecords = !records || records.length === 0;
+    if (currentPatient && Array.isArray(currentPatient.records)) {
+      const hasNoRecords = currentPatient.records.length === 0;
       setIsNewPatient(hasNoRecords);
       
-      if (hasNoRecords) {
-        // For new patients, show editor directly
-        setShowDashboard(false);
-        setShowEditor(true);
-      } else {
-        // For existing patients, show dashboard
-        setShowDashboard(true);
-        setShowEditor(false);
-      }
+      // REMOVED: Auto-switch to editor. We want to show the dashboard even for new patients.
+      // The dashboard handles empty states and provides the "Create Record" button.
+      setShowDashboard(true);
+      setShowEditor(false);
     }
-  }, [currentPatient, records]);
+  }, [currentPatient]);
 
   // Handle record selection from sidebar
   useEffect(() => {
@@ -230,7 +229,9 @@ const PatientView = () => {
   ];
   
   // Renderizar estado de carregamento
-  if (isLoading) {
+  // Show full screen loader only if we don't have the patient yet AND we are loading.
+  // If we have the patient but are loading (e.g. dashboard data or records), let the child components handle their own loading states.
+  if (isLoading && !currentPatient) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -311,14 +312,12 @@ const PatientView = () => {
             </div>
 
             {/* Botão "Voltar ao Dashboard" - Direita */}
-            {!isNewPatient && (
-              <button
-                onClick={handleBackToDashboard}
-                className="px-3 py-1 bg-theme-card text-white rounded hover:bg-theme-card/80 transition-colors"
-              >
-                ← Voltar ao Dashboard
-              </button>
-            )}
+            <button
+              onClick={handleBackToDashboard}
+              className="px-3 py-1 bg-theme-card text-white rounded hover:bg-theme-card/80 transition-colors"
+            >
+              ← Voltar ao Dashboard
+            </button>
           </div>
           
           <HybridEditor 
@@ -327,21 +326,18 @@ const PatientView = () => {
             title={`${isNewPatient ? 'Primeiro' : 'Novo'} ${tabs.find(t => t.id === activeTab)?.label || 'Registro'}`}
             onSave={() => {
               fetchPatientRecords(id);
-              if (!isNewPatient) {
-                handleBackToDashboard();
-              } else {
-                // For new patients, refresh data and show dashboard after first record
+              // Always return to dashboard after save
+              handleBackToDashboard();
+              if (isNewPatient) {
                 setIsNewPatient(false);
-                setShowDashboard(true);
-                setShowEditor(false);
               }
             }}
-            onCancel={isNewPatient ? () => navigate('/patients') : handleBackToDashboard}
+            onCancel={handleBackToDashboard}
           />
         </div>
       )}
 
-      {/* New patient welcome screen */}
+      {/* New patient welcome screen - DISABLED: Prefer standard dashboard
       {isNewPatient && viewMode === 'dashboard' && (
         <div className="flex flex-col items-center justify-center h-full p-8 text-center">
           <div className="max-w-md">
@@ -374,9 +370,10 @@ const PatientView = () => {
           </div>
         </div>
       )}
+      */}
       
       {/* Default dashboard view */}
-      {viewMode === 'dashboard' && !isNewPatient && (
+      {viewMode === 'dashboard' && (
         <PatientDashboard 
           key={`dashboard-${id}`}
           patientId={id} 

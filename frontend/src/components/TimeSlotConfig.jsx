@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTimeSlotStore } from '../stores/timeSlotStore';
+import { useTimeSlotStore } from '../store/timeSlotStore';
 import { useThemeStore } from '../store/themeStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -13,7 +13,7 @@ import { Badge } from '../components/ui/badge';
 const TimeSlotConfig = ({ selectedDate }) => {
   const { timeRanges, addTimeRange, removeTimeRange, generateSlotsFromRanges, createSlotsFromRangeInBackend } = useTimeSlotStore();
   const { isDarkMode } = useThemeStore();
-  
+
   const dayId = selectedDate ? selectedDate.getDay() : new Date().getDay();
   const selectedLabel = selectedDate ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dia selecionado';
   const [expandedDays, setExpandedDays] = useState({ [dayId]: true });
@@ -58,7 +58,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
     const updatedModalities = currentModalities.includes(modalityId)
       ? currentModalities.filter(m => m !== modalityId)
       : [...currentModalities, modalityId];
-    
+
     setNewRange(prev => ({
       ...prev,
       modalities: updatedModalities
@@ -115,10 +115,10 @@ const TimeSlotConfig = ({ selectedDate }) => {
         {singleWeekDays.map(day => {
           const dayRanges = timeRanges[day.id] || [];
           const totalHours = getTotalHours(dayRanges);
-          
+
           return (
             <div key={day.id} className="border border-transparent rounded-lg p-4">
-              <div 
+              <div
                 className="flex items-center justify-between cursor-pointer hover:bg-theme-surface p-2 rounded transition-colors"
                 onClick={() => toggleDay(day.id)}
               >
@@ -153,7 +153,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                   </Button>
                 </div>
               </div>
-              
+
               {expandedDays[day.id] && (
                 <div className="mt-4 space-y-4 border-t border-theme-border pt-4">
                   {/* Existing ranges */}
@@ -179,7 +179,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                                 const Icon = option.icon;
                                 return (
                                   <Badge key={mod} variant="secondary" className="text-xs">
-  
+
                                     {option.label.substring(0, 3)}
                                   </Badge>
                                 );
@@ -198,11 +198,11 @@ const TimeSlotConfig = ({ selectedDate }) => {
                       ))}
                     </div>
                   )}
-                  
+
                   {/* New range form */}
                   <div className="space-y-4 p-4 bg-theme-card border border-theme-border rounded-lg max-w-2xl mx-auto">
                     <h4 className="text-sm font-medium text-theme-text">Adicionar nova faixa:</h4>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor={`start-${day.id}`} className="text-theme-text">Horário inicial</Label>
@@ -214,7 +214,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                           className="bg-theme-card border-theme-border text-theme-text"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor={`end-${day.id}`} className="text-theme-text">Horário final</Label>
                         <Input
@@ -226,7 +226,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor={`duration-${day.id}`} className="text-theme-text">Duração (min)</Label>
@@ -265,27 +265,26 @@ const TimeSlotConfig = ({ selectedDate }) => {
                         </Select>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2 max-w-md mx-auto">
                       <Label className="text-theme-text">Modalidades de atendimento</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {modalityOptions.map(option => {
                           const Icon = option.icon;
                           const isSelected = newRange.modalities.includes(option.id);
-                          
+
                           return (
                             <div
                               key={option.id}
-                              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                                isSelected 
-                                  ? 'bg-theme-accent border-theme-accent text-white' 
+                              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected
+                                  ? 'bg-theme-accent border-theme-accent text-white'
                                   : 'bg-theme-card border-theme-border hover:bg-theme-surface'
-                              }`}
+                                }`}
                               onClick={() => handleModalityChange(option.id)}
                             >
                               <Checkbox
                                 checked={isSelected}
-                                onChange={() => {}} // Handled by parent click
+                                onChange={() => { }} // Handled by parent click
                                 className="border-theme-border"
                               />
 
@@ -297,7 +296,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
                         })}
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 justify-center">
                       <Button
                         onClick={() => handleAddRange(day.id)}
@@ -319,7 +318,7 @@ const TimeSlotConfig = ({ selectedDate }) => {
             </div>
           );
         })}
-        
+
 
       </CardContent>
     </Card>

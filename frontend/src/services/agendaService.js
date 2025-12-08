@@ -32,6 +32,11 @@ export const agendaService = {
   },
   deleteAppointment: (id) => {
     return api.delete(`/agenda/appointments/${id}`);
+  },
+
+  // Patient's own appointments (patient scope)
+  getMyAppointments: ({ status, start, end } = {}) => {
+    return api.get('/agenda/my-appointments', buildQuery({ status, start, end }));
   }
 };
 

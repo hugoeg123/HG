@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -26,29 +27,30 @@ import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 
 // Ícones
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  GraduationCap, 
-  FileText, 
-  Camera, 
-  Upload, 
-  Save, 
-  X, 
-  Plus, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  FileText,
+  Camera,
+  Upload,
+  Save,
+  X,
+  Plus,
   Trash2,
   Eye,
   Edit3,
   Download,
-  Calendar
+  Calendar,
+  CheckCircle,
+  Globe
 } from 'lucide-react';
 
 /**
  * Perfil vazio para inicialização
- * Hook: Usado como estado inicial do formulário
  */
 const emptyProfile = {
   nome: '',
@@ -88,128 +90,135 @@ const emptyExperiencia = {
 
 /**
  * Componente de Card Público
- * 
- * Hook: Exibe informações do perfil em modo marketplace
- * Conector: Usado na tab "Visão Pública"
  */
 const PublicCard = React.memo(({ profile }) => {
-  const { theme } = useThemeStore();
   const navigate = useNavigate();
-  
+  const { t } = useTranslation();
+
   return (
-    <Card className="w-full max-w-2xl mx-auto bg-theme-card border-theme-border theme-border">
-      <CardHeader className="text-center pb-4">
-        <div className="flex flex-col items-center space-y-4">
-          <Avatar className="w-24 h-24">
-            <AvatarImage src={profile.avatar_url} alt={profile.nome} />
-            <AvatarFallback className="text-2xl">
-              {profile.nome?.split(' ').map(n => n[0]).join('').toUpperCase() || 'MD'}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="space-y-2">
-            <CardTitle className="text-2xl font-bold">{profile.nome || 'Nome não informado'}</CardTitle>
-            {profile.titulo_profissional && (
-              <p className="text-lg text-muted-foreground">
-                {profile.titulo_profissional}
-              </p>
-            )}
-            {profile.specialty && (
-              <Badge variant="secondary" className="text-sm">
-                {profile.specialty}
-              </Badge>
-            )}
-          </div>
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800">
+        {/* Banner / Header Background */}
+        <div className="h-32 bg-gradient-to-r from-teal-500 to-blue-600 relative">
+          <div className="absolute inset-0 bg-black/10"></div>
         </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        <div className="flex justify-center gap-3">
-          <Button 
-            variant="default" 
-            size="sm" 
-            onClick={() => navigate('/agenda')}
-            className="flex items-center space-x-2 bg-accent/20 text-accent hover:bg-accent/40 border border-transparent hover:border-accent/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 transition-all duration-200"
-          >
-            <Calendar className="w-4 h-4 text-accent" />
-            <span className="text-accent">Agenda</span>
-          </Button>
-          {profile.curriculo_url && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => window.open(profile.curriculo_url, '_blank')}
-              className="flex items-center space-x-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Baixar Currículo</span>
-            </Button>
-          )}
-        </div>
-        
-        {profile.biografia && (
-          <div>
-            <h3 className="font-semibold mb-2 flex items-center">
-              <User className="w-4 h-4 mr-2" />
-              Sobre
-            </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {profile.biografia}
-            </p>
-          </div>
-        )}
-        
-        {profile.formacao && profile.formacao.length > 0 && (
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center">
-              <GraduationCap className="w-4 h-4 mr-2" />
-              Formação Acadêmica
-            </h3>
-            <div className="space-y-3">
-              {profile.formacao.map((item, index) => (
-                <div key={index} className="p-3 rounded-lg bg-theme-surface">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-medium">{item.curso}</h4>
-                    <span className="text-sm text-muted-foreground">
-                      {item.ano_inicio} - {item.ano_fim || 'Atual'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-1">{item.instituicao}</p>
-                  {item.descricao && (
-                    <p className="text-xs text-muted-foreground">{item.descricao}</p>
-                  )}
-                </div>
-              ))}
+
+        <div className="px-8 pb-8">
+          <div className="relative flex justify-between items-end -mt-12 mb-6">
+            <div className="flex items-end">
+              <Avatar className="w-32 h-32 border-4 border-white dark:border-gray-900 shadow-lg">
+                <AvatarImage src={profile.avatar_url} alt={profile.nome} className="object-cover" />
+                <AvatarFallback className="text-3xl bg-gray-200 dark:bg-gray-800">
+                  {profile.nome?.split(' ').map(n => n[0]).join('').toUpperCase() || 'MD'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="ml-4 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.nome || 'Nome não informado'}</h1>
+                <p className="text-lg text-teal-600 dark:text-teal-400 font-medium">{profile.titulo_profissional}</p>
+              </div>
+            </div>
+            <div className="flex gap-3 mb-2">
+              <Button
+                onClick={() => navigate('/agenda')}
+                className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                {t('profile.schedule')}
+              </Button>
+              {profile.curriculo_url && (
+                <Button
+                  variant="outline"
+                  onClick={() => window.open(profile.curriculo_url, '_blank')}
+                  className="border-gray-300 dark:border-gray-700"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {t('profile.downloadCurriculum')}
+                </Button>
+              )}
             </div>
           </div>
-        )}
-        
-        {profile.experiencias && profile.experiencias.length > 0 && (
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center">
-              <Briefcase className="w-4 h-4 mr-2" />
-              Experiência Profissional
-            </h3>
-            <div className="space-y-3">
-              {profile.experiencias.map((item, index) => (
-                <div key={index} className="p-3 rounded-lg bg-theme-surface">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-medium">{item.cargo}</h4>
-                    <span className="text-sm text-muted-foreground">
-                      {item.ano_inicio} - {item.atual ? 'Atual' : item.ano_fim}
-                    </span>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Sobre */}
+              {profile.biografia && (
+                <section>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center text-gray-900 dark:text-white">
+                    <User className="w-5 h-5 mr-2 text-teal-500" />
+                    {t('profile.about')}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {profile.biografia}
+                  </p>
+                </section>
+              )}
+
+              {/* Experiência */}
+              {profile.experiencias && profile.experiencias.length > 0 && (
+                <section>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+                    <Briefcase className="w-5 h-5 mr-2 text-teal-500" />
+                    {t('profile.experience')}
+                  </h3>
+                  <div className="space-y-6">
+                    {profile.experiencias.map((item, index) => (
+                      <div key={index} className="relative pl-6 border-l-2 border-gray-200 dark:border-gray-700 last:border-0">
+                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-teal-500 border-4 border-white dark:border-gray-900"></div>
+                        <div className="mb-1">
+                          <h4 className="text-base font-semibold text-gray-900 dark:text-white">{item.cargo}</h4>
+                          <p className="text-sm text-teal-600 dark:text-teal-400 font-medium">{item.empresa}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-2">
+                          {item.ano_inicio} - {item.atual ? t('profile.current') : item.ano_fim}
+                        </p>
+                        {item.descricao && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{item.descricao}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-1">{item.empresa}</p>
-                  {item.descricao && (
-                    <p className="text-xs text-muted-foreground">{item.descricao}</p>
-                  )}
-                </div>
-              ))}
+                </section>
+              )}
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-8">
+              {/* Specialties */}
+              {profile.specialty && (
+                <section>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">{t('profile.specialty')}</h3>
+                  <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-300 border-0 px-3 py-1 text-sm">
+                    {profile.specialty}
+                  </Badge>
+                </section>
+              )}
+
+              {/* Education */}
+              {profile.formacao && profile.formacao.length > 0 && (
+                <section>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+                    <GraduationCap className="w-5 h-5 mr-2 text-teal-500" />
+                    {t('profile.education')}
+                  </h3>
+                  <div className="space-y-4">
+                    {profile.formacao.map((item, index) => (
+                      <div key={index} className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+                        <h4 className="font-medium text-gray-900 dark:text-white">{item.curso}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{item.instituicao}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {item.ano_inicio} - {item.ano_fim || t('profile.current')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 });
 
@@ -217,14 +226,16 @@ PublicCard.displayName = 'PublicCard';
 
 /**
  * Componente Principal - Página de Perfil
- * 
- * Hook: Gerencia estado do perfil e integração com API
- * Conector: Usa authStore para autenticação e api.js para requisições
  */
 const Profile = () => {
   const { user } = useAuthStore();
   const { theme } = useThemeStore();
-  
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
+
   // Estados do componente
   const [profile, setProfile] = useState(emptyProfile);
   const [editProfile, setEditProfile] = useState(emptyProfile);
@@ -236,8 +247,6 @@ const Profile = () => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const hasLoadedRef = useRef(false);
   const avatarPreviewUrlRef = useRef(null);
-  const avatarInputRef = useRef(null);
-  const curriculoInputRef = useRef(null);
 
   // Limpeza de objectURL ao desmontar
   useEffect(() => {
@@ -248,11 +257,7 @@ const Profile = () => {
       }
     };
   }, []);
-  
-  /**
-   * Mapear dados da API para o formato do componente
-   * Hook: Converte resposta da API para estrutura local
-   */
+
   const mapApiDataToProfile = useCallback((apiData) => {
     return {
       nome: apiData.nome || '',
@@ -267,19 +272,15 @@ const Profile = () => {
       experiencias: apiData.experiencias || []
     };
   }, []);
-  
-  /**
-   * Carregar perfil da API
-   * Hook: Busca dados do perfil no backend
-   */
+
   const loadProfile = useCallback((abortSignal) => {
     setLoading(true);
     const LOAD_TIMEOUT_MS = 6000;
     let timeoutId;
     let fallbackApplied = false;
-  
+
     const requestPromise = throttledApi.get('/auth/profile', { signal: abortSignal });
-  
+
     const applyFallback = () => {
       if (fallbackApplied) return;
       fallbackApplied = true;
@@ -292,9 +293,9 @@ const Profile = () => {
       }
       setLoading(false);
     };
-  
+
     timeoutId = setTimeout(applyFallback, LOAD_TIMEOUT_MS);
-  
+
     requestPromise
       .then((response) => {
         clearTimeout(timeoutId);
@@ -320,11 +321,10 @@ const Profile = () => {
           setLoading(false);
         }
       });
-  
+
     return requestPromise;
   }, [user, mapApiDataToProfile]);
-  
-  // Carregar perfil ao montar o componente (evitar chamada duplicada no StrictMode)
+
   useEffect(() => {
     if (hasLoadedRef.current) return;
     hasLoadedRef.current = true;
@@ -334,23 +334,14 @@ const Profile = () => {
       controller.abort();
     };
   }, [loadProfile]);
-  
-  /**
-   * Manipular mudanças nos campos do formulário
-   * Hook: Atualiza estado do formulário de edição
-   */
+
   const handleInputChange = useCallback((field, value) => {
     setEditProfile(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
-  
-  /**
-   * Manipular upload de avatar
-   * Hook: Processa seleção de arquivo de avatar
-   */
-  // Função utilitária: compactar/redimensionar imagem no cliente para melhorar performance
+
   const compressImage = useCallback((file, maxSize = 1024, quality = 0.85) => {
     return new Promise((resolve) => {
       try {
@@ -388,23 +379,19 @@ const Profile = () => {
   const handleAvatarChange = useCallback((event) => {
     const file = event.target.files[0];
     if (file) {
-      // Validar tipo de arquivo
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         toast.error('Tipo de arquivo inválido. Use JPEG, PNG ou WebP.');
         return;
       }
-      
-      // Validar tamanho (5MB)
+
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Arquivo muito grande. Máximo 5MB.');
         return;
       }
-      
-      // Compactar/redimensionar para otimizar upload
+
       compressImage(file).then((optimized) => {
         setAvatarFile(optimized);
-        // Limpar URL anterior
         if (avatarPreviewUrlRef.current) {
           URL.revokeObjectURL(avatarPreviewUrlRef.current);
           avatarPreviewUrlRef.current = null;
@@ -415,15 +402,10 @@ const Profile = () => {
       });
     }
   }, [compressImage]);
-  
-  /**
-   * Manipular upload de currículo
-   * Hook: Processa seleção de arquivo de currículo
-   */
+
   const handleCurriculoChange = useCallback((event) => {
     const file = event.target.files[0];
     if (file) {
-      // Validar tipo de arquivo
       const allowedTypes = [
         'application/pdf',
         'application/msword',
@@ -433,26 +415,21 @@ const Profile = () => {
         toast.error('Tipo de arquivo inválido. Use PDF, DOC ou DOCX.');
         return;
       }
-      
-      // Validar tamanho (5MB)
+
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Arquivo muito grande. Máximo 5MB.');
         return;
       }
-      
+
       setCurriculoFile(file);
     }
   }, []);
-  
-  /**
-   * Upload de arquivos
-   * Hook: Envia arquivos para o backend
-   */
+
   const uploadFiles = useCallback(async () => {
     if (!avatarFile && !curriculoFile) {
       return {};
     }
-    
+
     const formData = new FormData();
     if (avatarFile) {
       formData.append('avatar', avatarFile);
@@ -460,18 +437,12 @@ const Profile = () => {
     if (curriculoFile) {
       formData.append('curriculo', curriculoFile);
     }
-    
+
     try {
-      // Enviar como multipart/form-data garantindo que o boundary seja definido pelo browser
       const response = await throttledApi.post('/files/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const data = response?.data || {};
-      // Mapear respostas de forma flexível (suporta vários formatos)
-      // Possíveis formatos:
-      // 1) { files: { avatar_url, curriculo_url } }
-      // 2) { avatar_url, curriculo_url }
-      // 3) { files: { avatar, curriculo } } onde valores são URLs
       const filesObj = data.files || data;
       return {
         ...(filesObj.avatar_url ? { avatar_url: filesObj.avatar_url } : {}),
@@ -481,134 +452,111 @@ const Profile = () => {
       };
     } catch (error) {
       console.error('Erro no upload:', error);
-      // Continuar salvando sem anexos
       return {};
     }
   }, [avatarFile, curriculoFile]);
-  
-  /**
-   * Valida dados do perfil antes de enviar
-   * Hook: Valida campos críticos para evitar erros de validação
-   */
+
   const validarDadosPerfil = useCallback((data) => {
     const erros = [];
-    
-    // Validar nome (mínimo 2 caracteres)
-    if (data.nome && data.nome.length < 2) {
-      erros.push('Nome deve ter pelo menos 2 caracteres');
-    }
-    
-    // Validar email
-    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      erros.push('Email inválido');
-    }
-    
-    // Validar título profissional (máximo 100 caracteres)
-    if (data.titulo_profissional && data.titulo_profissional.length > 100) {
-      erros.push('Título profissional muito longo (máximo 100 caracteres)');
-    }
-    
-    // Validar biografia (máximo 1000 caracteres)
-    if (data.biografia && data.biografia.length > 1000) {
-      erros.push('Biografia muito longa (máximo 1000 caracteres)');
-    }
-    
-    // Validar URLs apenas se presentes
-    if (data.avatar_url && !data.avatar_url.match(/^https?:\/\/.+/)) {
-      erros.push('URL do avatar inválida');
-    }
-    
-    if (data.curriculo_url && !data.curriculo_url.match(/^https?:\/\/.+/)) {
-      erros.push('URL do currículo inválida');
-    }
-    
+    if (data.nome && data.nome.length < 2) erros.push('Nome deve ter pelo menos 2 caracteres');
+    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) erros.push('Email inválido');
+    if (data.titulo_profissional && data.titulo_profissional.length > 100) erros.push('Título profissional muito longo (máximo 100 caracteres)');
+    if (data.biografia && data.biografia.length > 1000) erros.push('Biografia muito longa (máximo 1000 caracteres)');
     return erros;
   }, []);
-  
-  /**
-   * Salvar perfil
-   * Hook: Envia dados atualizados para o backend
-   */
+
+  const cleanText = useCallback((v) => {
+    if (typeof v !== 'string') return '';
+    const t = v.trim();
+    const hasAlphaNum = /[A-Za-zÀ-ÖØ-öø-ÿ0-9]/.test(t);
+    return hasAlphaNum ? t : '';
+  }, []);
+
+  const toYearOrNull = useCallback((v) => {
+    const n = parseInt(String(v ?? '').trim(), 10);
+    if (Number.isNaN(n)) return null;
+    const maxYear = new Date().getFullYear() + 1;
+    if (n < 1950 || n > maxYear) return null;
+    return n;
+  }, []);
+
+  const sanitizeFormacao = useCallback((arr) => {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map((item) => {
+        const obj = {
+          instituicao: cleanText(item?.instituicao),
+          curso: cleanText(item?.curso),
+          ano_inicio: toYearOrNull(item?.ano_inicio),
+          ano_fim: toYearOrNull(item?.ano_fim),
+          descricao: cleanText(item?.descricao)
+        };
+        const meaningful = !!(obj.instituicao || obj.curso || obj.descricao || obj.ano_inicio || obj.ano_fim);
+        return meaningful ? obj : null;
+      })
+      .filter(Boolean);
+  }, [cleanText, toYearOrNull]);
+
+  const sanitizeExperiencias = useCallback((arr) => {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map((item) => {
+        const atual = !!item?.atual;
+        const obj = {
+          empresa: cleanText(item?.empresa),
+          cargo: cleanText(item?.cargo),
+          ano_inicio: toYearOrNull(item?.ano_inicio),
+          ano_fim: atual ? null : toYearOrNull(item?.ano_fim),
+          descricao: cleanText(item?.descricao),
+          atual
+        };
+        const meaningful = !!(obj.empresa || obj.cargo || obj.descricao || obj.ano_inicio || obj.ano_fim);
+        return meaningful ? obj : null;
+      })
+      .filter(Boolean);
+  }, [cleanText, toYearOrNull]);
+
   const handleSave = useCallback(async () => {
     try {
       setSaving(true);
-      
-      // Upload de arquivos primeiro
       const uploadedFiles = await uploadFiles();
-      
-      // Preparar dados para envio
-      const updateData = {
-        ...editProfile,
-        ...uploadedFiles
-      };
-      
-      // Sanitizar campos vazios para evitar falhas de validação no backend
+      const updateData = { ...editProfile, ...uploadedFiles };
+
+      updateData.formacao = sanitizeFormacao(updateData.formacao);
+      updateData.experiencias = sanitizeExperiencias(updateData.experiencias);
+
       ['avatar_url', 'curriculo_url'].forEach((field) => {
         if (updateData[field] === '' || updateData[field] === null || updateData[field] === undefined) {
           delete updateData[field];
         }
       });
-      
-      // Log detalhado para debug
-      console.log('📤 Enviando dados do perfil:', {
-        campos: Object.keys(updateData),
-        avatar_url: updateData.avatar_url ? 'presente' : 'ausente',
-        curriculo_url: updateData.curriculo_url ? 'presente' : 'ausente',
-        nome: updateData.nome ? `${updateData.nome.length} caracteres` : 'ausente',
-        email: updateData.email ? 'presente' : 'ausente'
-      });
-      
-      // Validar dados antes de enviar
+
       const errosValidacao = validarDadosPerfil(updateData);
       if (errosValidacao.length > 0) {
-        console.warn('⚠️ Validação local falhou:', errosValidacao);
-        toast.error(errosValidacao[0]); // Mostrar apenas o primeiro erro
+        toast.error(errosValidacao[0]);
         return;
       }
-      
-      // Enviar atualização do perfil
+
       const response = await throttledApi.put('/auth/profile', updateData);
       const updatedProfile = mapApiDataToProfile(response.data);
-      
-      // Atualizar estados
+
       setProfile(updatedProfile);
       setEditProfile(updatedProfile);
-      
-      // Limpar arquivos temporários
       setAvatarFile(null);
       setCurriculoFile(null);
       setAvatarPreview(null);
-      
-      toast.success('Perfil atualizado com sucesso!');
+
+      toast.success(t('profile.success'));
       setActiveTab('public');
-      
+
     } catch (error) {
-      // Tratamento de erro aprimorado para evitar múltiplos logs
-      const errorDetails = {
-        message: error.response?.data?.message || error.message,
-        status: error.response?.status,
-        validationErrors: error.response?.data?.errors?.length || 0,
-        firstError: error.response?.data?.errors?.[0]?.msg || null
-      };
-      
-      // Log único e estruturado
-      console.error('❌ Erro ao salvar perfil:', errorDetails);
-      
-      // Mostrar mensagem amigável ao usuário
-      const userMessage = errorDetails.firstError || 
-                         errorDetails.message || 
-                         'Erro ao salvar perfil. Verifique os dados e tente novamente.';
-      
-      toast.error(userMessage);
+      console.error('Erro ao salvar perfil:', error);
+      toast.error(t('profile.error'));
     } finally {
       setSaving(false);
     }
-  }, [editProfile, uploadFiles, mapApiDataToProfile, validarDadosPerfil]);
-  
-  /**
-   * Cancelar edição
-   * Hook: Reverte mudanças não salvas
-   */
+  }, [editProfile, uploadFiles, mapApiDataToProfile, validarDadosPerfil, sanitizeFormacao, sanitizeExperiencias]);
+
   const handleCancel = useCallback(() => {
     setEditProfile(profile);
     setAvatarFile(null);
@@ -616,539 +564,438 @@ const Profile = () => {
     setAvatarPreview(null);
     setActiveTab('public');
   }, [profile]);
-  
-  /**
-   * Adicionar formação
-   * Hook: Adiciona nova entrada de formação acadêmica
-   */
+
   const addFormacao = useCallback(() => {
     setEditProfile(prev => ({
       ...prev,
       formacao: [...prev.formacao, { ...emptyFormacao }]
     }));
   }, []);
-  
-  /**
-   * Remover formação
-   * Hook: Remove entrada de formação acadêmica
-   */
+
   const removeFormacao = useCallback((index) => {
     setEditProfile(prev => ({
       ...prev,
       formacao: prev.formacao.filter((_, i) => i !== index)
     }));
   }, []);
-  
-  /**
-   * Atualizar formação
-   * Hook: Atualiza entrada específica de formação
-   */
+
   const updateFormacao = useCallback((index, field, value) => {
     setEditProfile(prev => ({
       ...prev,
-      formacao: prev.formacao.map((item, i) => 
+      formacao: prev.formacao.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       )
     }));
   }, []);
-  
-  /**
-   * Adicionar experiência
-   * Hook: Adiciona nova entrada de experiência profissional
-   */
+
   const addExperiencia = useCallback(() => {
     setEditProfile(prev => ({
       ...prev,
       experiencias: [...prev.experiencias, { ...emptyExperiencia }]
     }));
   }, []);
-  
-  /**
-   * Remover experiência
-   * Hook: Remove entrada de experiência profissional
-   */
+
   const removeExperiencia = useCallback((index) => {
     setEditProfile(prev => ({
       ...prev,
       experiencias: prev.experiencias.filter((_, i) => i !== index)
     }));
   }, []);
-  
-  /**
-   * Atualizar experiência
-   * Hook: Atualiza entrada específica de experiência
-   */
+
   const updateExperiencia = useCallback((index, field, value) => {
     setEditProfile(prev => ({
       ...prev,
-      experiencias: prev.experiencias.map((item, i) => 
+      experiencias: prev.experiencias.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       )
     }));
   }, []);
-  
-  // Memoizar avatar atual para performance
-  const currentAvatar = useMemo(() => {
-    return avatarPreview || editProfile.avatar_url || profile.avatar_url;
-  }, [avatarPreview, editProfile.avatar_url, profile.avatar_url]);
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-theme-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            Carregando perfil...
-          </p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando perfil...</p>
         </div>
       </div>
     );
   }
-  
-  return (
-    <div className="profile-page min-h-screen p-6 bg-theme-background">
-      <div className="max-w-4xl mx-auto">
 
-        
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-theme-background to-theme-card/30 px-4 py-8">
+      <div className="max-w-5xl mx-auto">
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-theme-surface border border-theme-border theme-border">
-            <TabsTrigger value="public" className="flex items-center space-x-2">
-              <Eye className="w-4 h-4" />
-              <span>Visão Pública</span>
-            </TabsTrigger>
-            <TabsTrigger value="edit" className="flex items-center space-x-2">
-              <Edit3 className="w-4 h-4" />
-              <span>Editar</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="public" className="mt-6">
+          <div className="flex justify-center mb-8">
+            <TabsList className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md p-1 rounded-full border border-gray-200 dark:border-gray-800">
+              <TabsTrigger value="public" className="rounded-full px-6 py-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white transition-all">
+                <Eye className="w-4 h-4 mr-2" />
+                {t('profile.publicView')}
+              </TabsTrigger>
+              <TabsTrigger value="edit" className="rounded-full px-6 py-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white transition-all">
+                <Edit3 className="w-4 h-4 mr-2" />
+                {t('profile.editProfile')}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="public" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {!profile.public_visibility && (
-              <div className="mb-4 p-3 rounded-lg border border-theme-border theme-border bg-theme-card text-muted-foreground">
-                Seu perfil está marcado como privado. Altere a visibilidade na aba Editar.
+              <div className="max-w-2xl mx-auto mb-6 p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/50 text-yellow-800 dark:text-yellow-200 flex items-center justify-center gap-2">
+                <Globe className="w-4 h-4" />
+                <span>{t('profile.privateWarning')}</span>
               </div>
             )}
             <PublicCard profile={profile} />
           </TabsContent>
-          
-          <TabsContent value="edit" className="mt-6">
-            <div className="space-y-6">
-              {/* Upload de Avatar e Currículo */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Upload className="w-5 h-5" />
-                    <span>Arquivos</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Avatar */}
-                  <div className="flex items-center space-x-6">
-                    <div className="flex flex-col items-center space-y-2">
-                      <Avatar className="w-20 h-20">
-                        <AvatarImage src={currentAvatar} alt="Avatar" />
-                        <AvatarFallback>
+
+          <TabsContent value="edit" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Sidebar - Basic Info & Avatar */}
+              <div className="space-y-6">
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('profile.profilePhoto')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center">
+                    <div className="relative group cursor-pointer mb-4">
+                      <Avatar className="w-32 h-32 border-4 border-white dark:border-gray-800 shadow-lg group-hover:opacity-90 transition-opacity">
+                        <AvatarImage src={avatarPreview || editProfile.avatar_url} />
+                        <AvatarFallback className="text-3xl">
                           {editProfile.nome?.split(' ').map(n => n[0]).join('').toUpperCase() || 'MD'}
                         </AvatarFallback>
                       </Avatar>
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handleAvatarChange}
-                          ref={avatarInputRef}
-                          className="hidden"
-                        />
-                        <Button 
-                          variant="primary" 
-                          size="sm" 
-                          className="flex items-center space-x-2"
-                          onClick={() => avatarInputRef.current?.click()}
-                        >
-                          <Camera className="w-4 h-4" />
-                          <span>Alterar Avatar</span>
-                        </Button>
-                      </label>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-black/50 rounded-full p-2 text-white">
+                          <Camera className="w-6 h-6" />
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleAvatarChange}
+                        accept="image/*"
+                      />
                     </div>
-                    
-                    <div className="flex-1">
-                      <h3 className="font-medium mb-2">Foto do Perfil</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Formatos aceitos: JPEG, PNG, WebP. Tamanho máximo: 5MB.
-                      </p>
-                      {avatarFile && (
-                        <p className="text-sm text-green-600">
-                          ✓ Novo arquivo selecionado: {avatarFile.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  {/* Currículo */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Currículo</h3>
-                    <div className="flex items-center space-x-4">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                          onChange={handleCurriculoChange}
-                          ref={curriculoInputRef}
-                          className="hidden"
-                        />
-                        <Button 
-                          variant="primary" 
-                          className="flex items-center space-x-2"
-                          onClick={() => curriculoInputRef.current?.click()}
-                        >
-                          <FileText className="w-4 h-4" />
-                          <span>Selecionar Currículo</span>
-                        </Button>
-                      </label>
-                      
-                      {editProfile.curriculo_url && (
-                        <Button 
-                          variant="primary" 
-                          size="sm"
-                          onClick={() => { const w = window.open(editProfile.curriculo_url, '_blank'); if (w) w.opener = null; }}
-                          className="flex items-center space-x-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Ver Atual</span>
-                        </Button>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground">
-                      Formatos aceitos: PDF, DOC, DOCX. Tamanho máximo: 5MB.
+                    <p className="text-xs text-gray-500 text-center">
+                      {t('profile.clickToChange')}
                     </p>
-                    
-                    {curriculoFile && (
-                      <p className="text-sm text-green-600">
-                        ✓ Novo arquivo selecionado: {curriculoFile.name}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Informações Básicas */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <User className="w-5 h-5" />
-                    <span>Informações Básicas</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Nome Completo</label>
-                      <Input
-                        value={editProfile.nome}
-                        onChange={(e) => handleInputChange('nome', e.target.value)}
-                        placeholder="Seu nome completo"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
-                      <Input
-                        type="email"
-                        value={editProfile.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        placeholder="seu@email.com"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Título Profissional</label>
-                      <Input
-                        value={editProfile.titulo_profissional}
-                        onChange={(e) => handleInputChange('titulo_profissional', e.target.value)}
-                        placeholder="Ex: Médico Cardiologista"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Especialidade</label>
-                      <Input
-                        value={editProfile.specialty}
-                        onChange={(e) => handleInputChange('specialty', e.target.value)}
-                        placeholder="Ex: Cardiologia"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Biografia</label>
-                    <Textarea
-                      value={editProfile.biografia}
-                      onChange={(e) => handleInputChange('biografia', e.target.value)}
-                      placeholder="Conte um pouco sobre sua trajetória profissional..."
-                      rows={4}
-                      maxLength={1000}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {editProfile.biografia?.length || 0}/1000 caracteres
-                    </p>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium mb-1">Visibilidade Pública</label>
-                    <div className="flex items-center space-x-2">
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('profile.visibility')}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                       <Checkbox
-                        checked={!!editProfile.public_visibility}
-                        onCheckedChange={(checked) => handleInputChange('public_visibility', !!checked)}
+                        id="visibility"
+                        checked={editProfile.public_visibility}
+                        onCheckedChange={(checked) => handleInputChange('public_visibility', checked)}
                       />
-                      <span className="text-sm text-muted-foreground">
-                        Exibir seu perfil no marketplace público
-                      </span>
+                      <label htmlFor="visibility" className="text-sm font-medium cursor-pointer select-none">
+                        {t('profile.publicProfile')}
+                      </label>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Formação Acadêmica */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <GraduationCap className="w-5 h-5" />
-                      <span>Formação Acadêmica</span>
-                    </div>
-                    <Button 
-                      variant="primary" 
-                      size="sm" 
-                      onClick={addFormacao}
-                      className="flex items-center space-x-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Adicionar</span>
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {editProfile.formacao.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">
-                      Nenhuma formação adicionada. Clique em "Adicionar" para começar.
+                    <p className="text-xs text-gray-500 mt-2 ml-1">
+                      {t('profile.visibilityHint')}
                     </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {editProfile.formacao.map((item, index) => (
-                        <div key={index} className={`p-4 border rounded-lg border-theme-border theme-border`}>
-                          <div className="flex justify-between items-start mb-4">
-                            <h4 className="font-medium">Formação {index + 1}</h4>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeFormacao(index)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('profile.curriculum')}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors relative">
+                      <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {curriculoFile ? curriculoFile.name : t('profile.uploadCurriculum')}
+                      </p>
+                      <input
+                        type="file"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleCurriculoChange}
+                        accept=".pdf,.doc,.docx"
+                      />
+                    </div>
+                    {editProfile.curriculo_url && !curriculoFile && (
+                      <div className="flex items-center gap-2 mt-3 text-sm text-teal-600">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>{t('profile.curriculumSaved')}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm mt-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('common.language')}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={i18n.language === 'pt-BR' ? 'default' : 'outline'}
+                        onClick={() => changeLanguage('pt-BR')}
+                        className={i18n.language === 'pt-BR' ? 'bg-teal-600 hover:bg-teal-700' : ''}
+                      >
+                        Português
+                      </Button>
+                      <Button
+                        variant={i18n.language === 'en' ? 'default' : 'outline'}
+                        onClick={() => changeLanguage('en')}
+                        className={i18n.language === 'en' ? 'bg-teal-600 hover:bg-teal-700' : ''}
+                      >
+                        English
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Main Content - Forms */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>{t('profile.basicInfo')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{t('profile.name')}</label>
+                        <Input
+                          value={editProfile.nome}
+                          onChange={(e) => handleInputChange('nome', e.target.value)}
+                          placeholder="Dr. João Silva"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{t('profile.email')}</label>
+                        <Input
+                          value={editProfile.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          placeholder="joao@exemplo.com"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{t('profile.professionalTitle')}</label>
+                        <Input
+                          value={editProfile.titulo_profissional}
+                          onChange={(e) => handleInputChange('titulo_profissional', e.target.value)}
+                          placeholder="Ex: Cardiologista Intervencionista"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{t('profile.specialty')}</label>
+                        <Input
+                          value={editProfile.specialty}
+                          onChange={(e) => handleInputChange('specialty', e.target.value)}
+                          placeholder="Ex: Cardiologia"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">{t('profile.bio')}</label>
+                      <Textarea
+                        value={editProfile.biografia}
+                        onChange={(e) => handleInputChange('biografia', e.target.value)}
+                        placeholder={t('profile.bioPlaceholder')}
+                        className="min-h-[120px]"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>{t('profile.education')}</CardTitle>
+                    <Button variant="outline" size="sm" onClick={addFormacao}>
+                      <Plus className="w-4 h-4 mr-2" /> {t('profile.add')}
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {editProfile.formacao.map((item, index) => (
+                      <div key={index} className="relative p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg group">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => removeFormacao(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.course')}</label>
+                            <Input
+                              value={item.curso}
+                              onChange={(e) => updateFormacao(index, 'curso', e.target.value)}
+                              placeholder="Ex: Medicina"
+                              className="bg-white dark:bg-gray-900"
+                            />
                           </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Instituição</label>
-                              <Input
-                                value={item.instituicao}
-                                onChange={(e) => updateFormacao(index, 'instituicao', e.target.value)}
-                                placeholder="Nome da instituição"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Curso</label>
-                              <Input
-                                value={item.curso}
-                                onChange={(e) => updateFormacao(index, 'curso', e.target.value)}
-                                placeholder="Nome do curso"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Ano de Início</label>
-                              <Input
-                                type="number"
-                                value={item.ano_inicio}
-                                onChange={(e) => updateFormacao(index, 'ano_inicio', e.target.value)}
-                                placeholder="2020"
-                                min="1950"
-                                max={new Date().getFullYear()}
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Ano de Conclusão</label>
-                              <Input
-                                type="number"
-                                value={item.ano_fim}
-                                onChange={(e) => updateFormacao(index, 'ano_fim', e.target.value)}
-                                placeholder="2024 (deixe vazio se em andamento)"
-                                min="1950"
-                                max={new Date().getFullYear() + 10}
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
-                            <Textarea
-                              value={item.descricao}
-                              onChange={(e) => updateFormacao(index, 'descricao', e.target.value)}
-                              placeholder="Descreva brevemente o curso, projetos relevantes, etc."
-                              rows={2}
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.institution')}</label>
+                            <Input
+                              value={item.instituicao}
+                              onChange={(e) => updateFormacao(index, 'instituicao', e.target.value)}
+                              placeholder="Ex: USP"
+                              className="bg-white dark:bg-gray-900"
                             />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Experiência Profissional */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Briefcase className="w-5 h-5" />
-                      <span>Experiência Profissional</span>
-                    </div>
-                    <Button 
-                      variant="primary" 
-                      size="sm" 
-                      onClick={addExperiencia}
-                      className="flex items-center space-x-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Adicionar</span>
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {editProfile.experiencias.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">
-                      Nenhuma experiência adicionada. Clique em "Adicionar" para começar.
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {editProfile.experiencias.map((item, index) => (
-                        <div key={index} className={`p-4 border rounded-lg border-theme-border theme-border`}>
-                          <div className="flex justify-between items-start mb-4">
-                            <h4 className="font-medium">Experiência {index + 1}</h4>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeExperiencia(index)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.startYear')}</label>
+                            <Input
+                              type="number"
+                              value={item.ano_inicio || ''}
+                              onChange={(e) => updateFormacao(index, 'ano_inicio', e.target.value)}
+                              placeholder="2015"
+                              className="bg-white dark:bg-gray-900"
+                            />
                           </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Empresa/Instituição</label>
-                              <Input
-                                value={item.empresa}
-                                onChange={(e) => updateExperiencia(index, 'empresa', e.target.value)}
-                                placeholder="Nome da empresa"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Cargo</label>
-                              <Input
-                                value={item.cargo}
-                                onChange={(e) => updateExperiencia(index, 'cargo', e.target.value)}
-                                placeholder="Seu cargo/função"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Ano de Início</label>
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.endYear')}</label>
+                            <Input
+                              type="number"
+                              value={item.ano_fim || ''}
+                              onChange={(e) => updateFormacao(index, 'ano_fim', e.target.value)}
+                              placeholder="2021"
+                              className="bg-white dark:bg-gray-900"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {editProfile.formacao.length === 0 && (
+                      <div className="text-center py-6 text-gray-500 text-sm italic">
+                        Nenhuma formação adicionada.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>{t('profile.experience')}</CardTitle>
+                    <Button variant="outline" size="sm" onClick={addExperiencia}>
+                      <Plus className="w-4 h-4 mr-2" /> {t('profile.add')}
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {editProfile.experiencias.map((item, index) => (
+                      <div key={index} className="relative p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg group">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => removeExperiencia(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.position')}</label>
+                            <Input
+                              value={item.cargo}
+                              onChange={(e) => updateExperiencia(index, 'cargo', e.target.value)}
+                              placeholder="Ex: Médico Residente"
+                              className="bg-white dark:bg-gray-900"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.company')}</label>
+                            <Input
+                              value={item.empresa}
+                              onChange={(e) => updateExperiencia(index, 'empresa', e.target.value)}
+                              placeholder="Ex: Hospital Sírio-Libanês"
+                              className="bg-white dark:bg-gray-900"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.startYear')}</label>
+                            <Input
+                              type="number"
+                              value={item.ano_inicio || ''}
+                              onChange={(e) => updateExperiencia(index, 'ano_inicio', e.target.value)}
+                              placeholder="2021"
+                              className="bg-white dark:bg-gray-900"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-500">{t('profile.endYear')}</label>
+                            <div className="flex gap-2">
                               <Input
                                 type="number"
-                                value={item.ano_inicio}
-                                onChange={(e) => updateExperiencia(index, 'ano_inicio', e.target.value)}
-                                placeholder="2020"
-                                min="1950"
-                                max={new Date().getFullYear()}
+                                value={item.ano_fim || ''}
+                                onChange={(e) => updateExperiencia(index, 'ano_fim', e.target.value)}
+                                placeholder="2023"
+                                disabled={item.atual}
+                                className="bg-white dark:bg-gray-900"
                               />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Ano de Término</label>
-                              <div className="space-y-2">
-                                <Input
-                                  type="number"
-                                  value={item.ano_fim}
-                                  onChange={(e) => updateExperiencia(index, 'ano_fim', e.target.value)}
-                                  placeholder="2024"
-                                  min="1950"
-                                  max={new Date().getFullYear() + 1}
-                                  disabled={item.atual}
+                              <div className="flex items-center">
+                                <Checkbox
+                                  id={`atual-${index}`}
+                                  checked={item.atual}
+                                  onCheckedChange={(checked) => updateExperiencia(index, 'atual', checked)}
                                 />
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={item.atual}
-                                    onChange={(e) => {
-                                      updateExperiencia(index, 'atual', e.target.checked);
-                                      if (e.target.checked) {
-                                        updateExperiencia(index, 'ano_fim', '');
-                                      }
-                                    }}
-                                    className="rounded"
-                                  />
-                                  <span className="text-sm">Trabalho atual</span>
-                                </label>
+                                <label htmlFor={`atual-${index}`} className="ml-2 text-xs cursor-pointer">{t('profile.current')}</label>
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
-                            <Textarea
-                              value={item.descricao}
-                              onChange={(e) => updateExperiencia(index, 'descricao', e.target.value)}
-                              placeholder="Descreva suas principais responsabilidades e conquistas..."
-                              rows={2}
-                            />
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Botões de Ação */}
-              <div className="flex justify-end space-x-4">
-                <Button 
-                  variant="outline" 
-                  onClick={handleCancel}
-                  disabled={saving}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar
-                </Button>
-                
-                <Button 
-                  variant="primary"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  <span>{saving ? 'Salvando...' : 'Salvar Perfil'}</span>
-                </Button>
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium text-gray-500">{t('profile.description')}</label>
+                          <Textarea
+                            value={item.descricao}
+                            onChange={(e) => updateExperiencia(index, 'descricao', e.target.value)}
+                            placeholder="Principais responsabilidades..."
+                            className="bg-white dark:bg-gray-900 min-h-[80px]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {editProfile.experiencias.length === 0 && (
+                      <div className="text-center py-6 text-gray-500 text-sm italic">
+                        Nenhuma experiência adicionada.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-3 pt-4 pb-12">
+                  <Button variant="outline" onClick={handleCancel} disabled={saving}>
+                    {t('profile.cancel')}
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700 text-white min-w-[120px]">
+                    {saving ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {t('profile.saving')}
+                      </div>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {t('profile.save')}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </TabsContent>

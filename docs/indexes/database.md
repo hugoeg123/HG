@@ -16,6 +16,7 @@ Local: `backend/src/migrations/`
 - `20250727191613-add-color-to-tags.js` — cor nas tags
 - `20251017093000-add-public-visibility-to-medicos.js` — visibilidade pública
 - `20251017121000-add-formacao-experiencias-to-medicos.js` — formação e experiências
+- `20251104090000-create-reviews.js` — avaliações de médicos (Reviews)
 
 ## Migrações (SQL externas)
 Local: `backend/migrations/`

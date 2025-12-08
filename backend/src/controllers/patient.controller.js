@@ -14,23 +14,23 @@ const { Sequelize } = require('sequelize');
 exports.getAllPatients = async (req, res) => {
   try {
     console.log('getAllPatients - User from request:', req.user);
-    
+
     // Opções de paginação
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    
+
     // Opções de ordenação
     const sortField = req.query.sortField || 'name';
     const sortOrder = req.query.sortOrder === 'desc' ? 'DESC' : 'ASC';
-    
+
     // Opções de filtro - incluir filtro por usuário
     const where = {};
-    
+
     if (req.user && req.user.id) {
       where.createdBy = req.user.id;
     }
-    
+
     if (req.query.search) {
       const { Op } = require('sequelize');
       where[Op.or] = [
@@ -39,36 +39,37 @@ exports.getAllPatients = async (req, res) => {
         { phone: { [Op.iLike]: `%${req.query.search}%` } }
       ];
     }
-    
+
     console.log('getAllPatients - Query where conditions:', where);
-    
+
     // Executar consulta simplificada - separar contagem total da busca de pacientes
     // Primeiro, obter contagem total
     const totalCount = await Patient.count({ where });
-    
-    // Depois, buscar pacientes sem GROUP BY para evitar subquery complexa
+
+    // Depois, buscar pacientes com subquery para contagem de registros
     const patients = await Patient.findAll({
       where,
+      attributes: {
+        include: [
+          [
+            Sequelize.literal(`(
+              SELECT COUNT(*)::int
+              FROM records AS record
+              WHERE record."patientId" = "Patient"."id"
+            )`),
+            'recordCount'
+          ]
+        ]
+      },
       order: [[sortField, sortOrder]],
       limit,
       offset
     });
-    
-    // Adicionar contagem de registros para cada paciente de forma separada
-    const patientsWithRecordCount = await Promise.all(
-      patients.map(async (patient) => {
-        const recordCount = await Record.count({
-          where: { patientId: patient.id }
-        });
-        return {
-          ...patient.toJSON(),
-          recordCount
-        };
-      })
-    );
-    
+
+    const patientsWithRecordCount = patients.map(p => p.toJSON());
+
     console.log('getAllPatients - Found patients count:', totalCount);
-    
+
     res.json({
       patients: patientsWithRecordCount,
       pagination: {
@@ -88,18 +89,18 @@ exports.getAllPatients = async (req, res) => {
 exports.getPatientById = async (req, res) => {
   try {
     const patient = await Patient.findByPk(req.params.id);
-    
+
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
-    
+
     // Verificar se o paciente pertence ao usuário autenticado
     if (req.user && req.user.id && patient.createdBy !== req.user.id) {
-      return res.status(403).json({ 
-        message: 'Acesso negado. Você não tem permissão para visualizar este paciente.' 
+      return res.status(403).json({
+        message: 'Acesso negado. Você não tem permissão para visualizar este paciente.'
       });
     }
-    
+
     res.json(patient);
   } catch (error) {
     console.error('Erro ao buscar paciente:', error);
@@ -115,7 +116,7 @@ exports.createPatient = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     if (!req.user || !req.user.id) {
       console.error('Erro ao criar paciente: Usuário não autenticado ou ID ausente.');
       return res.status(401).json({ message: 'Autenticação necessária para criar paciente.' });
@@ -125,7 +126,7 @@ exports.createPatient = async (req, res) => {
       ...req.body,
       createdBy: req.user.id
     });
-    
+
     res.status(201).json(patient);
   } catch (error) {
     console.error('Erro ao criar paciente:', error.message, error.stack);
@@ -141,24 +142,24 @@ exports.updatePatient = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     // Buscar paciente
     const patient = await Patient.findByPk(req.params.id);
-    
+
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
-    
+
     // Verificar se o paciente pertence ao usuário autenticado
     if (req.user && req.user.id && patient.createdBy !== req.user.id) {
-      return res.status(403).json({ 
-        message: 'Acesso negado. Você não tem permissão para modificar este paciente.' 
+      return res.status(403).json({
+        message: 'Acesso negado. Você não tem permissão para modificar este paciente.'
       });
     }
-    
+
     // Atualizar paciente
     await patient.update(req.body);
-    
+
     res.json(patient);
   } catch (error) {
     console.error('Erro ao atualizar paciente:', error);
@@ -170,20 +171,20 @@ exports.updatePatient = async (req, res) => {
 exports.deletePatient = async (req, res) => {
   try {
     const patient = await Patient.findByPk(req.params.id);
-    
+
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
-    
+
     // Verificar se o paciente pertence ao usuário autenticado
     if (req.user && req.user.id && patient.createdBy !== req.user.id) {
-      return res.status(403).json({ 
-        message: 'Acesso negado. Você não tem permissão para excluir este paciente.' 
+      return res.status(403).json({
+        message: 'Acesso negado. Você não tem permissão para excluir este paciente.'
       });
     }
-    
+
     await patient.destroy();
-    
+
     res.json({
       message: 'Paciente excluído com sucesso',
       patient
@@ -198,36 +199,36 @@ exports.deletePatient = async (req, res) => {
 exports.getPatientDashboard = async (req, res) => {
   try {
     const patientId = req.params.id;
-    
+
     // Verificar se o paciente existe
     const patient = await Patient.findByPk(patientId);
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
-    
+
     // Verificar se o paciente pertence ao usuário autenticado
     if (req.user && req.user.id && patient.createdBy !== req.user.id) {
-      return res.status(403).json({ 
-        message: 'Acesso negado. Você não tem permissão para acessar os dados deste paciente.' 
+      return res.status(403).json({
+        message: 'Acesso negado. Você não tem permissão para acessar os dados deste paciente.'
       });
     }
-    
+
     // Importar serviço do dashboard
     const patientDashboardService = require('../services/patientDashboard.service');
-    
+
     // Buscar dados consolidados do dashboard
     const dashboardData = await patientDashboardService.getPatientDashboardData(patientId);
-    
+
     res.json({
       patientId,
       patientName: patient.name,
       lastUpdated: new Date().toISOString(),
       ...dashboardData
     });
-    
+
   } catch (error) {
     console.error('Erro ao buscar dashboard do paciente:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Erro ao buscar dados do dashboard',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });

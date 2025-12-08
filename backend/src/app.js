@@ -17,6 +17,7 @@ require('dotenv').config();
 // Importar rotas e middlewares
 const apiRoutes = require('./routes');
 const { sequelize } = require('./models/sequelize');
+const logger = require('./utils/logger');
 
 // Criar aplicação Express
 const app = express();
@@ -70,7 +71,7 @@ const corsOptions = {
     } else if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
+      logger.warn(`CORS blocked origin: ${origin}`);
       callback(new Error('Não permitido pelo CORS'));
     }
   },
@@ -133,14 +134,14 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 
 // Parsing de JSON e URL-encoded
-app.use(express.json({ 
+app.use(express.json({
   limit: '10mb',
   strict: true
 }));
 
-app.use(express.urlencoded({ 
-  extended: true, 
-  limit: '10mb' 
+app.use(express.urlencoded({
+  extended: true,
+  limit: '10mb'
 }));
 
 // Servir arquivos estáticos da pasta uploads
@@ -164,18 +165,18 @@ if (process.env.NODE_ENV === 'development' && DEBUG_HTTP) {
 
     // Log detalhado para requisições CORS e OPTIONS (condicional)
     if (DEBUG_CORS && (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/'))) {
-      console.log(`[CORS-DEBUG] ${req.method} ${req.originalUrl}`);
-      console.log(`[CORS-DEBUG] Origin: ${req.headers.origin}`);
-      console.log(`[CORS-DEBUG] Headers: ${JSON.stringify(req.headers)}`);
+      logger.debug(`[CORS-DEBUG] ${req.method} ${req.originalUrl}`);
+      logger.debug(`[CORS-DEBUG] Origin: ${req.headers.origin}`);
+      logger.debug(`[CORS-DEBUG] Headers: ${JSON.stringify(req.headers)}`);
     }
 
     res.on('finish', () => {
       const duration = Date.now() - start;
-      console.log(`${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+      logger.http(`${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
 
       // Log adicional para respostas CORS (condicional)
       if (DEBUG_CORS && (req.method === 'OPTIONS' || req.originalUrl.includes('/auth/'))) {
-        console.log(`[CORS-DEBUG] Response Headers: ${JSON.stringify(res.getHeaders())}`);
+        logger.debug(`[CORS-DEBUG] Response Headers: ${JSON.stringify(res.getHeaders())}`);
       }
     });
     next();
@@ -208,8 +209,8 @@ app.use('*', (req, res) => {
 
 // Middleware global de tratamento de erros
 app.use((error, req, res, next) => {
-  console.error('Erro não tratado:', error);
-  
+  logger.error('Erro não tratado:', error);
+
   // Erro de CORS
   if (error.message === 'Não permitido pelo CORS') {
     return res.status(403).json({
@@ -217,7 +218,7 @@ app.use((error, req, res, next) => {
       code: 'CORS_ERROR'
     });
   }
-  
+
   // Erro de payload muito grande
   if (error.type === 'entity.too.large') {
     return res.status(413).json({
@@ -226,7 +227,7 @@ app.use((error, req, res, next) => {
       limit: '10MB'
     });
   }
-  
+
   // Erro de JSON malformado
   if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
     return res.status(400).json({
@@ -235,7 +236,7 @@ app.use((error, req, res, next) => {
       details: 'Verifique a sintaxe do JSON enviado'
     });
   }
-  
+
   // Erro genérico
   res.status(500).json({
     error: 'Erro interno do servidor',
@@ -253,19 +254,19 @@ const startServer = async () => {
   try {
     // Testar conexão com banco de dados
     await sequelize.authenticate();
-    console.log('✅ Conexão com PostgreSQL estabelecida');
-    
+    logger.info('✅ Conexão com PostgreSQL estabelecida');
+
     // Sincronizar modelos (apenas em desenvolvimento)
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: false });
-      console.log('✅ Modelos sincronizados com o banco');
+      logger.info('✅ Modelos sincronizados com o banco');
     }
-    
+
     const PORT = process.env.PORT || 5001;
-    
+
     // Criar servidor HTTP
     const server = createServer(app);
-    
+
     // Configurar Socket.io
     const io = new Server(server, {
       cors: {
@@ -290,57 +291,60 @@ const startServer = async () => {
         credentials: true
       }
     });
-    
+
     // Configurar serviços do Socket.io
     const socketService = require('./services/socket.service')(io);
-    
+    // Expor serviço via registro para uso em controladores
+    // Connector: controllers podem obter sendToUser/broadcast sem importar io
+    const { setSocketService } = require('./services/socket.registry');
+    setSocketService(socketService);
+
     server.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API: http://localhost:${PORT}/api`);
-      console.log(`❤️  Health: http://localhost:${PORT}/api/health`);
-      console.log(`🔌 Socket.io configurado e ativo`);
-      // Log de reinício removido para evitar duplicidade de logs com nodemon
+      logger.info(`🚀 Servidor rodando na porta ${PORT}`);
+      logger.info(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`🔗 API: http://localhost:${PORT}/api`);
+      logger.info(`❤️  Health: http://localhost:${PORT}/api/health`);
+      logger.info(`🔌 Socket.io configurado e ativo`);
     });
-    
+
     // Graceful shutdown
     const gracefulShutdown = async (signal) => {
-      console.log(`\n🛑 Recebido sinal ${signal}. Iniciando shutdown graceful...`);
-      
+      logger.info(`\n🛑 Recebido sinal ${signal}. Iniciando shutdown graceful...`);
+
       server.close(async () => {
-        console.log('🔌 Servidor HTTP fechado');
-        
+        logger.info('🔌 Servidor HTTP fechado');
+
         try {
           await sequelize.close();
-          console.log('🔌 Conexão com banco fechada');
+          logger.info('🔌 Conexão com banco fechada');
           process.exit(0);
         } catch (error) {
-          console.error('❌ Erro ao fechar conexão com banco:', error);
+          logger.error('❌ Erro ao fechar conexão com banco:', error);
           process.exit(1);
         }
       });
-      
+
       // Forçar shutdown após 10 segundos
       setTimeout(() => {
-        console.log('⏰ Forçando shutdown após timeout');
+        logger.error('⏰ Forçando shutdown após timeout');
         process.exit(1);
       }, 10000);
     };
-    
+
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    
+
   } catch (error) {
-    console.error('❌ Erro ao inicializar servidor:', error);
-    console.error('⚠️ Iniciando servidor sem banco de dados (modo degradado).');
+    logger.error('❌ Erro ao inicializar servidor:', error);
+    logger.warn('⚠️ Iniciando servidor sem banco de dados (modo degradado).');
 
     const PORT = process.env.PORT || 5001;
     const server = createServer(app);
 
     server.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT} (DB offline)`);
-      console.log(`🔗 API: http://localhost:${PORT}/api`);
-      console.log(`❤️  Health: http://localhost:${PORT}/api/health`);
+      logger.info(`🚀 Servidor rodando na porta ${PORT} (DB offline)`);
+      logger.info(`🔗 API: http://localhost:${PORT}/api`);
+      logger.info(`❤️  Health: http://localhost:${PORT}/api/health`);
     });
   }
 };

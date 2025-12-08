@@ -23,7 +23,7 @@ const generateToken = (medico, role = 'medico') => {
       role: role,
       roles: [role],
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'dev_secret_123',
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
   );
 };
@@ -38,7 +38,7 @@ const generatePatientToken = (patient) => {
       role: 'patient',
       roles: ['patient']
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'dev_secret_123',
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
   );
 };
@@ -103,7 +103,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substr(2, 9);
-  
+
   try {
     console.log(`[LOGIN-${requestId}] Iniciando tentativa de login`, {
       email: req.body?.email,
@@ -129,12 +129,12 @@ exports.login = async (req, res) => {
     // Buscar médico
     console.log(`[LOGIN-${requestId}] Buscando médico no banco de dados...`);
     const medico = await Medico.findOne({ where: { email } });
-    
+
     if (!medico) {
       console.log(`[LOGIN-${requestId}] Médico não encontrado para email:`, email);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
-    
+
     console.log(`[LOGIN-${requestId}] Médico encontrado:`, {
       id: medico.id,
       nome: medico.nome,
@@ -145,18 +145,18 @@ exports.login = async (req, res) => {
     // Verificar senha
     console.log(`[LOGIN-${requestId}] Verificando senha...`);
     const isMatch = await bcrypt.compare(password, medico.senha_hash);
-    
+
     if (!isMatch) {
       console.log(`[LOGIN-${requestId}] Senha incorreta para médico:`, medico.id);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
-    
+
     console.log(`[LOGIN-${requestId}] Senha verificada com sucesso`);
 
     // Gerar token
     console.log(`[LOGIN-${requestId}] Gerando token JWT...`);
     const token = generateToken(medico);
-    
+
     const loginDuration = Date.now() - startTime;
     console.log(`[LOGIN-${requestId}] Login realizado com sucesso em ${loginDuration}ms`, {
       medicoId: medico.id,
@@ -185,10 +185,10 @@ exports.login = async (req, res) => {
       sqlState: error.parent?.sqlState,
       sqlMessage: error.parent?.sqlMessage
     });
-    
+
     // Garantir que sempre retornamos uma resposta JSON válida
     if (!res.headersSent) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Erro interno do servidor durante o login',
         requestId: requestId,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -200,8 +200,8 @@ exports.login = async (req, res) => {
 // Obter médico atual
 exports.getCurrentUser = async (req, res) => {
   try {
-    const medico = await Medico.findByPk(req.user.sub, { 
-      attributes: { exclude: ['senha_hash'] } 
+    const medico = await Medico.findByPk(req.user.sub, {
+      attributes: { exclude: ['senha_hash'] }
     });
     if (!medico) {
       return res.status(404).json({ message: 'Médico não encontrado' });
@@ -234,8 +234,8 @@ exports.getCurrentUser = async (req, res) => {
 // Obter perfil completo do médico (endpoint específico para perfil)
 exports.getProfile = async (req, res) => {
   try {
-    const medico = await Medico.findByPk(req.user.sub, { 
-      attributes: { exclude: ['senha_hash'] } 
+    const medico = await Medico.findByPk(req.user.sub, {
+      attributes: { exclude: ['senha_hash'] }
     });
     if (!medico) {
       return res.status(404).json({ message: 'Médico não encontrado' });
@@ -271,7 +271,7 @@ exports.updateProfile = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const errorArray = errors.array();
-      
+
       // Log estruturado para debug
       console.error('❌ Validação falhou:', {
         endpoint: 'PUT /auth/profile',
@@ -281,26 +281,26 @@ exports.updateProfile = async (req, res) => {
         firstError: errorArray[0]?.msg || null,
         fieldsWithErrors: errorArray.map(err => err.path)
       });
-      
-      return res.status(400).json({ 
+
+      return res.status(400).json({
         message: 'Erro de validação nos dados do perfil',
-        errors: errorArray 
+        errors: errorArray
       });
     }
 
-    const { 
-      nome, 
-      email, 
-      titulo_profissional, 
-      biografia, 
-      specialty, 
-      avatar_url, 
-      curriculo_url, 
+    const {
+      nome,
+      email,
+      titulo_profissional,
+      biografia,
+      specialty,
+      avatar_url,
+      curriculo_url,
       public_visibility,
       formacao,
       experiencias
     } = req.body;
-    
+
     const updateData = {};
 
     // Campos básicos
@@ -313,7 +313,7 @@ exports.updateProfile = async (req, res) => {
     if (public_visibility !== undefined) updateData.public_visibility = !!public_visibility;
     if (Array.isArray(formacao)) updateData.formacao = formacao;
     if (Array.isArray(experiencias)) updateData.experiencias = experiencias;
-    
+
     // Verificar email duplicado
     if (email) {
       const existingMedico = await Medico.findOne({
@@ -336,8 +336,8 @@ exports.updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'Médico não encontrado' });
     }
 
-    const medico = await Medico.findByPk(req.user.sub, { 
-      attributes: { exclude: ['senha_hash'] } 
+    const medico = await Medico.findByPk(req.user.sub, {
+      attributes: { exclude: ['senha_hash'] }
     });
 
     // Log de sucesso para rastreabilidade

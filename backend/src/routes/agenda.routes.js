@@ -85,6 +85,17 @@ router.get(
   agendaController.getAppointments
 );
 
+// GET /api/agenda/my-appointments - Listar agendamentos do paciente autenticado
+router.get(
+  '/my-appointments',
+  [
+    query('status').optional().isIn(['booked', 'cancelled', 'completed', 'no_show']).withMessage('Status inválido'),
+    query('start').optional().isISO8601().withMessage('start deve ser ISO8601'),
+    query('end').optional().isISO8601().withMessage('end deve ser ISO8601')
+  ],
+  agendaController.getMyAppointments
+);
+
 // POST /api/agenda/appointments - Criar agendamento
 router.post(
   '/appointments',

@@ -1,9 +1,10 @@
 import React from 'react';
 import { usePatientStore } from '../../store/patientStore';
 import { normalizeTags, formatTagForDisplay } from '../../utils/tagUtils';
+import { MessageSquare } from 'lucide-react';
 
 const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
-  const { currentPatient, fetchRecordById, loading } = usePatientStore();
+  const { currentPatient, fetchRecordById, loading, setChatContext } = usePatientStore();
 
   // Filtra os registros pelo tipo com validação
   const filteredRecords = React.useMemo(() => {
@@ -26,6 +27,16 @@ const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
     if (onRecordSelect) {
       onRecordSelect(recordId);
     }
+  };
+
+  const handleAddToChat = (e, record) => {
+    e.stopPropagation();
+    setChatContext({
+      type: 'record',
+      id: record.id,
+      title: record.title || record.type || 'Registro',
+      content: record.content || ''
+    });
   };
 
   // Formata a data para exibição com validação
@@ -80,14 +91,23 @@ const RecordsList = ({ patientId, recordType, onRecordSelect }) => {
             <div
               key={recordId}
               onClick={() => handleRecordClick(recordId)}
-              className="bg-theme-card p-2 rounded cursor-pointer hover:bg-theme-card/80 transition-colors"
+              className="bg-theme-card p-2 rounded cursor-pointer hover:bg-theme-card/80 transition-colors group"
             >
               <div className="flex justify-between items-center">
-                <div className="text-sm font-medium text-gray-200 truncate">
+                <div className="text-sm font-medium text-gray-200 truncate flex-1">
                   {recordTitle}
                 </div>
-                <div className="text-xs text-gray-400">
-                  {formatDate(recordCreatedAt)}
+                <div className="flex items-center gap-2">
+                   <div className="text-xs text-gray-400">
+                     {formatDate(recordCreatedAt)}
+                   </div>
+                   <button
+                     onClick={(e) => handleAddToChat(e, record)}
+                     className="p-1 text-teal-400 hover:text-teal-300 hover:bg-teal-900/20 rounded transition-colors opacity-0 group-hover:opacity-100"
+                     title="Anexar ao Chat"
+                   >
+                     <MessageSquare size={14} />
+                   </button>
                 </div>
               </div>
               {recordTags.length > 0 && (

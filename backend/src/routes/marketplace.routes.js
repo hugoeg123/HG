@@ -11,10 +11,13 @@
  */
 
 const express = require('express');
-const { query, param } = require('express-validator');
+const { query, param, body } = require('express-validator');
 const router = express.Router();
 
 const marketplaceController = require('../controllers/marketplace.controller');
+const reviewController = require('../controllers/review.controller');
+const { authMiddleware } = require('../middleware/auth');
+const { authorize } = require('../middleware/authorize');
 
 // GET /api/marketplace/medicos - Listar médicos públicos com filtros
 router.get(
@@ -46,6 +49,27 @@ router.get(
     query('modality').optional().isIn(['presencial', 'telemedicina', 'domiciliar']).withMessage('Modalidade inválida')
   ],
   marketplaceController.listAvailableSlots
+);
+
+// GET /api/marketplace/medicos/:id/reviews - Listar avaliações públicas do médico
+router.get(
+  '/medicos/:id/reviews',
+  [param('id').isUUID().withMessage('ID deve ser UUID válido')],
+  reviewController.listPublicReviews
+);
+
+// POST /api/marketplace/medicos/:id/reviews - Criar avaliação (paciente autenticado)
+router.post(
+  '/medicos/:id/reviews',
+  [
+    authMiddleware,
+    authorize(['patient']),
+    param('id').isUUID().withMessage('ID deve ser UUID válido'),
+    body('rating').isInt({ min: 1, max: 5 }).withMessage('rating deve ser 1-5'),
+    body('comment').optional().isString().isLength({ max: 1000 }).withMessage('comentário muito longo'),
+    body('is_public').optional().isBoolean()
+  ],
+  reviewController.createReview
 );
 
 module.exports = router;

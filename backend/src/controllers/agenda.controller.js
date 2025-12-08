@@ -255,7 +255,61 @@ exports.getAppointments = async (req, res) => {
   }
 };
 
+// Listar agendamentos do paciente autenticado
+// Connector: Usado pelo frontend AgendaSummary (paciente) via /agenda/my-appointments
+exports.getMyAppointments = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Autenticação necessária.' });
+    }
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({ message: 'Acesso restrito a pacientes.' });
+    }
+
+    const where = { patient_id: req.user.id };
+    const { status, start, end } = req.query;
+    if (status) where.status = status;
+
+    // Filtrar por intervalo via slot
+    const slotWhere = {};
+    if (start || end) {
+      const startDate = start ? new Date(start) : null;
+      const endDate = end ? new Date(end) : null;
+      if (startDate && endDate) {
+        slotWhere[Op.and] = [
+          { start_time: { [Op.lt]: endDate } },
+          { end_time: { [Op.gt]: startDate } }
+        ];
+      } else if (startDate) {
+        slotWhere.end_time = { [Op.gt]: startDate };
+      } else if (endDate) {
+        slotWhere.start_time = { [Op.lt]: endDate };
+      }
+    }
+
+    const appointments = await Appointment.findAll({
+      where,
+      include: [
+        { 
+          model: AvailabilitySlot, 
+          as: 'slot', 
+          where: slotWhere, 
+          include: [{ model: Medico, as: 'medico', attributes: ['id', 'nome'] }] 
+        },
+        { model: Patient, as: 'patient', attributes: ['id', 'name'] }
+      ],
+      order: [[{ model: AvailabilitySlot, as: 'slot' }, 'start_time', 'ASC']]
+    });
+
+    res.json({ data: appointments });
+  } catch (error) {
+    console.error('Erro ao listar meus agendamentos:', error);
+    res.status(500).json({ message: 'Erro ao listar meus agendamentos' });
+  }
+};
+
 // Criar agendamento
+// Hook: Ao criar, notifica médico via socket.service (socket.registry)
 exports.createAppointment = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -269,7 +323,19 @@ exports.createAppointment = async (req, res) => {
     const { slot_id, patient_id, notes } = req.body;
     const slot = await AvailabilitySlot.findByPk(slot_id, { include: [{ model: Appointment, as: 'appointments' }] });
     if (!slot) return res.status(404).json({ message: 'Slot não encontrado' });
-    if (slot.medico_id !== req.user.id) return res.status(403).json({ message: 'Acesso negado ao slot.' });
+    // Autorização: médico só pode criar para seus slots; paciente pode agendar se for o próprio paciente
+    if (req.user.role === 'medico') {
+      if (slot.medico_id !== req.user.id) {
+        return res.status(403).json({ message: 'Acesso negado ao slot.' });
+      }
+    } else if (req.user.role === 'patient') {
+      if (patient_id !== req.user.id) {
+        return res.status(403).json({ message: 'Paciente autenticado deve corresponder ao patient_id.' });
+      }
+      // Para paciente, permitir agendamento em slots de qualquer médico, desde que disponível
+    } else {
+      return res.status(403).json({ message: 'Perfil de usuário não autorizado para agendar.' });
+    }
 
     if (slot.status !== 'available') {
       return res.status(400).json({ message: 'Slot não está disponível para agendamento.' });
@@ -278,14 +344,63 @@ exports.createAppointment = async (req, res) => {
     const patient = await Patient.findByPk(patient_id);
     if (!patient) return res.status(404).json({ message: 'Paciente não encontrado' });
 
-    const appointment = await Appointment.create({
-      slot_id,
-      patient_id,
-      status: 'booked',
-      notes: notes || null
-    });
+    // Define booking origin based on user role
+    const origin = (req.user.role === 'patient')
+      ? 'patient_marketplace'
+      : (req.user.role === 'medico' ? 'doctor_manual' : 'system');
+
+    // Criação de agendamento com origem; fallback defensivo se coluna não existir
+    let appointment;
+    try {
+      appointment = await Appointment.create({
+        slot_id,
+        patient_id,
+        status: 'booked',
+        notes: notes || null,
+        origin
+      });
+    } catch (dbErr) {
+      // Fallback: se o erro indicar coluna ausente (migração não aplicada), criar sem 'origin'
+      const msg = String(dbErr?.message || '').toLowerCase();
+      const isUndefinedColumn = msg.includes('column') && msg.includes('origin') && msg.includes('does not exist');
+      const isPgUndefinedColumnCode = dbErr?.parent?.code === '42703';
+      if (isUndefinedColumn || isPgUndefinedColumnCode) {
+        console.warn('[appointments.origin missing] Criando agendamento sem coluna origin. Execute migrations.', {
+          code: dbErr?.parent?.code,
+          detail: dbErr?.parent?.detail || dbErr?.message
+        });
+        appointment = await Appointment.create({
+          slot_id,
+          patient_id,
+          status: 'booked',
+          notes: notes || null
+        });
+      } else {
+        throw dbErr;
+      }
+    }
 
     await slot.update({ status: 'booked' });
+    
+    // Notificar médico do slot via Socket.io (se disponível)
+    try {
+      const { getSocketService } = require('../services/socket.registry');
+      const socketService = getSocketService && getSocketService();
+      if (socketService && slot.medico_id) {
+        socketService.sendToUser(slot.medico_id, 'notification', {
+          type: 'appointment:new',
+          appointmentId: appointment.id,
+          slotId: slot.id,
+          patientId: patient.id,
+          patientName: patient.name,
+          slot: { start_time: slot.start_time, end_time: slot.end_time },
+          message: `Novo agendamento criado pelo paciente ${patient.name || patient.id}.`,
+          createdAt: new Date().toISOString()
+        });
+      }
+    } catch (notifyErr) {
+      console.warn('Falha ao enviar notificação de agendamento:', notifyErr?.message);
+    }
 
     res.status(201).json(appointment);
   } catch (error) {
@@ -295,6 +410,7 @@ exports.createAppointment = async (req, res) => {
 };
 
 // Atualizar agendamento
+// Hook: Ao cancelar um agendamento de origem marketplace, notifica o paciente via socket.service
 exports.updateAppointment = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -306,7 +422,10 @@ exports.updateAppointment = async (req, res) => {
     }
 
     const id = req.params.id;
-    const appointment = await Appointment.findByPk(id, { include: [{ model: AvailabilitySlot, as: 'slot' }] });
+    const appointment = await Appointment.findByPk(id, { include: [
+      { model: AvailabilitySlot, as: 'slot' },
+      { model: Patient, as: 'patient', attributes: ['id', 'name'] }
+    ] });
     if (!appointment) return res.status(404).json({ message: 'Agendamento não encontrado' });
     if (appointment.slot.medico_id !== req.user.id) return res.status(403).json({ message: 'Acesso negado ao agendamento.' });
 
@@ -329,6 +448,27 @@ exports.updateAppointment = async (req, res) => {
       const count = await Appointment.count({ where: { slot_id: appointment.slot_id, status: 'booked' } });
       if (count === 0) {
         await appointment.slot.update({ status: 'available' });
+      }
+
+      // Notificar paciente se for cancelamento de origem marketplace
+      try {
+        const origin = appointment?.origin || null;
+        if (origin === 'patient_marketplace' && appointment?.patient_id) {
+          const { getSocketService } = require('../services/socket.registry');
+          const socketService = getSocketService && getSocketService();
+          if (socketService) {
+            socketService.sendToUser(appointment.patient_id, 'notification', {
+              type: 'appointment:cancelled_by_doctor',
+              appointmentId: appointment.id,
+              slotId: appointment.slot_id,
+              slot: { start_time: appointment.slot?.start_time, end_time: appointment.slot?.end_time },
+              message: `Sua consulta foi cancelada pelo médico.`,
+              createdAt: new Date().toISOString()
+            });
+          }
+        }
+      } catch (notifyErr) {
+        console.warn('Falha ao notificar paciente sobre cancelamento:', notifyErr?.message);
       }
     }
 

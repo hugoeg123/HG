@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from './ui/button';
-import { useTimeSlotStore } from '@/stores/timeSlotStore.js';
-import { useThemeStore } from '@/store/themeStore.js';
+import { Button } from '@/components/ui/button';
+import { useTimeSlotStore } from '../store/timeSlotStore';
+import { useThemeStore } from '../store/themeStore';
 
 const TimeGridHeader = () => {
   const {
@@ -27,8 +27,8 @@ const TimeGridHeader = () => {
         key={date.toISOString()}
         onClick={() => setSelectedWeek(date)}
         className={`flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-all border border-transparent hover:border-theme-border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-ring_outline focus:ring-offset-theme-background
-          ${isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'}
-        `}
+            ${isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'}
+          `}
         aria-pressed={isSelected}
       >
         {date.toLocaleDateString('pt-BR', {
