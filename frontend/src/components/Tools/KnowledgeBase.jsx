@@ -53,9 +53,8 @@ const KnowledgeBase = () => {
     wikiResults,
     notes,
     isLoading,
-    searchKnowledge,
     addNote
-  } = useKnowledgeSearch();
+  } = useKnowledgeSearch(searchQuery);
 
   useEffect(() => {
     console.log('KnowledgeBase mounted - Full Integration');
@@ -63,7 +62,6 @@ const KnowledgeBase = () => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      searchKnowledge(searchQuery);
       setExpandedItems(new Set());
     }
   };
@@ -73,6 +71,12 @@ const KnowledgeBase = () => {
       handleSearch();
     }
   };
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      console.log('KnowledgeBase query changed:', searchQuery);
+    }
+  }, [searchQuery]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();

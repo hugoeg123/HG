@@ -17,13 +17,15 @@ const KnowledgeSidebar: React.FC = () => {
         wikiResults,
         notes,
         isLoading,
-        searchKnowledge,
         addNote
-    } = useKnowledgeSearch();
+    } = useKnowledgeSearch(query);
+
+    // Debugging data flow as requested
+    console.log('Knowledge Search Diagnostics:', { diagnosticResults, interactionResults });
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        searchKnowledge(query);
+        // Search is now reactive via the hook's useEffect
     };
 
     const handleAddNote = async (e: React.FormEvent) => {
