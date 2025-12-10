@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 /**
  * Custom hook for managing AbortController to cancel pending requests
@@ -19,7 +19,7 @@ import { useEffect, useRef } from 'react';
 export const useAbortController = () => {
   const abortControllerRef = useRef(null);
 
-  const createAbortSignal = () => {
+  const createAbortSignal = useCallback(() => {
     // Cancel previous request if it exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -28,14 +28,14 @@ export const useAbortController = () => {
     // Create new AbortController
     abortControllerRef.current = new AbortController();
     return abortControllerRef.current.signal;
-  };
+  }, []);
 
-  const abortPendingRequests = () => {
+  const abortPendingRequests = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-  };
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -69,7 +69,7 @@ export const useAbortController = () => {
 export const useMultipleAbortControllers = () => {
   const controllersRef = useRef(new Map());
 
-  const createSignal = (key) => {
+  const createSignal = useCallback((key) => {
     // Cancel previous request with same key
     if (controllersRef.current.has(key)) {
       console.debug(`Canceling previous request for key: ${key}`);
@@ -81,22 +81,22 @@ export const useMultipleAbortControllers = () => {
     controllersRef.current.set(key, controller);
     
     return controller.signal;
-  };
+  }, []);
 
-  const abortRequest = (key) => {
+  const abortRequest = useCallback((key) => {
     const controller = controllersRef.current.get(key);
     if (controller) {
       controller.abort();
       controllersRef.current.delete(key);
     }
-  };
+  }, []);
 
-  const abortAll = () => {
+  const abortAll = useCallback(() => {
     controllersRef.current.forEach((controller) => {
       controller.abort();
     });
     controllersRef.current.clear();
-  };
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {

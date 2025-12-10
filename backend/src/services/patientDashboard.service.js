@@ -60,7 +60,13 @@ async function getPatientDashboardData(patientId) {
       medicamentosEmUso: [],
       investigacoesEmAndamento: [],
       resultadosRecentes: [],
-      historicoConsultas: []
+      historicoConsultas: [],
+      sinaisVitais: {
+        pressao: { valor: '--', status: 'neutral', timestamp: '--' },
+        temperatura: { valor: '--', status: 'neutral', timestamp: '--' },
+        saturacao: { valor: '--', status: 'neutral', timestamp: '--' },
+        frequencia: { valor: '--', status: 'neutral', timestamp: '--' }
+      }
     };
 
     // Processar cada registro
@@ -205,13 +211,34 @@ async function extractDashboardInfo(sections, tagMap, record, dashboardData) {
 
       case '#PA': // Pressão Arterial
         if (section.parsed_value && section.parsed_value.sistolica) {
+          const valor = `${section.parsed_value.sistolica}/${section.parsed_value.diastolica}`;
+          updateVitalSign(dashboardData, 'pressao', valor, record.date);
+          
           dashboardData.resultadosRecentes.push({
             ...info,
             exame: 'Pressão Arterial',
-            resultado: `${section.parsed_value.sistolica}/${section.parsed_value.diastolica} mmHg`,
+            resultado: `${valor} mmHg`,
             tipo: 'sinal_vital'
           });
         }
+        break;
+
+      case '#TEMP':
+      case '#TEMPERATURA':
+        updateVitalSign(dashboardData, 'temperatura', section.valor_raw + '°C', record.date);
+        break;
+
+      case '#FC':
+      case '#FREQ_CARDIACA':
+      case '#PULSO':
+        updateVitalSign(dashboardData, 'frequencia', section.valor_raw + ' bpm', record.date);
+        break;
+
+      case '#SPO2':
+      case '#SAT':
+      case '#SATURACAO':
+      case '#O2':
+        updateVitalSign(dashboardData, 'saturacao', section.valor_raw + '%', record.date);
         break;
 
       default:
@@ -280,6 +307,23 @@ function getConsultaType(codigo) {
     '#PLANO': 'plano_terapeutico'
   };
   return mapping[codigo] || 'outros';
+}
+
+/**
+ * Atualiza um sinal vital no dashboard se ainda não tiver valor
+ * @param {Object} dashboardData - Dados do dashboard
+ * @param {string} key - Chave do sinal vital (pressao, temperatura, saturacao, frequencia)
+ * @param {string} value - Valor formatado
+ * @param {Date|string} timestamp - Data do registro
+ */
+function updateVitalSign(dashboardData, key, value, timestamp) {
+  if (dashboardData.sinaisVitais && dashboardData.sinaisVitais[key] && dashboardData.sinaisVitais[key].valor === '--') {
+    dashboardData.sinaisVitais[key] = {
+      valor: value,
+      status: 'success', // Pode implementar lógica de alerta aqui depois
+      timestamp: timestamp ? new Date(timestamp).toLocaleDateString('pt-BR') : 'Hoje'
+    };
+  }
 }
 
 /**

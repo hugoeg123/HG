@@ -1,4 +1,5 @@
 import mitt from 'mitt';
+import { useEffect, useCallback } from 'react';
 
 /**
  * Event Bus for Tag System
@@ -153,10 +154,7 @@ export const eventManager = new EventManager();
  * Hook: Provides React-friendly event handling
  */
 export const useEventListener = (eventType, handler, deps = [], componentName = null) => {
-  const { useEffect, useCallback } = require('react');
-  
   const memoizedHandler = useCallback(handler, deps);
-  
   useEffect(() => {
     const cleanup = eventManager.on(eventType, memoizedHandler, componentName);
     return cleanup;

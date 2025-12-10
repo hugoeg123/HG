@@ -40,7 +40,8 @@ function parseSections(rawText, tags) {
 
   // Regex para capturar tags e seu conteúdo
   // Captura: #TAG: conteúdo até próxima tag ou fim
-  const tagRegex = /^(#\w+|>>\w+):\s*([\s\S]*?)(?=^(?:#\w+|>>\w+):|$)/gm;
+  // Permite espaços no início da linha
+  const tagRegex = /^\s*(#\w+|>>\w+):\s*([\s\S]*?)(?=^\s*(?:#\w+|>>\w+):|$)/gm;
   const matches = Array.from(rawText.matchAll(tagRegex));
 
   if (matches.length === 0) {
@@ -51,8 +52,14 @@ function parseSections(rawText, tags) {
     const codigo = match[1];
     const valorRaw = match[2].trim();
 
+    // Normalizar código da tag (converter >> para # para busca)
+    // Permite usar >>PA como alias para #PA
+    const searchCode = codigo.startsWith('>>') ? codigo.replace('>>', '#') : codigo;
+
     // Encontrar a tag correspondente
-    const tag = tags.find(t => t.codigo === codigo);
+    // Tenta encontrar pelo código normalizado (#) ou pelo original (caso o banco tenha >>)
+    const tag = tags.find(t => t.codigo === searchCode || t.codigo === codigo);
+
     if (!tag) {
       throw new Error(`Tag inválida: ${codigo}`);
     }

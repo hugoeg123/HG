@@ -47,14 +47,25 @@ const TagToolbar = ({
   const defaultCategoriesConfig = {
     'Anamnese': { icon: <BookText size={16} />, order: 1 },
     'Exame Físico': { icon: <Stethoscope size={16} />, order: 2 },
-    'Investigação': { icon: <FlaskConical size={16} />, order: 3 },
-    'Diagnóstico': { icon: <ClipboardList size={16} />, order: 4 },
-    'Plano': { icon: <Pill size={16} />, order: 5 },
+    'Sinais Vitais': { icon: <Activity size={16} />, order: 3 }, // Added Vital Signs category
+    'Investigação': { icon: <FlaskConical size={16} />, order: 4 },
+    'Diagnóstico': { icon: <ClipboardList size={16} />, order: 5 },
+    'Plano': { icon: <Pill size={16} />, order: 6 },
   };
 
   const categories = Object.keys(categoriesConfig).length > 0 
     ? categoriesConfig 
     : defaultCategoriesConfig;
+
+  // Ensure 'Sinais Vitais' tags are present if not provided in availableTags
+  // This is a UI enhancement to ensure quick access even if backend tags are missing
+  const vitalSignTags = [
+    { code: '#PA', name: 'Pressão Arterial', category: 'Sinais Vitais' },
+    { code: '#FC', name: 'Frequência Cardíaca', category: 'Sinais Vitais' },
+    { code: '#FR', name: 'Frequência Respiratória', category: 'Sinais Vitais' },
+    { code: '#Temp', name: 'Temperatura', category: 'Sinais Vitais' },
+    { code: '#SpO2', name: 'Saturação de O2', category: 'Sinais Vitais' }
+  ];
 
   // Group tags by category
   const groupedTags = useMemo(() => {
@@ -62,12 +73,32 @@ const TagToolbar = ({
       Object.keys(categories).map(cat => [cat, { main: [], subs: {} }])
     );
     
-    if (Array.isArray(availableTags)) {
-      availableTags.forEach(tag => {
+    // Merge availableTags with vitalSignTags for display
+    // Filter out duplicates if availableTags already has them
+    const allTags = [...availableTags];
+    vitalSignTags.forEach(vt => {
+        if (!allTags.some(t => t.code === vt.code || t.codigo === vt.code)) {
+            allTags.push(vt);
+        }
+    });
+
+    if (Array.isArray(allTags)) {
+      allTags.forEach(tag => {
         if (!tag) return;
         const category = tag.category || tag.categoria || 'Anamnese';
+        
+        // Handle case where category might not exist in config
         if (!grouped[category]) {
-          grouped[category] = { main: [], subs: {} };
+          // If 'Sinais Vitais' or others are missing from config but present in tags, add them
+          if (category === 'Sinais Vitais' && !grouped['Sinais Vitais']) {
+             grouped['Sinais Vitais'] = { main: [], subs: {} };
+             // Note: Won't show up in UI map unless added to categories keys, handled below
+          } else {
+             // Fallback to Anamnese or create ad-hoc? Fallback for now
+             if (!grouped['Anamnese']) grouped['Anamnese'] = { main: [], subs: {} };
+             grouped['Anamnese'].main.push(tag);
+             return;
+          }
         }
         
         if (tag.parentId) {
@@ -83,6 +114,11 @@ const TagToolbar = ({
     
     return grouped;
   }, [availableTags, categories]);
+
+  // Update categories list to include Sinais Vitais if it has tags but not in config
+  // (Though we added it to defaultCategoriesConfig, custom config might override it)
+  
+  // Handle category toggle
 
   // Handle category toggle
   const toggleCategory = (category) => {

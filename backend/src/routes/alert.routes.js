@@ -21,8 +21,8 @@ const createAlertValidation = [
     .isLength({ min: 1, max: 500 })
     .withMessage('Mensagem deve ter entre 1 e 500 caracteres'),
   body('severity')
-    .isIn(['low', 'medium', 'high', 'critical'])
-    .withMessage('Severidade deve ser: low, medium, high ou critical'),
+    .isIn(['info', 'warning', 'critical'])
+    .withMessage('Severidade deve ser: info, warning ou critical'),
   body('record_id')
     .optional()
     .isUUID()

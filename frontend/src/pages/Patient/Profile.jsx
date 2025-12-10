@@ -18,6 +18,7 @@ import PatientAgenda from './components/PatientAgenda';
 import ContactCard from '../../components/PatientProfile/ContactCard';
 import IdentificationCard from '../../components/PatientProfile/IdentificationCard';
 import AnthropometricsCard from '../../components/PatientProfile/AnthropometricsCard';
+import VitalSignsCard from '../../components/PatientProfile/VitalSignsCard';
 import LifestyleCard from '../../components/PatientProfile/LifestyleCard';
 import AntecedentsCard from '../../components/PatientProfile/AntecedentsCard';
 import { Activity, Calendar, User, FileText, Search, Save } from 'lucide-react';
@@ -233,6 +234,7 @@ const PatientProfile = () => {
             <div className="grid grid-cols-1 gap-6">
               <ContactCard patient={patient} />
               <IdentificationCard patient={patient} />
+              <VitalSignsCard patient={patient} lastSnapshot={profileData?.vitalSigns} />
               <AnthropometricsCard data={profileData?.anthropometrics} />
               <LifestyleCard data={profileData?.lifestyle} />
               <AntecedentsCard patient={patient} conditions={profileData?.conditions} />

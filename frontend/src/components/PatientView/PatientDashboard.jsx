@@ -351,7 +351,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
 
     console.log('🔍 PatientDashboard loading for patient:', safePatientId);
     loadDashboard();
-  }, [safePatientId]); // Removed loadDashboard from dependencies to prevent infinite loop
+  }, [safePatientId, loadDashboard]); // Added loadDashboard to dependencies
 
   // Handle retry with force refresh to bypass cache
   const handleRetry = useCallback(() => {
@@ -856,47 +856,46 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
               )}
             </div>
 
-            <div className="patient-dashboard-card bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
-              <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">{t('patientDashboard.activeTherapeuticPlan')}</h3>
-              {isLoading ? (
-                <div className="space-y-4">
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-theme-card rounded w-1/2 mb-1"></div>
-                    <div className="h-3 bg-theme-card rounded w-2/3"></div>
-                  </div>
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-700 rounded w-2/3 mb-2"></div>
-                    <div className="h-3 bg-theme-card rounded w-1/2 mb-1"></div>
-                    <div className="h-3 bg-theme-card rounded w-3/4"></div>
-                  </div>
-                </div>
-              ) : realData.planos.length > 0 ? (
-                <div className="space-y-4">
-                  {realData.planos.slice(0, 3).map((plano, index) => (
-                    <div key={index} className="mb-4">
-                      <h4 className="font-semibold text-white">{plano.titulo || plano.tipo || t('patientDashboard.therapeuticPlan')}</h4>
-                      <div className="text-sm mt-2 text-gray-300">
-                        {plano.descricao || plano.resumo || t('patientDashboard.noDescription')}
-                      </div>
-                      {plano.data && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(plano.data).toLocaleDateString('pt-BR')}
-                        </div>
-                      )}
+            {realData.planos.length > 0 && (
+              <div className="patient-dashboard-card bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+                <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">{t('patientDashboard.activeTherapeuticPlan')}</h3>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-theme-card rounded w-1/2 mb-1"></div>
+                      <div className="h-3 bg-theme-card rounded w-2/3"></div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Target size={24} className="mx-auto mb-2 opacity-50" />
-                  <p>{t('patientDashboard.noActivePlan')}</p>
-                  <p className="text-sm mt-1">{t('patientDashboard.plansWillShow')}</p>
-                </div>
-              )}
-            </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {realData.planos.slice(0, 3).map((plano, index) => (
+                      <div key={index} className="mb-4">
+                        <h4 className="font-semibold text-white">{plano.titulo || plano.tipo || t('patientDashboard.therapeuticPlan')}</h4>
+                        <div className="text-sm mt-2 text-gray-300">
+                          {plano.descricao || plano.resumo || t('patientDashboard.noDescription')}
+                        </div>
+                        {plano.data && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(plano.data).toLocaleDateString('pt-BR')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {/* Visual separator if there are more items */}
+                    {realData.planos.length > 3 && (
+                      <div className="pt-2 border-t border-gray-700">
+                        <p className="text-xs text-center text-gray-400">
+                          {t('patientDashboard.morePlans', { count: realData.planos.length - 3 })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-            <div className="patient-dashboard-card bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
+            <div id="problems_and_diagnostics" className="patient-dashboard-card bg-theme-card p-3 sm:p-5 rounded-lg border border-theme-border">
               <h3 className="font-semibold text-base sm:text-lg theme-text-primary mb-3 sm:mb-4">{t('patientDashboard.clinicalSummary')}</h3>
               {isLoading ? (
                 <div className="space-y-4">
@@ -908,34 +907,26 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
                       <div className="h-3 bg-theme-card rounded w-4/5"></div>
                     </div>
                   </div>
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-700 rounded w-1/3 mb-2"></div>
-                    <div className="space-y-1">
-                      <div className="h-3 bg-theme-card rounded w-2/3"></div>
-                      <div className="h-3 bg-theme-card rounded w-1/2"></div>
-                    </div>
-                  </div>
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-700 rounded w-2/3 mb-2"></div>
-                    <div className="space-y-1">
-                      <div className="h-3 bg-theme-card rounded w-3/4"></div>
-                      <div className="h-3 bg-theme-card rounded w-4/5"></div>
-                      <div className="h-3 bg-theme-card rounded w-2/3"></div>
-                    </div>
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-2"><HeartPulse size={16} /> {t('patientDashboard.activeProblems')}</p>
                     {realData.problemasAtivos.length > 0 ? (
-                      <ul className="space-y-1 text-sm list-disc list-inside text-gray-300">
-                        {realData.problemasAtivos.slice(0, 5).map((problema, index) => (
-                          <li key={index}>
-                            {problema.descricao || problema.problema || problema.texto || problema}
-                          </li>
+                      <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-teal-600 scrollbar-track-transparent snap-x">
+                        {realData.problemasAtivos.map((problema, index) => (
+                          <div key={index} className="min-w-[200px] max-w-[250px] p-3 bg-theme-background border border-gray-700 rounded-lg snap-start flex-shrink-0 hover:border-teal-500/50 transition-colors">
+                            <p className="text-sm text-gray-200 font-medium line-clamp-3">
+                              {problema.descricao || problema.problema || problema.texto || problema}
+                            </p>
+                            {(problema.data || problema.since) && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                {t('common.since')}: {new Date(problema.data || problema.since).toLocaleDateString('pt-BR')}
+                              </p>
+                            )}
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     ) : (
                       <p className="text-sm text-gray-500">{t('patientDashboard.noActiveProblems')}</p>
                     )}

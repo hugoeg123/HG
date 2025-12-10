@@ -1,227 +1,142 @@
-aqui vai um roteiro pronto para você passar ao(a) dev — direto ao ponto, com tarefas, critérios de aceite e trechos para copiar e colar. Mantém **header + left + center + right**, **azul no bright** e **verde no dark**, e aplica o estilo de forma coerente em **todas** as páginas (calculadoras, registro, listas, diálogos).
+Assumindo o papel de liderança do protocolo médico do Health Guardian.
+Abaixo, apresento a estruturação definitiva para a **Saturação Periférica de Oxigênio ($SpO_2$)**, integrada aos sinais vitais anteriormente definidos.
 
-# Mensagem para o agente programador
+Esta resposta elimina emojis, foca na lógica condicional para a equipe de desenvolvimento e alinha as diretrizes da **British Thoracic Society (BTS)** — o padrão-ouro global para oxigenoterapia — com a **Sociedade Brasileira de Pneumologia e Tisiologia (SBPT)** e a **American Thoracic Society (ATS)**.
 
-## Objetivo
+-----
 
-Padronizar o tema (bright=azul, dark=verde) com contraste elevado e superfícies consistentes em **todo o app** sem alterar fluxos. Introduzir utilitários e componentes base para reutilização (Surface, CardTonal, FormSection, Btn). Corrigir o tipo do `Chip` e prevenir erros de build.
+### 1\. Protocolo Clínico: Oximetria de Pulso ($SpO_2$)
 
----
+#### 1.1. Definição da "Verdade" Clínica (Adultos e Pediatria)
 
-## Entregáveis (arquivos/patch)
+A oximetria exige uma lógica condicional: o valor "normal" depende do histórico do paciente (presença de retenção crônica de $CO_2$).
 
-1. **CSS tokens globais**
+**População Geral (Sem patologia pulmonar prévia):**
 
-* Criar `src/styles/theme.css` (ou `src/index.css`) com as CSS vars abaixo e importar uma vez no bootstrap do app.
-* Tokens cobrem superfícies, texto, brand e status.
+  * **Normal (Verde):** $\geq 93\%$. (A maioria das referências cita $\geq 95\%$ como ideal, mas clinicamente $\geq 93\%$ em repouso é aceitável sem oxigênio suplementar em muitos contextos ambulatoriais).
+  * **Alerta Amarelo (Atenção):** $93\% - 94\%$ (Zona cinzenta; monitorar evolução).
+  * **Alerta Vermelho (Hipoxemia):** $\leq 92\%$. (Gatilho para avaliação médica imediata e consideração de $O_2$ suplementar).
 
-```css
-:root {
-  /* BRIGHT (azul) */
-  --background: 220 25% 96%;
-  --foreground: 222 47% 12%;
-  --card: 0 0% 100%;
-  --muted: 220 20% 93%;
-  --border: 220 18% 80%;
-  --ring: 221 83% 53%;
-  --primary: 221 83% 53%;
-  --primary-foreground: 0 0% 100%;
-  --accent: 201 96% 32%;
-  --destructive: 0 72% 45%;
+**População DPOC / Retentores de Carbono (Chronic Obstructive Pulmonary Disease - COPD):**
+Para estes pacientes, a "normalidade" é mais baixa. Oxigenar demais (ex: levar a 99%) pode causar narcose por $CO_2$ e parada respiratória.
 
-  /* Superfícies + aliases */
-  --surface-0: 220 25% 96%;
-  --surface-1: 0 0% 100%;
-  --surface-2: 0 0% 100%;
-  --surface-3: 0 0% 100%;
-  --outline:   220 18% 80%;
-  --text: var(--foreground);
-  --text-muted: 222 12% 36%;
-  --text-subtle: 222 10% 45%;
+  * **Alvo Terapêutico (Verde):** $88\% - 92\%$.
+  * **Alerta Vermelho (Hipoxemia Grave):** $< 88\%$.
+  * **Alerta Laranja (Risco de Hipercapnia):** $> 96\%$ (Muitas vezes ignorado, mas crítico: excesso de oxigênio em DPOC é perigoso).
+
+-----
+
+#### 1.2. Convergência e Divergência: Brasil vs. EUA/Reino Unido
+
+  * **Padrão Ouro (Global):** A diretriz da **British Thoracic Society (BTS 2017)** é a referência mundial para prescrição de oxigênio. Ela estabelece o alvo de **88-92%** para pacientes com risco de falência respiratória hipercápnica (DPOC).
+  * **Brasil (SBPT):** Segue estritamente a mesma lógica. A "I Recomendação Brasileira de Espirometria e Oximetria" considera valores normais acima de 95% ao nível do mar, mas aceita \>93% em prática clínica antes de intervir.
+  * **Diferença:** Não há conflito de valores. A diferença é semântica: manuais brasileiros (Manole, USP) tendem a focar na hipoxemia (\<90-92%), enquanto protocolos americanos/britânicos (Mayo/BTS) enfatizam igualmente o perigo da **hiperóxia** em DPOC.
+  * **Para o App:** A nossa "verdade" será híbrida e segura: alerta de hipoxemia em $\leq 92\%$ para gerais e $< 88\%$ para DPOC.
+
+-----
+
+### 2\. Mapa de Variáveis para Equipe de Programação
+
+Aqui está a lógica algorítmica para a implementação dos alertas, incluindo a condicional de DPOC.
+
+#### 2.1. Tabela Humana e Definições de Variáveis
+
+| ID Técnico | Nome PT-BR | Nome EN-US | Abrev. | Faixa Verde (Geral) | Faixa Verde (DPOC) | Alerta Vermelho (Geral) | Alerta Vermelho (DPOC) | Fonte |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `spo2_pct` | Saturação de Oxigênio | Oxygen Saturation | $SpO_2$ | $93\% - 100\%$ | $88\% - 92\%$ | $\leq 92\%$ | $< 88\%$ | BTS Guideline / SBPT |
+
+#### 2.2. Pseudo-código para Regra de Negócio
+
+```javascript
+// Input: valor spo2 (int), paciente_tem_dpoc (bool)
+
+if (paciente_tem_dpoc == true) {
+    // Lógica para DPOC (Alvo 88-92%)
+    if (spo2 < 88) {
+        return "ALERTA_VERMELHO"; // Hipoxemia grave
+    } else if (spo2 >= 88 && spo2 <= 92) {
+        return "NORMAL_VERDE";    // Alvo terapêutico ideal
+    } else if (spo2 > 92 && spo2 <= 95) {
+        return "ALERTA_AMARELO";  // Aceitável, mas atenção para não subir muito
+    } else { // spo2 > 96
+        return "ALERTA_LARANJA";  // Risco de Hipercapnia (excesso de O2)
+    }
+} else {
+    // Lógica Geral (Alvo >= 93%)
+    if (spo2 <= 92) {
+        return "ALERTA_VERMELHO"; // Hipoxemia - Intervenção necessária
+    } else if (spo2 >= 93 && spo2 <= 94) {
+        return "ALERTA_AMARELO";  // Zona de atenção
+    } else {
+        return "NORMAL_VERDE";    // Saturação adequada
+    }
 }
-.dark {
-  /* DARK (verde) */
-  --background: 220 20% 9%;
-  --foreground: 210 20% 94%;
-  --card: 220 15% 13%;
-  --muted: 220 15% 16%;
-  --border: 220 10% 26%;
-  --ring: 161 94% 40%;
-  --primary: 161 94% 40%;
-  --primary-foreground: 220 25% 10%;
-  --accent: 201 90% 46%;
-
-  --surface-0: 220 20% 9%;
-  --surface-1: 220 15% 13%;
-  --surface-2: 220 15% 13%;
-  --surface-3: 220 15% 17%;
-  --outline:   220 10% 26%;
-  --text: var(--foreground);
-  --text-muted: 210 10% 70%;
-  --text-subtle: 210 8% 60%;
-}
-
-/* util p/ separação sutil */
-.card-shadow { box-shadow: 0 1px 0 hsl(var(--border)); }
 ```
 
-E no bootstrap:
+-----
 
-```ts
-// src/main.tsx ou src/App.tsx
-import "./styles/theme.css";
-```
+### 3\. Estrutura JSON Atualizada (Vitas Completos)
 
-2. **Tailwind mapeado para tokens**
+Este JSON consolida Temperatura, FC, FR, PA e agora inclui o objeto `oxygen_saturation` com a lógica de exceção explícita.
 
-* Atualizar `tailwind.config.ts`:
-
-```ts
-extend: {
-  colors: {
-    background: "hsl(var(--background))",
-    foreground: "hsl(var(--foreground))",
-    card: "hsl(var(--card))",
-    muted: "hsl(var(--muted))",
-    border: "hsl(var(--border))",
-    ring: "hsl(var(--ring))",
-    primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
-    accent: "hsl(var(--accent))",
-    destructive: "hsl(var(--destructive))",
-    surface: {
-      0: "hsl(var(--surface-0))",
-      1: "hsl(var(--surface-1))",
-      2: "hsl(var(--surface-2))",
-      3: "hsl(var(--surface-3))",
+```json
+[
+  {
+    "id": "oxygen_saturation",
+    "label_pt": "Saturação Periférica de Oxigênio",
+    "label_en": "Oxygen Saturation",
+    "abbr_pt": ["SpO2", "SatO2"],
+    "abbr_en": ["SpO2", "O2 Sat"],
+    "unit": "%",
+    "logic_type": "conditional_threshold",
+    "inputs_required": ["value", "has_copd_history"],
+    "thresholds_general_adult_pediatric": {
+      "red_low": 92,
+      "yellow_low": 94,
+      "green_min": 95,
+      "green_max": 100,
+      "clinical_note": "Abaixo de 92% em ar ambiente indica hipoxemia significativa."
     },
+    "thresholds_copd_exception": {
+      "red_low": 87,
+      "green_min": 88,
+      "green_max": 92,
+      "alert_high_hypercapnia_risk": 96,
+      "clinical_note": "Pacientes retentores crônicos (DPOC). Alvo 88-92%. Evitar >96%."
+    },
+    "sources": [
+      "British Thoracic Society (BTS) Guideline for Oxygen Use 2017",
+      "Sociedade Brasileira de Pneumologia e Tisiologia (SBPT)",
+      "Mayo Clinic - Hypoxemia definition"
+    ]
   },
-  borderRadius: { lg: "16px", md: "12px", sm: "10px" },
-}
+  {
+    "id": "systolic_bp",
+    "label_pt": "Pressão Arterial Sistólica",
+    "thresholds": {
+        "adult_hypotension": 90,
+        "pediatric_hypotension_formula": "70 + (2 * age_in_years)"
+    }
+  },
+  {
+    "id": "heart_rate",
+    "label_pt": "Frequência Cardíaca",
+    "thresholds": {
+        "adult_bradycardia": 50,
+        "adult_tachycardia": 100,
+        "pediatric_critical_low": 60
+    }
+  }
+]
 ```
 
-3. **Componentes utilitários (reuso em qualquer página)**
+-----
 
-* Adicionar em `src/components/ui/base/`:
+### 4\. Considerações Finais sobre a Literatura Consultada
 
-`Surface.tsx`
+1.  **Toronto Notes & Mayo Clinic:** Ambos definem hipoxemia geralmente como $SpO_2 < 90\%$, mas para fins de *triagem segura* em um aplicativo, o corte de **92%** é superior pois antecipa a descompensação. O app deve ser mais sensível que específico para segurança.
+2.  **Manuais Brasileiros (USP/Manole):** Enfatizam o exame físico (cianose) mas corroboram a oximetria como o "quinto sinal vital". O protocolo de sepse do **Instituto Latino Americano de Sepse (ILAS)** usa disfunção orgânica/hipoxemia como critério de alerta, alinhado com o corte de 92%.
+3.  **Pediatria:** A regra de $\leq 92\%$ é segura e amplamente aceita para crianças (PALS/AAP). Em recém-nascidos, a faixa alvo pode variar, mas para um app de uso geral/prontuário, manter o alerta em 92% previne erros graves.
 
-```tsx
-export function Surface({ level = 1, className = "", ...props }: { level?: 0|1|2|3; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
-  const bg = {0:"bg-surface-0",1:"bg-surface-1",2:"bg-card",3:"bg-surface-3"}[level] || "bg-card";
-  return <div className={`rounded-2xl border border-border ${bg} ${className}`} {...props} />;
-}
-```
-
-`CardTonal.tsx`
-
-```tsx
-export function CardTonal({ tone="neutral", className="", ...props }:{tone?: "neutral"|"brand"|"success"|"warning"|"danger"; className?:string} & React.HTMLAttributes<HTMLDivElement>) {
-  const map = {
-    neutral: "bg-card border-border",
-    brand: "bg-[hsl(var(--brand-soft,221 90% 94%))] border-transparent",
-    success: "bg-[hsl(var(--success-soft,160 70% 92%))] border-transparent",
-    warning: "bg-[hsl(var(--warning-soft,38 90% 92%))] border-transparent",
-    danger:  "bg-[hsl(var(--danger-soft,0 85% 93%))] border-transparent",
-  };
-  return <div className={`rounded-2xl border ${map[tone]} ${className}`} {...props} />;
-}
-```
-
-`FormSection.tsx`
-
-```tsx
-export function FormSection({ title, description, children }:{title:string; description?:string; children:React.ReactNode}) {
-  return (
-    <section className="rounded-2xl border border-border bg-surface-1 p-4">
-      <header className="mb-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        {description && <p className="text-xs opacity-70">{description}</p>}
-      </header>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-```
-
-`Btn.tsx`
-
-```tsx
-export function Btn({ variant="solid", className="", ...props }:{variant?: "solid"|"outline"|"ghost"} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const base = "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-ring";
-  const map = {
-    solid: "bg-primary text-primary-foreground hover:opacity-95",
-    outline: "border border-border bg-card hover:bg-muted",
-    ghost: "hover:bg-[hsl(var(--brand-soft,221 90% 94%))]",
-  };
-  return <button className={`${base} ${map[variant]} ${className}`} {...props} />;
-}
-```
-
-4. **Correção do Chip**
-
-* Onde houver `Chip`, ajustar tipo para evitar crashes de build:
-
-```tsx
-type ChipProps = { label: string; active?: boolean; intent?: "warn" };
-```
-
-5. **Aplicação transversal (sem refatorar layout)**
-
-* No header, sidebars, cards, inputs e botões, usar **tokens**:
-
-  * Header/rails/cards: `bg-card border-border card-shadow`
-  * Inputs: `bg-card border border-border focus:ring-2 ring-ring`
-  * Botão primário: `bg-primary text-primary-foreground focus:ring-2 ring-ring`
-  * Botões neutros: `border border-border bg-card hover:bg-muted`
-* Em listas/tabelas: header com `bg-surface-1`, linhas zebra `bg-surface-0/surface-1`, `border-border` nas separações.
-* Calculadoras/Registro: embalar blocos em `<FormSection ...>`; alertas/sugestões usar `<CardTonal tone="brand" | "warning" | "danger">`.
-
-6. **Find & Replace seguro**
-
-* Substituir (global) para aumentar contraste no bright:
-
-  * `bg-white` → `bg-card`
-  * `bg-gray-50/100` → `bg-background` (ou `bg-surface-0`)
-  * `border-gray-200/300` → `border-border`
-  * `text-gray-900` → `text-foreground`
-  * `ring-blue-600` → `ring-ring`
-  * `bg-blue-600` → `bg-primary`
-  * `text-white` (em primários) → `text-primary-foreground`
-  * `hover:bg-gray-50` → `hover:bg-muted`
-  * `shadow-sm` em cards → manter `border` + `card-shadow`
-
-7. **A11y & UX**
-
-* Em **todo** clicável: `focus:outline-none focus:ring-2 ring-ring` e alvo ≥ 40×40.
-* Ícones do header/rails com `min-h-10 min-w-10`.
-* Estados vazios: usar `soft-*` (ex.: `soft-warning`) p/ mensagens informativas.
-
-8. **Testes (mínimos)**
-
-* Unit: render dos 4 componentes (`Surface`, `CardTonal`, `FormSection`, `Btn`) em ambos os temas.
-* Smoke: alternância de tema injeta/alternar `--primary` e `--background`.
-* Regressão: `Chip intent="warn"` renderiza sem erro.
-
----
-
-## Critérios de aceite (DoD)
-
-* Bright mode: cartões **brancos** sobre **cinza claro**; borda visível em painéis e cards.
-* Dark mode: superfícies com **elevação** (surface-1/2/3) e verde como **primary**.
-* Em **calculadoras**, **registro** e **listas**:
-
-  * blocos principais envolvidos por `Surface`/`FormSection`;
-  * inputs com `bg-card` e `ring-ring` no foco;
-  * botões primários/outline obedecendo tokens.
-* Nenhum import muda rotas/fluxos; apenas estilo.
-* Build limpo, sem warnings de tipo no `Chip`.
-
----
-
-## Perguntas (para alinhar antes de codar)
-
-1. No `Chip` com `intent="warn"`, quer somente **texto âmbar** ou **texto + borda/fundo tonal**? (hoje: fundo leve + texto âmbar)
-2. O **Right rail** deve existir em **todas** as páginas (colapsável)? (calculadoras, registro, etc.)
-3. Mantemos o **banner “Bem-vindo”** no dashboard com o gradiente `primary↔accent` ou evoluímos para uma toolbar compacta?
-
-Se aprovar, aplico este patch em um PR único e faço a primeira rodada de **find & replace** nas páginas de **Calculadoras** e **Registro** para herdarem as superfícies.
+**Próximo Passo:**
+Deseja que eu refine as mensagens de texto exatas (copywriting médico) que aparecerão para o usuário quando esses limites forem violados (ex: "Saturação crítica: verifique se há falta de ar e considere procurar emergência")?

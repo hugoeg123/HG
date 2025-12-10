@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { alertService } from '../../services/api';
 import { usePatientStore } from '../../store/patientStore';
+import { subscribeToAlerts, initSocket } from '../../services/socket';
+import { useEventListener } from '../../lib/events';
 
 /**
  * Alerts component - Exibe e gerencia alertas médicos
@@ -17,43 +19,66 @@ const Alerts = () => {
   const [error, setError] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAlert, setNewAlert] = useState({
-    title: '',
-    description: '',
-    type: 'info',
+    message: '',
+    severity: 'info',
     patientId: null,
     recordId: null,
-    dueDate: '',
   });
 
   const { currentPatient } = usePatientStore();
 
   // Carregar alertas
   useEffect(() => {
+    // Garantir socket inicializado
+    initSocket();
+
     const fetchAlerts = async () => {
       try {
-        setIsLoading(true);
-        const response = await alertService.getAll();
-        
+        const response = await alertService.getAll({ params: { unread: true } });
+
         // Connector: Backend retorna { alerts: [...], pagination: {...} }
-        // Extrair array de alertas da resposta
         const alertsData = response.data?.alerts || response.data || [];
-        
-        // Garantir que sempre seja um array
-        setAlerts(Array.isArray(alertsData) ? alertsData : []);
+
+        setAlerts(prevAlerts => {
+          const newAlerts = Array.isArray(alertsData) ? alertsData : [];
+          // Comparação simples para evitar re-render
+          if (JSON.stringify(prevAlerts) === JSON.stringify(newAlerts)) return prevAlerts;
+          return newAlerts;
+        });
         setError(null);
-        
-        console.log('Alertas carregados:', alertsData);
       } catch (err) {
         console.error('Erro ao carregar alertas:', err);
-        setError(err.response?.data?.message || 'Não foi possível carregar os alertas');
-        setAlerts([]); // Garantir array vazio em caso de erro
+        if (alerts.length === 0) {
+          setError(err.response?.data?.message || 'Não foi possível carregar os alertas');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchAlerts();
+
+    // Inscrição no Socket para novos alertas (Real-time)
+    const unsubscribe = subscribeToAlerts((newAlertData) => {
+      console.log('⚡ Novo alerta recebido via Socket:', newAlertData);
+
+      // Tocar som de notificação (opcional)
+      try {
+        const audio = new Audio('/sounds/alert.mp3'); // Assumindo path, se não existir falha silenciosamente
+        audio.play().catch(() => { });
+      } catch (e) { }
+
+      setAlerts(prev => [newAlertData, ...prev]);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
+
+  useEventListener('alert.local', (localAlert) => {
+    setAlerts(prev => [localAlert, ...prev]);
+  }, [setAlerts], 'Alerts');
 
   // Atualizar patientId quando o paciente atual mudar
   useEffect(() => {
@@ -77,25 +102,27 @@ const Alerts = () => {
   // Criar novo alerta
   const handleCreateAlert = async (e) => {
     e.preventDefault();
-    
-    if (!newAlert.title.trim()) {
-      setError('O título do alerta é obrigatório');
+
+    if (!newAlert.message.trim()) {
+      setError('A mensagem do alerta é obrigatória');
       return;
     }
 
     try {
       setIsLoading(true);
-      const response = await alertService.create(newAlert);
+      const response = await alertService.create({
+        message: newAlert.message,
+        severity: newAlert.severity,
+        record_id: newAlert.recordId || null
+      });
       // Hook: Garantir que alerts seja array antes de adicionar novo item
       const currentAlerts = Array.isArray(alerts) ? alerts : [];
       setAlerts([...currentAlerts, response.data]);
       setNewAlert({
-        title: '',
-        description: '',
-        type: 'info',
+        message: '',
+        severity: 'info',
         patientId: currentPatient?.id || null,
         recordId: null,
-        dueDate: '',
       });
       setShowCreateForm(false);
       setError(null);
@@ -109,12 +136,17 @@ const Alerts = () => {
 
   // Marcar alerta como concluído
   const handleMarkAsDone = async (alertId) => {
-    try {
-      await alertService.markAsDone(alertId);
-      // Hook: Garantir que alerts seja array antes de usar map
+    const isEphemeral = String(alertId).startsWith('ephem_');
+    if (isEphemeral) {
       const currentAlerts = Array.isArray(alerts) ? alerts : [];
-      setAlerts(currentAlerts.map(alert => 
-        alert.id === alertId ? { ...alert, status: 'completed' } : alert
+      setAlerts(currentAlerts.filter(a => a.id !== alertId));
+      return;
+    }
+    try {
+      await alertService.markAsRead(alertId);
+      const currentAlerts = Array.isArray(alerts) ? alerts : [];
+      setAlerts(currentAlerts.map(alert =>
+        alert.id === alertId ? { ...alert, is_read: true } : alert
       ));
     } catch (err) {
       console.error('Erro ao marcar alerta como concluído:', err);
@@ -141,8 +173,8 @@ const Alerts = () => {
 
   // Filtrar alertas por status - Hook: Proteção contra dados inválidos
   const safeAlerts = Array.isArray(alerts) ? alerts : [];
-  const pendingAlerts = safeAlerts.filter(alert => alert.status === 'pending');
-  const completedAlerts = safeAlerts.filter(alert => alert.status === 'completed');
+  const pendingAlerts = safeAlerts.filter(alert => alert.is_read === false);
+  const completedAlerts = safeAlerts.filter(alert => alert.is_read === true);
 
   // Verificar se um alerta está atrasado
   const isOverdue = (dueDate) => {
@@ -202,9 +234,9 @@ const Alerts = () => {
               />
             </svg>
           )}
-          </button>
+        </button>
       </div>
-        {/* Mensagem de erro */}
+      {/* Mensagem de erro */}
       {error && (
         <div className="mb-4 p-3 bg-red-900 bg-opacity-30 border border-red-800 text-red-300 rounded">
           {error}
@@ -215,59 +247,51 @@ const Alerts = () => {
       {showCreateForm && (
         <form onSubmit={handleCreateAlert} className="mb-6 bg-gray-700 p-3 rounded">
           <div className="mb-3">
-            <label className="block text-gray-300 mb-1">Título</label>
+            <label className="block text-gray-300 mb-1">Mensagem</label>
             <input
-              id="alert-title"
+              id="alert-message"
               type="text"
-              name="title"
-              value={newAlert.title}
+              name="message"
+              value={newAlert.message}
               onChange={handleNewAlertChange}
               className="input w-full"
-              placeholder="Título do alerta"
-              aria-label="Título do alerta"
+              placeholder="Mensagem do alerta"
+              aria-label="Mensagem do alerta"
             />
           </div>
 
           <div className="mb-3">
-            <label className="block text-gray-300 mb-1">Descrição</label>
-            <textarea
-              id="alert-description"
-              name="description"
-              value={newAlert.description}
+            <label className="block text-gray-300 mb-1">Registro (opcional)</label>
+            <input
+              id="alert-record-id"
+              type="text"
+              name="recordId"
+              value={newAlert.recordId || ''}
               onChange={handleNewAlertChange}
-              className="input w-full h-20"
-              placeholder="Descrição do alerta"
-              aria-label="Descrição do alerta"
-            ></textarea>
+              className="input w-full"
+              placeholder="ID do registro relacionado"
+              aria-label="ID do registro relacionado"
+            />
           </div>
 
           <div className="mb-3">
-            <label className="block text-gray-300 mb-1">Tipo</label>
+            <label className="block text-gray-300 mb-1">Severidade</label>
             <select
-              id="alert-type"
-              name="type"
-              value={newAlert.type}
+              id="alert-severity"
+              name="severity"
+              value={newAlert.severity}
               onChange={handleNewAlertChange}
               className="input w-full"
-              aria-label="Tipo do alerta"
+              aria-label="Severidade do alerta"
             >
               <option value="info">Informação</option>
               <option value="warning">Aviso</option>
-              <option value="urgent">Urgente</option>
+              <option value="critical">Crítico</option>
             </select>
           </div>
 
           <div className="mb-3">
-            <label className="block text-gray-300 mb-1">Data de Vencimento</label>
-            <input
-              id="alert-due-date"
-              type="date"
-              name="dueDate"
-              value={newAlert.dueDate}
-              onChange={handleNewAlertChange}
-              aria-label="Data de vencimento do alerta"
-              className="input w-full"
-            />
+            <div className="text-xs text-gray-400">Alertas automáticos são exibidos abaixo</div>
           </div>
 
           <div className="flex justify-end space-x-2">
@@ -309,70 +333,64 @@ const Alerts = () => {
                 {pendingAlerts.map((alert) => (
                   <div
                     key={alert.id}
-                    className={`p-3 rounded ${isOverdue(alert.dueDate) ? 'bg-red-900 bg-opacity-30 border border-red-800' : 
-                      alert.type === 'urgent' ? 'bg-red-900 bg-opacity-20 border border-red-800' :
-                      alert.type === 'warning' ? 'bg-yellow-900 bg-opacity-20 border border-yellow-800' :
-                      'bg-teal-900 bg-opacity-20 border border-teal-800'}`}
+                    className={`relative p-4 rounded-lg shadow-sm border-l-4 transition-all duration-200 hover:shadow-md ${alert.severity === 'critical'
+                        ? 'bg-red-900/20 border-red-500 text-red-100'
+                        : alert.severity === 'warning'
+                          ? 'bg-yellow-900/20 border-yellow-500 text-yellow-100'
+                          : 'bg-teal-900/20 border-teal-500 text-teal-100'
+                      }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h5 className="text-white font-medium">{alert.title}</h5>
-                        {alert.description && (
-                          <p className="text-gray-300 text-sm mt-1">{alert.description}</p>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        {alert.severity === 'critical' && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
                         )}
-                        {alert.patientId && currentPatient && alert.patientId === currentPatient.id && (
-                          <div className="mt-1 text-xs text-gray-400">
-                            Paciente: {currentPatient.name}
-                          </div>
+                        {alert.severity === 'warning' && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
                         )}
-                        {alert.dueDate && (
-                          <div className={`mt-1 text-xs ${isOverdue(alert.dueDate) ? 'text-red-400' : 'text-gray-400'}`}>
-                            Vencimento: {formatDate(alert.dueDate)}
-                            {isOverdue(alert.dueDate) && ' (Atrasado)'}
-                          </div>
+                        {(alert.severity === 'info' || !alert.severity) && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
                         )}
                       </div>
-                      <div className="flex space-x-1">
+
+                      <div className="flex-1">
+                        <h5 className="font-semibold text-sm leading-tight">{alert.message}</h5>
+                        {alert.patientId && currentPatient && alert.patientId === currentPatient.id && (
+                          <div className="mt-1 text-xs opacity-70 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                            <span>Paciente: {currentPatient.name}</span>
+                          </div>
+                        )}
+                        <div className="mt-2 text-xs opacity-60">
+                          {formatDate(alert.created_at || new Date())}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
                         <button
                           onClick={() => handleMarkAsDone(alert.id)}
-                          className="text-green-400 hover:text-green-300"
-                          title="Marcar como concluído"
-                          aria-label="Marcar alerta como concluído"
+                          className="p-1 rounded-full hover:bg-white/10 transition-colors text-green-400"
+                          title="Marcar como lido"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </button>
                         <button
                           onClick={() => handleDeleteAlert(alert.id)}
-                          className="text-red-400 hover:text-red-300"
-                          title="Excluir alerta"
-                          aria-label="Excluir alerta"
+                          className="p-1 rounded-full hover:bg-white/10 transition-colors text-red-400"
+                          title="Excluir"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                         </button>
                       </div>
@@ -395,15 +413,7 @@ const Alerts = () => {
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h5 className="text-gray-400 font-medium line-through">{alert.title}</h5>
-                        {alert.description && (
-                          <p className="text-gray-500 text-sm mt-1 line-through">{alert.description}</p>
-                        )}
-                        {alert.completedAt && (
-                          <div className="mt-1 text-xs text-gray-500">
-                            Concluído em: {formatDate(alert.completedAt)}
-                          </div>
-                        )}
+                        <h5 className="text-gray-400 font-medium line-through">{alert.message}</h5>
                       </div>
                       <button
                         onClick={() => handleDeleteAlert(alert.id)}

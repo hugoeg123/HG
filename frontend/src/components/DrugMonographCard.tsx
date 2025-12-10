@@ -37,7 +37,7 @@ export const DrugMonographCard: React.FC<{ drug: DrugResult }> = ({ drug }) => {
                 {/* Indications */}
                 <AccordionSection
                     title="Indicações e Uso"
-                    icon={<Activity className="w-4 h-4 text-blue-500" />}
+                    icon={<Activity className="w-4 h-4 text-emerald-400" />}
                     isOpen={openSections['indications']}
                     onToggle={() => toggleSection('indications')}
                 >
@@ -48,7 +48,7 @@ export const DrugMonographCard: React.FC<{ drug: DrugResult }> = ({ drug }) => {
                 {drug.mechanism && (
                     <AccordionSection
                         title="Mecanismo de Ação"
-                        icon={<Activity className="w-4 h-4 text-cyan-500" />}
+                        icon={<Activity className="w-4 h-4 text-emerald-400" />}
                         isOpen={openSections['mechanism']}
                         onToggle={() => toggleSection('mechanism')}
                     >
@@ -59,7 +59,7 @@ export const DrugMonographCard: React.FC<{ drug: DrugResult }> = ({ drug }) => {
                 {/* Contraindications */}
                 <AccordionSection
                     title="Contraindicações"
-                    icon={<ShieldAlert className="w-4 h-4 text-amber-500" />}
+                    icon={<ShieldAlert className="w-4 h-4 text-emerald-400" />}
                     isOpen={openSections['contraindications']}
                     onToggle={() => toggleSection('contraindications')}
                 >
@@ -69,7 +69,7 @@ export const DrugMonographCard: React.FC<{ drug: DrugResult }> = ({ drug }) => {
                 {/* Adverse Reactions */}
                 <AccordionSection
                     title="Efeitos Adversos"
-                    icon={<AlertOctagon className="w-4 h-4 text-purple-500" />}
+                    icon={<AlertOctagon className="w-4 h-4 text-emerald-400" />}
                     isOpen={openSections['adverse']}
                     onToggle={() => toggleSection('adverse')}
                 >

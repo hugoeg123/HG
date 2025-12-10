@@ -21,6 +21,10 @@ const CalculatorTag = require('./CalculatorTag');
 const PatientAnthropometrics = require('./PatientAnthropometrics');
 const PatientLifestyle = require('./PatientLifestyle');
 const PatientCondition = require('./PatientCondition');
+const KnowledgeNote = require('./KnowledgeNote');
+const KnowledgeNoteRating = require('./KnowledgeNoteRating');
+const KnowledgeNoteComment = require('./KnowledgeNoteComment');
+const PatientVitalSigns = require('./PatientVitalSigns');
 
 // Novos modelos do sistema de tags dinâmicas
 const Medico = require('./Medico')(sequelize);
@@ -47,10 +51,12 @@ Patient.hasMany(Record, { foreignKey: 'patientId', as: 'records' });
 Patient.hasMany(PatientAnthropometrics, { foreignKey: 'patient_id', as: 'anthropometrics' });
 Patient.hasMany(PatientLifestyle, { foreignKey: 'patient_id', as: 'lifestyles' });
 Patient.hasMany(PatientCondition, { foreignKey: 'patient_id', as: 'conditions' });
+Patient.hasMany(PatientVitalSigns, { foreignKey: 'patient_id', as: 'vital_signs' });
 
 PatientAnthropometrics.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 PatientLifestyle.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 PatientCondition.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
+PatientVitalSigns.belongsTo(Patient, { foreignKey: 'patient_id', as: 'patient' });
 
 // Associações de Record
 Record.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
@@ -73,6 +79,26 @@ Record.hasMany(Alert, { foreignKey: 'record_id', as: 'alerts' });
 // Associações de Calculator
 Calculator.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
 User.hasMany(Calculator, { foreignKey: 'owner_id', as: 'calculators' });
+
+// Inicializar novos modelos sociais
+KnowledgeNoteRating.init(sequelize);
+KnowledgeNoteComment.init(sequelize);
+
+// Associações de KnowledgeNote
+KnowledgeNote.belongsTo(Medico, { foreignKey: 'user_id', as: 'user' });
+Medico.hasMany(KnowledgeNote, { foreignKey: 'user_id', as: 'knowledge_notes' });
+
+// Associações de KnowledgeNoteRating e Comment
+KnowledgeNote.hasMany(KnowledgeNoteRating, { foreignKey: 'note_id', as: 'ratings' });
+KnowledgeNoteRating.belongsTo(KnowledgeNote, { foreignKey: 'note_id', as: 'note' });
+KnowledgeNoteRating.belongsTo(Medico, { foreignKey: 'user_id', as: 'user' });
+
+KnowledgeNote.hasMany(KnowledgeNoteComment, { foreignKey: 'note_id', as: 'comments' });
+KnowledgeNoteComment.belongsTo(KnowledgeNote, { foreignKey: 'note_id', as: 'note' });
+KnowledgeNoteComment.belongsTo(Medico, { foreignKey: 'user_id', as: 'user' });
+
+Medico.hasMany(KnowledgeNoteRating, { foreignKey: 'user_id', as: 'note_ratings' });
+Medico.hasMany(KnowledgeNoteComment, { foreignKey: 'user_id', as: 'note_comments' });
 
 // Associações many-to-many Calculator-Tag
 Calculator.belongsToMany(Tag, {
@@ -124,6 +150,10 @@ module.exports = {
   PatientAnthropometrics,
   PatientLifestyle,
   PatientCondition,
+  KnowledgeNote,
+  KnowledgeNoteRating,
+  KnowledgeNoteComment,
+  PatientVitalSigns,
   // Novos modelos do sistema de tags dinâmicas
   Medico,
   Paciente,

@@ -6,6 +6,10 @@ import { parseSections } from '../../shared/parser.js';
 import { useDebounce, useDebounceCallback } from '../../hooks/useDebounce';
 import SectionBlock from './SectionBlock';
 import TagToolbar from './TagToolbar';
+import VitalSignEditor from './VitalSignEditor';
+import { extractNumericData } from '../../shared/parser.js';
+import { calculateSeverity } from '../../lib/vitalSignAlerts.js';
+import { emit as emitEvent } from '../../lib/events';
 
 /**
  * HybridEditor Component - Editor híbrido para registros médicos
@@ -48,6 +52,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   const safeRecord = record && typeof record === 'object' && !Array.isArray(record) ? record : null;
   
   const { createRecord, updateRecord, isLoading, setChatContext } = usePatientStore();
+  const { currentPatient } = usePatientStore();
   
   // Core editor state
   const [editorContent, setEditorContent] = useState('');
@@ -70,6 +75,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   // Performance optimization
   const debouncedContent = useDebounce(editorContent, 300);
   const sectionRefs = useRef({});
+  const lastAlertRef = useRef(null);
   
 
   
@@ -203,6 +209,63 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     
     fetchData();
   }, [safeRecordType]);
+
+  useEffect(() => {
+    const age = (() => {
+      const bd = currentPatient?.birthDate || currentPatient?.dateOfBirth;
+      if (!bd) return null;
+      const today = new Date();
+      const birth = new Date(bd);
+      let a = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+      return a;
+    })();
+
+    if (!debouncedContent) return;
+
+    try {
+      const pa = extractNumericData(debouncedContent, 'PA');
+      const fc = extractNumericData(debouncedContent, 'FC');
+      const fr = extractNumericData(debouncedContent, 'FR');
+      const spo2 = extractNumericData(debouncedContent, 'SPO2');
+      const temp = extractNumericData(debouncedContent, 'TEMP');
+
+      const vitals = {
+        systolic: pa?.sistolica ? Number(pa.sistolica) : undefined,
+        diastolic: pa?.diastolica ? Number(pa.diastolica) : undefined,
+        heartRate: fc?.frequencia ? Number(fc.frequencia) : undefined,
+        respiratoryRate: fr?.frequencia ? Number(fr.frequencia) : undefined,
+        spo2: spo2?.valor ? Number(spo2.valor) : undefined,
+        temp: temp?.temperatura ? Number(String(temp.temperatura).replace(',', '.')) : undefined
+      };
+
+      if (Object.values(vitals).every(v => v === undefined)) return;
+
+      const gender = (currentPatient?.gender || '').toLowerCase();
+      const isPregnant = Boolean(currentPatient?.obstetrics?.currentlyPregnant);
+      const hasCOPD = Array.isArray(currentPatient?.chronicConditions)
+        ? currentPatient.chronicConditions.some(c => String(c.condition_name || c).toLowerCase().includes('dpoc') || String(c.condition_name || c).toLowerCase().includes('copd'))
+        : false;
+
+      const alerts = calculateSeverity(vitals, { age: age ?? 25, isPregnant, hasCOPD, onRoomAir: true });
+      const key = JSON.stringify(alerts);
+      if (alerts.length > 0 && key !== lastAlertRef.current) {
+        lastAlertRef.current = key;
+        const primary = alerts[0];
+        const payload = {
+          id: `ephem_${Date.now()}`,
+          message: primary.message,
+          severity: primary.type === 'emergency' ? 'critical' : 'warning',
+          is_read: false,
+          created_at: new Date().toISOString(),
+          patientId: currentPatient?.id || null
+        };
+        emitEvent('alert.local', payload);
+      }
+    } catch (e) {
+    }
+  }, [debouncedContent, currentPatient]);
   
   // Handle view toggle
   const handleToggleView = useCallback(() => {
@@ -542,12 +605,31 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
               >
                 <Sparkles size={16} />
               </button>
-              <textarea
-                value={editorContent}
-                onChange={(e) => setEditorContent(e.target.value)}
-                className="w-full h-96 p-4 bg-theme-card border border-gray-700 rounded-xl text-gray-300 placeholder-gray-500 resize-y focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
-                placeholder="Digite o registro completo aqui..."
-              />
+              <div className="w-full h-96 p-4 bg-theme-card border border-gray-700 rounded-xl text-gray-300 placeholder-gray-500">
+                <VitalSignEditor
+                  value={editorContent}
+                  onChange={(val) => setEditorContent(val)}
+                  placeholder="Digite o registro completo aqui..."
+                  style={{ height: '100%' }}
+                  context={{
+                    age: (() => {
+                      const bd = currentPatient?.birthDate || currentPatient?.dateOfBirth;
+                      if (!bd) return 25;
+                      const today = new Date();
+                      const birth = new Date(bd);
+                      let a = today.getFullYear() - birth.getFullYear();
+                      const m = today.getMonth() - birth.getMonth();
+                      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+                      return a;
+                    })(),
+                    isPregnant: Boolean(currentPatient?.obstetrics?.currentlyPregnant),
+                    hasCOPD: Array.isArray(currentPatient?.chronicConditions)
+                      ? currentPatient.chronicConditions.some(c => String(c.condition_name || c).toLowerCase().includes('dpoc') || String(c.condition_name || c).toLowerCase().includes('copd'))
+                      : false,
+                    onRoomAir: true
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>

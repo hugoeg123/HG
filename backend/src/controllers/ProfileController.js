@@ -3,6 +3,7 @@ const {
     PatientAnthropometrics,
     PatientLifestyle,
     PatientCondition,
+    PatientVitalSigns,
     sequelize
 } = require('../models/sequelize');
 
@@ -38,11 +39,18 @@ const ProfileController = {
                 order: [['onset_date', 'DESC']]
             });
 
+            // Get latest vital signs
+            const vitalSigns = await PatientVitalSigns.findOne({
+                where: { patient_id: patientId },
+                order: [['recorded_at', 'DESC']]
+            });
+
             return res.json({
                 patient,
                 anthropometrics,
                 lifestyle,
-                conditions
+                conditions,
+                vitalSigns
             });
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -141,6 +149,26 @@ const ProfileController = {
         } catch (error) {
             console.error('Error updating condition:', error);
             return res.status(500).json({ message: 'Error updating condition', error: error.message });
+        }
+    },
+
+    // Add vital signs
+    addVitalSigns: async (req, res) => {
+        try {
+            const { patientId } = req.params;
+            const data = req.body;
+
+            const entry = await PatientVitalSigns.create({
+                patient_id: patientId,
+                ...data,
+                recorded_at: data.recorded_at || new Date(),
+                recorded_by: req.user?.id
+            });
+
+            return res.status(201).json(entry);
+        } catch (error) {
+            console.error('Error adding vital signs:', error);
+            return res.status(500).json({ message: 'Error adding vital signs', error: error.message });
         }
     }
 };

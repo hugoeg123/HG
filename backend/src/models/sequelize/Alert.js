@@ -51,7 +51,18 @@ Alert.init({
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'medicos',
+      key: 'id'
+    },
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
+  },
+  // ID do Paciente (opcional, para alertas diretos sem registro)
+  patient_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'patients',
       key: 'id'
     },
     onUpdate: 'CASCADE',
@@ -60,9 +71,9 @@ Alert.init({
   // ID do registro médico (foreign key)
   record_id: {
     type: DataTypes.UUID,
-    allowNull: false,
+    allowNull: true, // Agora opcional
     references: {
-      model: 'records',
+      model: 'registros',
       key: 'id'
     },
     onUpdate: 'CASCADE',
@@ -99,7 +110,7 @@ Alert.init({
 });
 
 // Hook para buscar alertas por severidade
-Alert.findBySeverity = async function(severity, userId) {
+Alert.findBySeverity = async function (severity, userId) {
   return await this.findAll({
     where: {
       severity,
@@ -110,7 +121,7 @@ Alert.findBySeverity = async function(severity, userId) {
 };
 
 // Hook para buscar alertas não lidos
-Alert.findUnread = async function(userId) {
+Alert.findUnread = async function (userId) {
   return await this.findAll({
     where: {
       user_id: userId,

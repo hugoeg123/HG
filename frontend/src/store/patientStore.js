@@ -559,34 +559,35 @@ const usePatientStore = create((set, get) => ({
 
   fetchPatientDashboard: async (patientId, options = {}) => {
     if (!patientId) return null;
-    
+
     // Cancel previous request if exists
     if (get().dashboardAbortController) {
       get().dashboardAbortController.abort();
     }
-    
+
     const controller = new AbortController();
     set({ isLoading: true, error: null, dashboardAbortController: controller });
 
     try {
       // Use signal from options if provided, otherwise use our controller
       const signal = options.signal || controller.signal;
-      
+
       const response = await patientService.getDashboard(patientId, { signal });
       const dashboardData = response.data;
-      
+
       set({ 
         dashboardData, 
         isLoading: false, 
         dashboardAbortController: null 
       });
-      
+
       return dashboardData;
     } catch (error) {
       if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+        set({ isLoading: false, dashboardAbortController: null });
         return null;
       }
-      
+
       console.error(`Erro ao buscar dashboard do paciente ${patientId}:`, error);
       set({ 
         error: error.response?.data?.message || 'Erro ao carregar dashboard', 

@@ -30,8 +30,10 @@ class AlertService {
   async createAlert(alertData) {
     try {
       const alert = await Alert.create(alertData);
+      console.log('ALERT_CREATE_SERVICE_OK', { id: alert.id, user_id: alert.user_id, record_id: alert.record_id, severity: alert.severity });
       return alert;
     } catch (error) {
+      console.error('ALERT_CREATE_SERVICE_ERROR', { error: error.message });
       throw new Error(`Erro ao criar alerta: ${error.message}`);
     }
   }

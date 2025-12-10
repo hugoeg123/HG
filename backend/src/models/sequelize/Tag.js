@@ -14,7 +14,7 @@ const { sequelize } = require('../../config/database-pg');
  * @class Tag
  * @extends Model
  */
-class Tag extends Model {}
+class Tag extends Model { }
 
 Tag.init({
   // ID da tag (chave primária)
@@ -79,8 +79,8 @@ Tag.init({
   modelName: 'Tag',
   tableName: 'tags',
   timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
+  // createdAt: 'created_at',
+  // updatedAt: 'updated_at',
   indexes: [
     // Índice para busca por nome
     {

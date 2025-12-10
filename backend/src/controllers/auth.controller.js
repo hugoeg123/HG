@@ -128,26 +128,38 @@ exports.login = async (req, res) => {
 
     // Buscar médico
     console.log(`[LOGIN-${requestId}] Buscando médico no banco de dados...`);
-    const medico = await Medico.findOne({ where: { email } });
+    let user = await Medico.findOne({ where: { email } });
+    let role = 'medico';
 
-    if (!medico) {
-      console.log(`[LOGIN-${requestId}] Médico não encontrado para email:`, email);
+    if (!user) {
+      // Se não for médico, tentar buscar como paciente
+      console.log(`[LOGIN-${requestId}] Médico não encontrado. Buscando como paciente...`);
+      user = await Patient.findOne({ where: { email } });
+      if (user) {
+        role = 'patient';
+      }
+    }
+
+    if (!user) {
+      console.log(`[LOGIN-${requestId}] Usuário não encontrado para email:`, email);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
-    console.log(`[LOGIN-${requestId}] Médico encontrado:`, {
-      id: medico.id,
-      nome: medico.nome,
-      email: medico.email,
-      hasPasswordHash: !!medico.senha_hash
+    console.log(`[LOGIN-${requestId}] Usuário encontrado (${role}):`, {
+      id: user.id,
+      nome: user.nome || user.name, // Patient uses 'name', Medico uses 'nome'
+      email: user.email,
+      hasPasswordHash: !!(user.senha_hash || user.password_hash) // Patient uses 'password_hash'
     });
 
     // Verificar senha
     console.log(`[LOGIN-${requestId}] Verificando senha...`);
-    const isMatch = await bcrypt.compare(password, medico.senha_hash);
+    // Check correct password field based on role
+    const passwordHash = role === 'medico' ? user.senha_hash : user.password_hash;
+    const isMatch = await bcrypt.compare(password, passwordHash);
 
     if (!isMatch) {
-      console.log(`[LOGIN-${requestId}] Senha incorreta para médico:`, medico.id);
+      console.log(`[LOGIN-${requestId}] Senha incorreta para usuário:`, user.id);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
@@ -155,25 +167,39 @@ exports.login = async (req, res) => {
 
     // Gerar token
     console.log(`[LOGIN-${requestId}] Gerando token JWT...`);
-    const token = generateToken(medico);
+    let token;
+    if (role === 'medico') {
+        token = generateToken(user);
+    } else {
+        token = generatePatientToken(user);
+    }
 
     const loginDuration = Date.now() - startTime;
     console.log(`[LOGIN-${requestId}] Login realizado com sucesso em ${loginDuration}ms`, {
-      medicoId: medico.id,
+      userId: user.id,
+      role: role,
       tokenLength: token.length
     });
+
+    const userData = role === 'medico' ? {
+        id: user.id,
+        name: user.nome,
+        email: user.email,
+        professional_type: user.professional_type,
+        professional_id: user.professional_id,
+        specialty: user.specialty,
+        role: 'medico'
+    } : {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: 'patient'
+    };
 
     res.json({
       message: 'Login realizado com sucesso',
       token,
-      user: {
-        id: medico.id,
-        name: medico.nome,
-        email: medico.email,
-        professional_type: medico.professional_type,
-        professional_id: medico.professional_id,
-        specialty: medico.specialty
-      }
+      user: userData
     });
   } catch (error) {
     const loginDuration = Date.now() - startTime;

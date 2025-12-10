@@ -16,7 +16,7 @@ const alertService = require('../services/alert.service');
  */
 exports.list = async (req, res) => {
   try {
-    console.log('list alerts - User from request:', req.user);
+    console.log('ALERT_LIST_REQUEST_USER', { id: req.user?.sub, role: req.user?.role });
     
     // Verificar se o usuário está autenticado
     if (!req.user || !req.user.sub) {
@@ -34,12 +34,48 @@ exports.list = async (req, res) => {
       offset: parseInt(req.query.offset) || 0
     };
 
-    console.log('list alerts - Filters:', filters);
+    console.log('ALERT_LIST_FILTERS', filters);
     
     // Buscar alertas usando o serviço
-    const alerts = await alertService.getAlerts(req.user.sub, filters);
-    
-    console.log('list alerts - Found alerts count:', alerts.length);
+    let alerts = await alertService.getAlerts(req.user.sub, filters);
+
+    // Fallback: gerar alertas derivados de registros recentes caso não haja persistidos
+    if (!alerts || alerts.length === 0) {
+      try {
+        const { Record } = require('../models');
+        const recentRecords = await Record.findAll({
+          where: { createdBy: req.user.sub },
+          order: [['date', 'DESC']],
+          limit: 20
+        });
+
+        const { extractVitals, calculateAlerts } = require('../utils/vitalSignParser');
+        const derived = [];
+        for (const r of recentRecords) {
+          const vitals = extractVitals(r.content || '');
+          const al = calculateAlerts(vitals);
+          for (const def of al) {
+            derived.push({
+              id: `ephem_${r.id}_${def.key || def.type}`,
+              user_id: req.user.sub,
+              record_id: r.id,
+              message: def.message,
+              severity: def.type,
+              is_read: false,
+              read_at: null,
+              created_at: r.date || new Date()
+            });
+          }
+        }
+
+        alerts = derived;
+        console.log('ALERT_LIST_FALLBACK_DERIVED', { count: derived.length });
+      } catch (fallbackErr) {
+        console.error('ALERT_LIST_FALLBACK_ERROR', { error: fallbackErr.message });
+      }
+    }
+
+    console.log('ALERT_LIST_RESULT_COUNT', { count: alerts.length });
     
     res.json({
       alerts,
@@ -142,6 +178,14 @@ exports.markAsRead = async (req, res) => {
       return res.status(401).json({ 
         message: 'Usuário não autenticado',
         code: 'NO_AUTH'
+      });
+    }
+
+    // No-op for efêmeros
+    if (id && id.startsWith('ephem_')) {
+      return res.json({
+        message: 'Alerta efêmero marcado como lido',
+        alert: { id, is_read: true }
       });
     }
 

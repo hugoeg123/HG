@@ -11,5 +11,6 @@ router.post('/patients/:patientId/anthropometrics', ProfileController.addAnthrop
 router.post('/patients/:patientId/lifestyle', ProfileController.addLifestyle);
 router.post('/patients/:patientId/conditions', ProfileController.addCondition);
 router.put('/patients/:patientId/conditions/:conditionId', ProfileController.updateCondition);
+router.post('/patients/:patientId/vital-signs', ProfileController.addVitalSigns);
 
 module.exports = router;

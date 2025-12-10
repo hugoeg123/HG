@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePatientStore } from '../store/patientStore';
 import { useTranslation } from 'react-i18next';
+import { agendaService } from '../services/api';
 
 /**
  * Dashboard component - Página principal após login
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const { user } = useAuthStore();
   const { patients, fetchPatients, isLoading, error, createPatient } = usePatientStore();
   const navigate = useNavigate();
+  const [consultationsCount, setConsultationsCount] = useState(0);
 
   // Hook: Guard against React.StrictMode double-invocation and duplicate data loads
   const didInit = useRef(false);
@@ -27,6 +29,29 @@ const Dashboard = () => {
     if (!patients || patients.length === 0) {
       fetchPatients();
     }
+
+    const fetchTodayConsultations = async () => {
+      try {
+        const today = new Date();
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+        const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+
+        const response = await agendaService.getAppointments({
+          start: startOfDay,
+          end: endOfDay,
+          status: 'booked'
+        });
+
+        if (response.data) {
+          const count = Array.isArray(response.data) ? response.data.length : 0;
+          setConsultationsCount(count);
+        }
+      } catch (error) {
+        console.error('Error fetching consultations:', error);
+      }
+    };
+
+    fetchTodayConsultations();
   }, []);
 
   const handleNewPatient = async () => {
@@ -79,7 +104,7 @@ const Dashboard = () => {
         {/* Card de consultas */}
         <div className="stat-card theme-bg-primary border theme-border p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold theme-text-primary mb-4">{t('dashboard.consultationsToday')}</h3>
-          <div className="text-3xl font-bold text-teal-400 mb-2">0</div>
+          <div className="text-3xl font-bold text-teal-400 mb-2">{consultationsCount}</div>
           <p className="theme-text-secondary text-sm">{t('dashboard.consultationsScheduled')}</p>
         </div>
 

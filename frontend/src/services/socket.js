@@ -11,7 +11,7 @@ let socketLoggedOnce = false;
 
 export const initSocket = () => {
   const { token, isAuthenticated } = useAuthStore.getState();
-  
+
   // Só conectar se estiver autenticado
   if (!token || !isAuthenticated) {
     if (!socketLoggedOnce) {
@@ -20,7 +20,7 @@ export const initSocket = () => {
     }
     return null;
   }
-  
+
   // Idempotent guard: if already connected/connecting, return existing socket
   if (socket && (socket.connected || socket.connecting)) {
     return socket;
@@ -33,7 +33,7 @@ export const initSocket = () => {
   if (lastAuthToken === token && socket) {
     return socket;
   }
-  
+
   initializing = true;
   try {
     // Socket URL fallback: use VITE_SOCKET_URL, default to backend on 5001 if undefined
@@ -99,7 +99,7 @@ export const disconnectSocket = () => {
 // Função para reconectar após re-login
 export const reconnectSocket = () => {
   const { token, isAuthenticated } = useAuthStore.getState();
-  
+
   if (!token || !isAuthenticated) {
     console.warn('Tentativa de reconexão sem token válido');
     return null;
@@ -108,7 +108,7 @@ export const reconnectSocket = () => {
   if (reconnecting || initializing) {
     return socket || null;
   }
-  
+
   console.log('Reconectando socket após re-login...');
   reconnecting = true;
   disconnectSocket();
@@ -119,7 +119,7 @@ export const reconnectSocket = () => {
 export const handleAuthError = () => {
   console.log('Erro 401: Não autorizado. Tentando reautenticar ou deslogar.');
   disconnectSocket();
-  
+
   // Verificar se ainda há token válido para tentar reconectar (apenas uma tentativa controlada)
   const { token, isAuthenticated } = useAuthStore.getState();
   if (token && isAuthenticated && !reconnecting && !initializing) {
@@ -181,4 +181,15 @@ export const emitUserActivity = (recordId, activity) => {
   if (!socket) return;
 
   socket.emit('user:activity', { recordId, activity });
+};
+
+export const subscribeToAlerts = (callback) => {
+  const socket = getSocket();
+  if (!socket) return;
+
+  socket.on('alert:new', callback);
+
+  return () => {
+    socket.off('alert:new');
+  };
 };

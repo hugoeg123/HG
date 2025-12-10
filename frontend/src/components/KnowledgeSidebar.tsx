@@ -1,15 +1,37 @@
+import { Search, Database, Globe, Lock, Unlock, Plus, Activity, BookOpen, ExternalLink, Trash2, Edit, X, Check } from 'lucide-react';
 import React, { useState } from 'react';
 import { useKnowledgeSearch } from '../hooks/useKnowledgeSearch';
 import { DrugMonographCard } from './DrugMonographCard';
-import { WikipediaCard } from './WikipediaCard';
 import { InteractionAlert } from './InteractionAlert';
-import { Search, PenTool, Database, Globe, Lock, Unlock, Plus, Activity, BookOpen, ExternalLink } from 'lucide-react';
+import { WikipediaCard } from './WikipediaCard';
+import { Carousel } from './ui/carousel';
 
+/**
+ * KnowledgeSidebar Component
+ * 
+ * Provides quick access to knowledge base features in a sidebar format.
+ * 
+ * ## Integration Map
+ * - **Hooks**: 
+ *   - `useKnowledgeSearch` (hooks/useKnowledgeSearch.ts) for data fetching
+ * - **Services**:
+ *   - Connects to Backend Knowledge API for Note CRUD
+ * - **Components**:
+ *   - `DrugMonographCard`, `WikipediaCard`, `InteractionAlert`
+ * - **Data Flow**:
+ *   - Search input -> useKnowledgeSearch -> Backend Proxy/API
+ *   - Note actions (Create/Edit/Delete) -> useKnowledgeSearch -> Backend API
+ */
 const KnowledgeSidebar: React.FC = () => {
     const [query, setQuery] = useState('');
     const [showNoteInput, setShowNoteInput] = useState(false);
     const [noteText, setNoteText] = useState('');
     const [isPublic, setIsPublic] = useState(true);
+
+    // State for editing notes
+    const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+    const [editingNoteText, setEditingNoteText] = useState('');
+    const [editingNotePublic, setEditingNotePublic] = useState(false);
 
     const {
         drugResults,
@@ -20,11 +42,17 @@ const KnowledgeSidebar: React.FC = () => {
         wikiResults,
         notes,
         isLoading,
-        addNote
-    } = useKnowledgeSearch(query);
+        searchKnowledge,
+        addNote,
+        updateNote,
+        deleteNote
+    } = useKnowledgeSearch();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        if (query.trim()) {
+            searchKnowledge(query);
+        }
     };
 
     const handleAddNote = async (e: React.FormEvent) => {
@@ -33,6 +61,30 @@ const KnowledgeSidebar: React.FC = () => {
         await addNote(noteText, isPublic, 'Eu (Você)', query);
         setNoteText('');
         setShowNoteInput(false);
+    };
+
+    const handleStartEditing = (note: any) => {
+        setEditingNoteId(note.id);
+        setEditingNoteText(note.text);
+        setEditingNotePublic(note.isPublic);
+    };
+
+    const handleCancelEditing = () => {
+        setEditingNoteId(null);
+        setEditingNoteText('');
+    };
+
+    const handleSaveEdit = async () => {
+        if (editingNoteText.trim() && editingNoteId) {
+            await updateNote(editingNoteId, editingNoteText, editingNotePublic);
+            handleCancelEditing();
+        }
+    };
+
+    const handleDeleteNote = async (id: string) => {
+        if (window.confirm('Tem certeza que deseja excluir esta nota?')) {
+            await deleteNote(id);
+        }
     };
 
     return (
@@ -66,7 +118,7 @@ const KnowledgeSidebar: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setIsPublic(!isPublic)}
-                                className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded border ${isPublic ? 'border-green-800 text-green-400 bg-green-900/20' : 'border-slate-600 text-slate-400'}`}
+                                className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded border ${isPublic ? 'border-blue-500 bg-blue-600/10 text-blue-700 dark:border-teal-500 dark:bg-teal-600/20 dark:text-teal-300' : 'border-slate-600 text-slate-400'}`}
                             >
                                 {isPublic ? <><Unlock className="w-3 h-3" /> Público</> : <><Lock className="w-3 h-3" /> Privado</>}
                             </button>
@@ -83,9 +135,15 @@ const KnowledgeSidebar: React.FC = () => {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Pesquise por termo clínico..."
-                        className="w-full pl-9 pr-3 py-2 bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-md focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition-all placeholder-[var(--color-text-secondary)] text-[var(--color-text-primary)] text-xs"
+                        className="w-full pl-9 pr-9 py-2 bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-md focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition-all placeholder-[var(--color-text-secondary)] text-[var(--color-text-primary)] text-xs"
                     />
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-[var(--color-text-secondary)]" />
+                    <button
+                        type="submit"
+                        className="absolute right-2 top-2 px-2 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
+                        title="Buscar"
+                    >
+                        <Search className="w-4 h-4" />
+                    </button>
                 </form>
                 {isLoading && <div className="h-1 w-full bg-[var(--color-primary)] mt-2 animate-pulse rounded"></div>}
             </div>
@@ -93,114 +151,153 @@ const KnowledgeSidebar: React.FC = () => {
             {/* Gadgets Container */}
             <div className="flex-1 overflow-y-auto p-3 space-y-4 bg-[var(--color-bg-dark)] custom-scrollbar">
 
-                {/* Wikipedia Card (Top Context) */}
-                {wikiResults.length > 0 && (
-                    <div className="mb-4">
+                {/* --- STATE: IDLE (No Search) --- */}
+                {!query.trim() && (
+                    <div className="animate-fadeIn">
+                        <div className="mb-4">
+                            <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Destaques da Comunidade</h3>
+                            {notes.length > 0 ? (
+                                <Carousel>
+                                    {notes.map(note => (
+                                        <div key={note.id} className="p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)] relative group min-h-[100px]">
+                                            {editingNoteId === note.id ? (
+                                                <div className="space-y-2">
+                                                    <textarea
+                                                        value={editingNoteText}
+                                                        onChange={(e) => setEditingNoteText(e.target.value)}
+                                                        className="w-full text-xs bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded p-2 focus:outline-none resize-none h-20"
+                                                    />
+                                                    <div className="flex justify-between items-center">
+                                                        <button
+                                                            onClick={() => setEditingNotePublic(!editingNotePublic)}
+                                                            className={`text-[9px] flex items-center gap-1 px-1.5 py-0.5 rounded border transition-colors ${editingNotePublic
+                                                                ? 'border-blue-500 bg-blue-600/10 text-blue-700 dark:border-teal-500 dark:bg-teal-600/20 dark:text-teal-300'
+                                                                : 'border-slate-600 text-slate-400'
+                                                                }`}
+                                                        >
+                                                            {editingNotePublic ? 'Público' : 'Privado'}
+                                                        </button>
+                                                        <div className="flex gap-1">
+                                                            <button onClick={handleCancelEditing} className="p-1 hover:bg-red-900/20 text-red-400 rounded"><X className="w-3 h-3" /></button>
+                                                            <button onClick={handleSaveEdit} className="p-1 hover:bg-green-900/20 text-green-400 rounded"><Check className="w-3 h-3" /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <p className="text-xs text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">{note.text}</p>
+                                                    <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-[var(--color-border)] opacity-70">
+                                                        <span className="text-[10px] items-center flex gap-1">
+                                                            {note.isPublic ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                                                            {note.author}
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[9px]">{new Date(note.timestamp).toLocaleDateString()}</span>
+                                                            {note.isOwner && (
+                                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <button onClick={() => handleStartEditing(note)} className="p-0.5 hover:bg-blue-900/20 text-blue-400 rounded"><Edit className="w-2.5 h-2.5" /></button>
+                                                                    <button onClick={() => handleDeleteNote(note.id)} className="p-0.5 hover:bg-red-900/20 text-red-400 rounded"><Trash2 className="w-2.5 h-2.5" /></button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+                                </Carousel>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-8 text-center text-[var(--color-text-muted)] border border-dashed border-[var(--color-border)] rounded-lg">
+                                    <Database className="w-8 h-8 opacity-20 mb-2" />
+                                    <p className="text-xs">A comunidade ainda não criou notas.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* --- STATE: ACTIVE SEARCH --- */}
+                {query.trim() && (
+                    <div className="space-y-4 animate-fadeIn">
+
+                        {/* 1. Wikipedia (Concept) - TOP PRIORITY */}
                         {wikiResults.map(wiki => (
                             <WikipediaCard key={wiki.id} wiki={wiki} />
                         ))}
-                    </div>
-                )}
 
-
-                {/* Interaction Alerts (Top Priority) */}
-                {interactionResults.length > 0 && (
-                    <div className="mb-4">
+                        {/* 2. Interactions */}
                         {interactionResults.map(inter => (
                             <InteractionAlert key={inter.id} interaction={inter} />
                         ))}
-                    </div>
-                )}
 
-                {/* Drug Monographs */}
-                {drugResults.length > 0 && (
-                    <div className="mb-4">
+                        {/* 3. Drug Monograph (OpenFDA) */}
                         {drugResults.map(drug => (
                             <DrugMonographCard key={drug.id} drug={drug} />
                         ))}
-                    </div>
-                )}
 
-                {/* Gadget: Community Notes */}
-                {notes.length > 0 && (
-                    <GadgetBox title="Notas da Comunidade" icon={<PenTool className="w-4 h-4 text-yellow-500" />} source="Health Guardian">
-                        <div className="space-y-2">
-                            {notes.map(note => (
-                                <div key={note.id} className="p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)] relative group">
-                                    <p className="text-xs text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">{note.text}</p>
-                                    <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-[var(--color-border)] opacity-70">
-                                        <span className="text-[10px] items-center flex gap-1">
-                                            {note.isPublic ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                                            {note.author}
-                                        </span>
-                                        <span className="text-[9px]">{new Date(note.timestamp).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </GadgetBox>
-                )}
-
-                {/* Gadget: Diagnostics (ICD) */}
-                {diagnosticResults.length > 0 && (
-                    <GadgetBox title="Diagnósticos (ICD-10/11)" icon={<Activity className="w-4 h-4 text-emerald-500" />} source="NLM / OMS">
-                        <ul className="space-y-2">
-                            {diagnosticResults.map((d) => (
-                                <li key={d.code} className="p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)]">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="text-xs text-[var(--color-text-primary)] font-bold">{d.title}</span>
-                                        <span className="text-[10px] bg-[var(--color-bg-dark)] text-[var(--color-text-secondary)] px-1.5 py-0.5 rounded border border-[var(--color-border)] font-mono shrink-0 ml-2">{d.code}</span>
-                                    </div>
-                                    <p className="text-[10px] text-[var(--color-text-secondary)] italic">{d.definition}</p>
-                                </li>
-                            ))}
-                        </ul>
-                    </GadgetBox>
-                )}
-
-                {/* Gadget: Literature (PubMed + Semantic) */}
-                {(pubmedResults.length > 0 || paperResults.length > 0) && (
-                    <GadgetBox title="Literatura Médica" icon={<BookOpen className="w-4 h-4 text-purple-500" />} source="PubMed / Semantic">
-                        <div className="space-y-3">
-                            {/* PubMed Section */}
-                            {pubmedResults.length > 0 && (
-                                <div className="space-y-2">
-                                    {pubmedResults.map(p => (
-                                        <div key={p.id} className="p-2 bg-[var(--color-bg-light)] border-l-2 border-blue-500 rounded-r text-xs">
-                                            <a href={p.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-400 hover:underline line-clamp-2 block mb-1">
-                                                {p.title} <ExternalLink className="w-2 h-2 inline ml-1" />
-                                            </a>
-                                            <p className="text-[var(--color-text-secondary)] text-[10px]">{p.authors} • {p.journal} • {p.pubdate.split(' ')[0]}</p>
-                                        </div>
+                        {/* 4. Diagnostics (ICD) */}
+                        {diagnosticResults.length > 0 && (
+                            <GadgetBox title="Diagnósticos (ICD-10)" icon={<Activity className="w-4 h-4 text-emerald-500" />} source="NLM">
+                                <ul className="space-y-2">
+                                    {diagnosticResults.map((d) => (
+                                        <li key={d.code} className="p-2 bg-[var(--color-bg-light)] rounded border border-[var(--color-border)]">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="text-xs text-[var(--color-text-primary)] font-bold">{d.title}</span>
+                                                <span className="text-[10px] bg-[var(--color-bg-dark)] text-[var(--color-text-secondary)] px-1.5 py-0.5 rounded border border-[var(--color-border)] font-mono shrink-0 ml-2">{d.code}</span>
+                                            </div>
+                                            <p className="text-[10px] text-[var(--color-text-secondary)] italic">{d.definition}</p>
+                                        </li>
                                     ))}
+                                </ul>
+                            </GadgetBox>
+                        )}
+
+                        {/* 5. Scientific Evidence (PubMed + Semantic) */}
+                        {(pubmedResults.length > 0 || paperResults.length > 0) && (
+                            <GadgetBox title="EVIDÊNCIAS CIENTÍFICAS" icon={<BookOpen className="w-4 h-4 text-purple-500" />} source="PUBMED / SEMANTIC">
+                                <div className="space-y-3">
+                                    {/* PubMed */}
+                                    {pubmedResults.length > 0 && (
+                                        <Carousel title="Artigos Recentes (PubMed)">
+                                            {pubmedResults.map(p => (
+                                                <div key={p.id} className="p-2 bg-[var(--color-bg-light)] border-l-2 border-blue-500 rounded-r text-xs hover:bg-[var(--color-bg-dark)] transition-colors group">
+                                                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-400 hover:underline line-clamp-2 block mb-1">
+                                                        {p.title} <ExternalLink className="w-2 h-2 inline ml-1 opacity-0 group-hover:opacity-100" />
+                                                    </a>
+                                                    <p className="text-[var(--color-text-secondary)] text-[10px]">{p.authors} • {p.journal} • {p.pubdate.split(' ')[0]}</p>
+                                                </div>
+                                            ))}
+                                        </Carousel>
+                                    )}
+
+                                    {/* Semantic Scholar */}
+                                    {paperResults.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h4 className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase">Semantic Scholar</h4>
+                                            {paperResults.map(p => (
+                                                <div key={p.id} className="p-2 bg-[var(--color-bg-light)] border-l-2 border-purple-500 rounded-r text-xs">
+                                                    <h4 className="font-semibold text-[var(--color-text-primary)] line-clamp-2">{p.title}</h4>
+                                                    <p className="text-[var(--color-text-secondary)] text-[10px] mt-1">{p.authors} • {p.year}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </GadgetBox>
+                        )}
 
-                            {/* Divider */}
-                            {pubmedResults.length > 0 && paperResults.length > 0 && <div className="h-px bg-[var(--color-border)]" />}
-
-                            {/* Semantic Scholar Section */}
-                            {paperResults.map(p => (
-                                <div key={p.id} className="p-2 bg-[var(--color-bg-light)] border-l-2 border-purple-500 rounded-r text-xs">
-                                    <h4 className="font-semibold text-[var(--color-text-primary)] line-clamp-2">{p.title}</h4>
-                                    <p className="text-[var(--color-text-secondary)] text-[10px] mt-1">{p.authors} • {p.year}</p>
+                        {/* No Results and Not Loading */}
+                        {
+                            !isLoading && drugResults.length === 0 && wikiResults.length === 0 && diagnosticResults.length === 0 && pubmedResults.length === 0 && paperResults.length === 0 && interactionResults.length === 0 && (
+                                <div className="p-4 text-center text-[var(--color-text-muted)] text-xs border border-dashed border-[var(--color-border)] rounded">
+                                    Nenhum resultado encontrado para "{query}".<br />Tente outro termo clínico.
                                 </div>
-                            ))}
-                        </div>
-                    </GadgetBox>
+                            )
+                        }
+                    </div >
                 )}
-
-
-
-                {!isLoading && !query && notes.length === 0 && (
-                    <div className="flex flex-col items-center justify-center p-8 text-center text-[var(--color-text-muted)] space-y-4">
-                        <Database className="w-12 h-12 opacity-20" />
-                        <p className="text-xs">Digite um termo clínico, nome de droga ou condição para pesquisar em múltiplas bases de dados.</p>
-                    </div>
-                )}
-
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

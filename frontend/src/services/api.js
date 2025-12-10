@@ -76,11 +76,11 @@ api.interceptors.request.use(
     if (config.headers.Authorization) {
       return config;
     }
-    
+
     // Tentar obter token do window.healthGuardianUtils se disponível
-    const token = window.healthGuardianUtils?.getToken() || 
-                  localStorage.getItem('hg_token');
-    
+    const token = window.healthGuardianUtils?.getToken() ||
+      localStorage.getItem('hg_token');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       if (DEBUG_API) {
@@ -88,7 +88,7 @@ api.interceptors.request.use(
       }
       return config;
     }
-    
+
     // Fallback: tentar obter do localStorage do Zustand
     const authStorage = localStorage.getItem('auth-storage');
     if (authStorage) {
@@ -117,21 +117,21 @@ api.interceptors.request.use(
 function retryRequest(error) {
   const config = error.config;
   config.__retryCount = config.__retryCount || 0;
-  
+
   if (config.__retryCount < 3) {
     config.__retryCount += 1;
     const delay = Math.pow(2, config.__retryCount) * 1000; // 2s, 4s, 8s
     if (DEBUG_API) {
       console.warn(`Retrying request in ${delay}ms (attempt ${config.__retryCount}/3):`, config.url);
     }
-    
+
     return new Promise(resolve => {
       setTimeout(() => {
         resolve(requestThrottler.throttle(() => api(config)));
       }, delay);
     });
   }
-  
+
   return Promise.reject(error);
 }
 
@@ -143,15 +143,15 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 429) {
       const config = error.config;
       config.__retryCount = config.__retryCount || 0;
-      
+
       if (config.__retryCount < 3) {
         config.__retryCount += 1;
         const delay = Math.pow(2, config.__retryCount) * 1000; // 2s, 4s, 8s
-        
+
         if (DEBUG_API) {
           console.warn(`Rate limited (429), retrying in ${delay}ms (attempt ${config.__retryCount}/3):`, config.url);
         }
-        
+
         return new Promise(resolve => {
           setTimeout(() => {
             resolve(requestThrottler.throttle(() => api(config)));
@@ -159,7 +159,7 @@ api.interceptors.response.use(
         });
       }
     }
-    
+
     // Handle network and resource errors with retry
     if (
       error.code === 'ECONNABORTED' ||
@@ -172,7 +172,7 @@ api.interceptors.response.use(
       }
       return retryRequest(error);
     }
-    
+
     // Handle server errors (5xx) with retry
     if (error.response && error.response.status >= 500) {
       if (DEBUG_API) {
@@ -180,19 +180,19 @@ api.interceptors.response.use(
       }
       return retryRequest(error);
     }
-    
+
     // Handle authentication errors
     if (error.response && error.response.status === 401) {
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       const isOnLoginPage = window.location.pathname === '/login';
-      
+
       if (!isLoginRequest && !isOnLoginPage) {
         localStorage.removeItem('auth-storage');
         localStorage.removeItem('hg_token');
         window.location.href = '/login';
       }
     }
-    
+
     // Don't log cancellation errors as they are expected behavior
     if (error.code === 'ERR_CANCELED' || error.name === 'AbortError') {
       if (DEBUG_API) {
@@ -200,7 +200,7 @@ api.interceptors.response.use(
       }
       return Promise.reject(error);
     }
-    
+
     // Log error details for debugging (excluding expected cancellations)
     if (DEBUG_API && error.response?.status !== 401) {
       console.error('API Error:', {
@@ -211,7 +211,7 @@ api.interceptors.response.use(
         message: error.message
       });
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -329,21 +329,21 @@ export const dynamicCalculatorService = {
   getCalculatorSchema: (calculatorId) => throttledApi.get(`/dynamic-calculators/${calculatorId}`),
   calculate: (calculatorId, inputs) => throttledApi.post(`/dynamic-calculators/${calculatorId}/calculate`, inputs),
   reloadSchemas: () => throttledApi.post('/dynamic-calculators/reload'),
-  
+
   // Unit conversion operations
   convertUnits: (conversionData) => throttledApi.post('/dynamic-calculators/convert/units', conversionData),
   getUnits: (dimension = null) => {
     const endpoint = dimension ? `/dynamic-calculators/units/${dimension}` : '/dynamic-calculators/units';
     return throttledApi.get(endpoint);
   },
-  
+
   // Analyte operations
   getAnalytes: (analyte = null) => {
     const endpoint = analyte ? `/dynamic-calculators/analytes/${analyte}` : '/dynamic-calculators/analytes';
     return throttledApi.get(endpoint);
   },
   getAnalyteDetails: (analyte) => throttledApi.get(`/dynamic-calculators/analytes/${analyte}/details`),
-  
+
   // Validation
   validateConversion: (validationData) => throttledApi.post('/dynamic-calculators/validate', validationData),
 };
@@ -361,12 +361,14 @@ export const templateService = {
 };
 
 export const alertService = {
-  getAll: () => throttledApi.get('/alerts'),
+  getAll: (config = {}) => throttledApi.get('/alerts', config),
   getById: (id) => throttledApi.get(`/alerts/${id}`),
   create: (data) => throttledApi.post('/alerts', data),
   update: (id, data) => throttledApi.put(`/alerts/${id}`, data),
   delete: (id) => throttledApi.delete(`/alerts/${id}`),
-  markAsDone: (id) => throttledApi.put(`/alerts/${id}`, { status: 'completed' }),
+  markAsRead: (id) => throttledApi.put(`/alerts/${id}/read`),
+  markAllAsRead: () => throttledApi.put('/alerts/mark-all-read'),
+  markAsDone: (id) => throttledApi.put(`/alerts/${id}/read`),
 };
 
 export const aiService = {
@@ -392,6 +394,7 @@ export const profileService = {
   addLifestyle: (patientId, data) => throttledApi.post(`/patients/${patientId}/lifestyle`, data),
   addCondition: (patientId, data) => throttledApi.post(`/patients/${patientId}/conditions`, data),
   updateCondition: (patientId, conditionId, data) => throttledApi.put(`/patients/${patientId}/conditions/${conditionId}`, data),
+  addVitalSigns: (patientId, data) => throttledApi.post(`/patients/${patientId}/vital-signs`, data),
 };
 
 /**
@@ -400,6 +403,18 @@ export const profileService = {
  */
 export const tagHistoryService = {
   get: (tagKey, params = {}) => throttledApi.get(`/tag-history/${encodeURIComponent(tagKey)}`, { params })
+};
+
+export const agendaService = {
+  getSlots: (params) => throttledApi.get('/agenda/slots', { params }),
+  createSlot: (data) => throttledApi.post('/agenda/slots', data),
+  updateSlot: (id, data) => throttledApi.put(`/agenda/slots/${id}`, data),
+  deleteSlot: (id) => throttledApi.delete(`/agenda/slots/${id}`),
+  getAppointments: (params) => throttledApi.get('/agenda/appointments', { params }),
+  getMyAppointments: (params) => throttledApi.get('/agenda/my-appointments', { params }),
+  createAppointment: (data) => throttledApi.post('/agenda/appointments', data),
+  updateAppointment: (id, data) => throttledApi.put(`/agenda/appointments/${id}`, data),
+  deleteAppointment: (id) => throttledApi.delete(`/agenda/appointments/${id}`),
 };
 
 export const exportService = {

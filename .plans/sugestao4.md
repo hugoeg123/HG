@@ -1,718 +1,558 @@
-Boa, agora ficou bem claro o escopo: **“Editar Perfil” como mini-WHO STEPS dentro do app**, versionado no tempo e sem engessar o futuro.
+Vou assumir aqui o papel de “chefe de protocolo” do app 😊
 
-Vou fazer 3 coisas:
+## 1. Escopo desta resposta
 
-1. **Refinar o seu prompt** para virar um “Prompt-Mestre / Especificação” usável direto com dev ou com agente de código.
-2. **Criar um PRD específico** para o módulo de Perfil do Paciente + Hábitos de Vida.
-3. **Definir uma “base de verdades”** (campos canônicos + regras) alinhada com OMS/WHO STEPS e com o seu modelo de prontuário.
+* **População:** adulto ≥18 anos, não gestante, em repouso, afebril, sem dor intensa.
+* **Uso:**
 
----
+  * validar **dados de perfil** preenchidos por pacientes;
+  * destacar valores em **registros profissionais**;
+  * definir a **faixa “verde” (normal)** dos sinais vitais.
+* **Fontes centrais (adulto):**
 
-## 1) Prompt aprimorado para o módulo “Editar Perfil”
+  * Cleveland Clinic – artigo de sinais vitais (tabela de normais para adultos).([Cleveland Clinic][1])
+  * Cleveland Clinic / Mayo Clinic – frequência cardíaca de repouso 60–100 bpm.([Cleveland Clinic][2])
+  * MedlinePlus / Mayo – temperatura corporal normal ~36,1–37,2 °C; febre ≥38 °C.([medlineplus.gov][3])
+  * NEWS2 (Royal College of Physicians) – faixa que zera a pontuação para FR, FC, PA, T.([rcp.ac.uk][4])
+  * Diretrizes Brasileiras de Hipertensão 2020 (SBC).([SciELO Brasil][5])
+  * Diretriz ACC/AHA 2017 de hipertensão (EUA).([professional.heart.org][6])
 
-> Use isso como prompt para dev / agente de código. Está escrito já pensando na stack atual: React + Vite + Tailwind + shadcn + Zustand no frontend, Node/Express/Sequelize no backend. ([GitHub][1])
-
----
-
-**Contexto**
-
-* Tela: `/patient/profile?tab=edit` → aba **“Editar Perfil”** já existe (Radix Tabs + shadcn UI).
-* Frontend: React 18 + Zustand + React Hook Form + Tailwind/shadcn. ([GitHub][1])
-* Backend: Node.js + Express + Sequelize + Postgres. ([GitHub][1])
-* Objetivo: criar um **formulário estruturado de Perfil do Paciente**, dividido em seções (divs), com:
-
-  * **Contact info muito sigilosa**
-  * **Identificação**
-  * **Antropometria**
-  * **Hábitos de vida (modelo WHO STEPS)**
-  * **Antecedentes (alérgicos, cirúrgicos, patológicos, gineco-obstétricos)**
-  * Cada seção salvável separadamente, com **percentual de preenchimento**.
-  * Dados de algumas seções (peso, antecedentes, hábitos) devem ser **versionados no tempo**, pois também podem ser atualizados pelo médico via prontuário.
+Textos como **Toronto Notes, Mayo Clinic, Semiologia Clínica (HC/FMUSP)** convergem, em essência, para os mesmos intervalos de normalidade; diferenças são muito pequenas (ex.: FR 12–18 vs 12–20).
 
 ---
 
-### 1.1. Estrutura da tela “Editar Perfil”
+## 2. Abreviações – português e inglês
 
-Dentro do tab `edit` da página de perfil do paciente, implementar **subdivisões visuais** (cards ou sections) nesta ordem:
+### Em português (BR)
 
-1. **Informações de Contato (Contato Pessoal e Emergência)**
+| Conceito                | Nome PT-BR                  | Abreviação PT     |
+| ----------------------- | --------------------------- | ----------------- |
+| Temperatura corporal    | Temperatura                 | **T** ou **Temp** |
+| Frequência cardíaca     | Frequência cardíaca         | **FC**            |
+| Frequência respiratória | Frequência respiratória     | **FR**            |
+| Pressão arterial        | Pressão arterial            | **PA**            |
+| Pressão art. sistólica  | Pressão arterial sistólica  | **PAS**           |
+| Pressão art. diastólica | Pressão arterial diastólica | **PAD**           |
+| Pressão art. média      | Pressão arterial média      | **PAM**           |
 
-   * Campos:
+### Em inglês (US)
 
-     * `phone_main` (celular principal — opcional, mas recomendado)
-     * `phone_emergency` (telefone de contato em caso de emergência — opcional)
-     * `email` (não editável se for o email de login — apenas exibir como read-only, com badge “Email da conta”)
-     * `first_name`
-     * `last_name`
-   * Requisitos:
-
-     * Destacar visualmente que essas informações são **altamente confidenciais**.
-     * Mostrar ícone e tooltip de privacidade (ex.: “Visível apenas para o próprio paciente e equipe assistente autorizada”).
-     * Permitir salvar essa seção separadamente (botão “Salvar contato”).
-
-2. **Identificação**
-
-   * Campos:
-
-     * `birth_date`
-     * `gender` (M/F/Outro/Não informar – mas tecnicamente armazenar algo flexível para futuro: `gender_identity` + `sex_assigned_at_birth` opcional)
-     * `ethnicity` (valores padronizados para Brasil: branco, preto, pardo, amarelo, indígena, outro, prefiro não informar)
-     * `occupation` (trabalho atual; string livre por enquanto)
-   * Requisitos:
-
-     * Também salvável separadamente.
-     * Parte desses campos pode ser **obrigatória** para completar o perfil (e entrar na % de preenchimento global).
-
-3. **Dados Antropométricos**
-
-   * Campos:
-
-     * `weight_kg` (peso atual em kg)
-     * `height_m` (altura em metros, formato 1.75)
-   * Requisitos:
-
-     * Salvar com **timestamp** (`observed_at`) e **origem** (`source = 'patient_profile'` ou `source = 'encounter'` etc) quando forem enviados.
-     * Backend deve **NÃO sobrescrever** histórico: criar um registro novo de “medida antropométrica” e atualizar um “snapshot atual” do paciente.
-     * Permitir que esses dados sejam também atualizados pelo médico via prontuário; o modelo deve suportar vários registros no tempo.
-
-4. **Hábitos de Vida (WHO STEPS-inspired)**
-   **Primeira camada:** 3 toggles “Sim/Não” que expandem sub-forms:
-
-   * **Tabagismo** — checkbox ou switch “Fumo ou já fumei?”
-
-     * Se “Não”: registrar `smoking_status = 'never'`.
-     * Se “Sim”: expandir campos:
-
-       * `smoking_status`: `'current'` ou `'former'`
-       * `cigarettes_per_day` (número)
-       * `years_smoked` (número)
-       * opcional: `years_since_quit` se ex-fumante
-     * Backend calcula e mantém `pack_years = (cigarettes_per_day / 20) * years_smoked`.
-
-   * **Álcool** — “Bebo bebidas alcoólicas?”
-
-     * Se “Não”: `drinks_per_week = 0`, sem binge.
-     * Se “Sim”: expandir:
-
-       * `drinks_per_week` (doses por semana; 1 dose ≈ 10–14 g etanol puro, alinhado a OMS/NIAAA). ([INAAA][2])
-       * `binge_last_30_days` (frequência de episódios de binge: 0, 1, 2–3, ≥4).
-
-         * Binge definido conforme OMS: ≥ 60 g etanol em uma ocasião (~6 doses). ([Organização Mundial da Saúde][3])
-
-   * **Exercício Físico** — “Pratico atividade física regular?”
-
-     * Se “Não”: `mod_minutes_per_week = 0`, `vig_minutes_per_week = 0`.
-     * Se “Sim”: expandir:
-
-       * `mod_minutes_per_week` (min/semana de atividade moderada)
-       * `vig_minutes_per_week` (min/semana de atividade vigorosa)
-       * opcional: `strength_days_per_week` (musculação/fortalecimento, 0–7)
-     * Regras:
-
-       * Front pode exibir label automático (ex.: “Atende recomendação OMS / AHA / não atende”) com base em:
-
-         * 150–300 min/sem moderado *ou* 75–150 min/sem vigoroso *ou* combinação equivalente (1 min vigoroso = 2 min moderado). ([PubMed][4])
-
-   * Todas essas variáveis ficam em um modelo `LifestyleSnapshot` versionado (timestamp + origem).
-
-5. **Antecedentes**
-
-   * Dividido em sub-seções:
-
-   **5.1. Alergias**
-
-   * Campo “Tem alergias relevantes?”
-
-     * Se “Não”: marca `has_allergies = false`.
-     * Se “Sim”: expandir:
-
-       * Lista de alergias (`allergies[]`):
-
-         * `substance` (texto)
-         * `reaction` (texto curto)
-         * `severity` (leve/moderada/grave)
-       * Esses dados devem ser mapeáveis para FHIR `AllergyIntolerance` futuramente.
-
-   **5.2. Antecedentes ginecológicos/obstétricos (somente se sexo feminino / gestante)**
-
-   * Perguntas chave (versão inicial):
-
-     * “Já esteve grávida?” (Sim/Não)
-
-       * Se Sim:
-
-         * `gravidity` (nº de gestações)
-         * `parity_normal` (nº partos vaginais)
-         * `parity_cesarean` (nº cesáreas)
-         * `abortions` (nº abortos)
-     * “Está gestando atualmente?” (Sim/Não)
-
-   **5.3. Antecedentes cirúrgicos**
-
-   * Lista:
-
-     * `surgery_name`
-     * `surgery_date` (ano ou data aproximada)
-     * `notes` (campo livre curto)
-
-   **5.4. Antecedentes patológicos / doenças crônicas**
-
-   * Lista de condições (mapeáveis a `#HD` no prontuário):
-
-     * `condition_name` (ex.: “Hipertensão arterial”, “Diabetes tipo 2”)
-     * `onset_date` (quando começou)
-     * `resolution_date` (opcional; se vazio → condição crônica)
-     * `notes`
-   * Backend deve:
-
-     * Guardar como objetos versionados (similar a FHIR `Condition` com `onset` e `abatement`).
-       Isso permite:
-
-       * saber **quando** o diagnóstico surgiu na vida do paciente
-       * se já foi resolvido ou é crônico.
-
-   **5.5. Medicações de uso contínuo**
-
-   * Lista:
-
-     * `drug_name`
-     * `dose`
-     * `schedule` (ex: “1x/dia”, “12/12h”)
-     * `indication` (curto)
-   * Esses dados serão importantes para reconciliação medicamentosa e interação futura.
+| Conceito                | Nome em inglês           | Abreviação EN    |
+| ----------------------- | ------------------------ | ---------------- |
+| Temperatura corporal    | Body temperature         | **Temp**, **BT** |
+| Frequência cardíaca     | Heart rate               | **HR**           |
+| Frequência respiratória | Respiratory rate         | **RR**           |
+| Pressão arterial        | Blood pressure           | **BP**           |
+| Pressão art. sistólica  | Systolic blood pressure  | **SBP**          |
+| Pressão art. diastólica | Diastolic blood pressure | **DBP**          |
+| Pressão art. média      | Mean arterial pressure   | **MAP**          |
 
 ---
 
-### 1.2. UX / comportamento de salvamento e progresso
+## 3. Faixa de normalidade (“verde”) – adulto
 
-* Cada **div/seção**:
+### 3.1 Temperatura (T / Temp / BT)
 
-  * tem seu próprio **botão “Salvar”** (ex.: “Salvar antropometria”, “Salvar hábitos de vida”).
-  * mostra um **indicador de progresso local** (ex.: “3/5 campos essenciais preenchidos (60%)”).
-* A tela inteira mostra um **progresso global** de perfil (ex.: barra “Perfil 72% completo”).
-* Salvamento:
+* **Faixa normal operacional do app (adulto, repouso):**
+  **36,1–37,2 °C** (via termômetro oral/timpânico ou equivalente bem calibrado).([medlineplus.gov][3])
+* **Pontos de corte relevantes para futuros alertas:**
 
-  * Front envia payload por **seção**, com endpoint específico ou campo `section` no body (`section: 'contact' | 'identification' | 'anthropometrics' | 'lifestyle' | 'history'`).
-  * Erros de uma seção **não quebram** as outras (tolerância a falha).
+  * **Febre:** ≥ **38,0 °C** (app pode tratar 37,3–37,9 °C como “zona amarela”).([medlineplus.gov][3])
+  * **Hipotermia:** < **35,0 °C** (alto risco; muitos protocolos urgência/UTI usam <35 °C como critério de gravidade).([CNIB][7])
 
 ---
 
-### 1.3. Requisitos de backend (alta-level)
+### 3.2 Frequência cardíaca (FC / HR)
 
-* Criar endpoints REST (exemplos):
+* **Faixa normal de repouso (adulto):**
+  **60–100 bpm** (Cleveland, Mayo, múltiplas fontes).([Cleveland Clinic][2])
+* **Notas para o app:**
 
-  * `GET /api/patients/:id/profile`
-    → retorna perfil completo, incluindo snapshots atuais de antropometria, hábitos e antecedentes.
+  * Atletas treinados podem ter FC 40–59 bpm sem patologia; ideal o app permitir flag “atleta” no perfil.
+  * **NEWS2** considera FC **51–90 bpm** como o intervalo totalmente neutro (0 pontos), tratando 91–110 como leve alteração.([rcp.ac.uk][4])
+  * Para **“verde” universal**, eu sugiro adotar:
 
-  * `PATCH /api/patients/:id/profile/contact`
+    * **FC 50–99 bpm** = normal operacional (sem destaque).
+    * FC 40–49 / 100–109 = amarelo; ≥110 ou <40 = vermelho (para próximas camadas de lógica).
 
-  * `PATCH /api/patients/:id/profile/identification`
+---
 
-  * `POST /api/patients/:id/anthropometrics` (cria NOVO registro de peso/altura com timestamp)
+### 3.3 Frequência respiratória (FR / RR)
 
-  * `POST /api/patients/:id/lifestyle` (cria snapshot de estilo de vida)
+* Fontes de fisiologia clínica + Cleveland Clinic + guias de observação adulta convergem para **12–20 irpm** como faixa habitual.([Geeky Medics][8])
+* **NEWS2** define **12–20 rpm** como o intervalo que rende 0 pontos (normal).([rcp.ac.uk][4])
 
-  * `POST /api/patients/:id/conditions` / `PUT` / `DELETE` (antecedentes patológicos)
+> **Faixa normal operacional para o app:**
+> **FR 12–20 irpm** em repouso, adulto acordado.
 
-  * `POST /api/patients/:id/allergies` / `PUT` / `DELETE`
+Para lógica futura:
 
-  * `POST /api/patients/:id/medications` / `PUT` / `DELETE`
+* 9–11 ou 21–24 → amarelo.
+* ≤8 ou ≥25 → vermelho/alarme (NEWS2).([rcp.ac.uk][4])
 
-* Cada entidade temporal (peso, lifestyle, condição) deve seguir o padrão:
+---
 
-  ```ts
+### 3.4 Pressão arterial (PA / BP, PAS/SBP, PAD/DBP)
+
+Aqui temos a maior diferença **Brasil x EUA**, então vou separar em:
+
+#### 3.4.1 O que é “normal” para o nosso app (faixa verde)
+
+* Para **adulto em repouso**, usando Cleveland Clinic e convergência das diretrizes:
+
+  * **PAS (SBP): 90–120 mmHg**
+  * **PAD (DBP): 60–80 mmHg**([Cleveland Clinic][1])
+
+Essa faixa:
+
+* Fica **acima do limiar de hipotensão** (≈90/60).([Cleveland Clinic][1])
+* Está dentro de **“ótimo”/“normal”** tanto para ACC/AHA quanto para SBC.
+
+**Para o app (verde):**
+
+* **PAS 90–120 mmHg e PAD 60–80 mmHg**
+
+  * Dentro disso → texto permanece sem destaque.
+  * Fora disso → amarelo/vermelho conforme graus que vocês definirem com base nas diretrizes.
+
+#### 3.4.2 Diferenças de classificação BR x EUA (importante para documentação)
+
+**Brasil – Diretriz Brasileira de HAS 2020 (SBC)** – medida em consultório, ≥18 anos:([SciELO Brasil][5])
+
+| Classificação SBC 2020 (consultório) | PAS (mmHg) |   PAD (mmHg) |
+| ------------------------------------ | ---------: | -----------: |
+| **Ótima (optimum BP)**               |       <120 |          <80 |
+| **Normal**                           |    120–129 |   e/ou 80–84 |
+| **Pré-hipertensão**                  |    130–139 |   e/ou 85–89 |
+| **HAS estágio 1**                    |    140–159 |   e/ou 90–99 |
+| **HAS estágio 2**                    |    160–179 | e/ou 100–109 |
+| **HAS estágio 3**                    |       ≥180 |    e/ou ≥110 |
+
+> **Diagnóstico de hipertensão (Brasil):**
+> Em geral **PA ≥140/90 mmHg** em medidas repetidas em consultório, com alvos terapêuticos em torno de <130/80 em grupos de maior risco.
+
+---
+
+**EUA – ACC/AHA 2017 (ainda base dos updates recentes)**:([professional.heart.org][6])
+
+| Categoria ACC/AHA 2017 | PAS (mmHg) | PAD (mmHg) |
+| ---------------------- | ---------: | ---------: |
+| **Normal**             |       <120 |      e <80 |
+| **Elevated**           |    120–129 |      e <80 |
+| **HAS estágio 1**      |    130–139 |   ou 80–89 |
+| **HAS estágio 2**      |       ≥140 |     ou ≥90 |
+
+> **Diagnóstico de hipertensão (EUA):**
+> **PA ≥130/80 mmHg** já é classificado como hipertensão; alvo de tratamento usual <130/80.([professional.heart.org][6])
+
+**Resumo da diferença crítica para o design do app:**
+
+* **Faixa 130–139/85–89:**
+
+  * **Brasil:** “pré-hipertensão” (ainda não HAS estabelecida).([SciELO Brasil][5])
+  * **EUA:** já é **hipertensão estágio 1**.([professional.heart.org][6])
+* **Por isso**, para não subestimar risco no app global, é prudente:
+
+  * Tratar **130–139/80–89** como **zona amarela de alerta** (pré-hipertensão / hipertensão estágio 1 conforme o país).
+  * Reservar “verde” apenas para **<130/<80**, e “ótimo” para 90–120/60–80, como sugerido acima.
+
+---
+
+## 4. “Mapa” de variáveis para o time de programação
+
+### 4.1 Tabela humana
+
+| ID técnico (sugestão) | Label PT-BR             | Label EN-US              | Abrev PT | Abrev EN | Faixa verde adulto (18+, repouso) | Unidade | Fontes principais                                                  |
+| --------------------- | ----------------------- | ------------------------ | -------: | -------: | --------------------------------- | ------: | ------------------------------------------------------------------ |
+| `temp_c`              | Temperatura corporal    | Body temperature         | T / Temp |  Temp/BT | **36,1 – 37,2**                   |      °C | MedlinePlus, Mayo, Cleveland([medlineplus.gov][3])                 |
+| `hr_bpm`              | Frequência cardíaca     | Heart rate               |       FC |       HR | **50 – 99**                       |     bpm | Cleveland, Mayo, NEWS2 (faixa neutra 51–90)([Cleveland Clinic][2]) |
+| `rr_bpm`              | Frequência respiratória | Respiratory rate         |       FR |       RR | **12 – 20**                       |    irpm | GeekyMedics, NEWS2, Cleveland([Geeky Medics][8])                   |
+| `sbp_mmHg`            | Pressão art. sistólica  | Systolic blood pressure  |      PAS |      SBP | **90 – 120**                      |    mmHg | Cleveland, SBC 2020, ACC/AHA 2017([Cleveland Clinic][1])           |
+| `dbp_mmHg`            | Pressão art. diastólica | Diastolic blood pressure |      PAD |      DBP | **60 – 80**                       |    mmHg | Mesmas acima                                                       |
+
+> **Observação operacional:** para pacientes que informarem ser atletas, idosos frágeis ou em uso de betabloqueador, faz sentido modular os thresholds de FC e PA (camada futura de personalização).
+
+---
+
+### 4.2 Versão em JSON (pronta para o time dev usar como seed)
+
+```json
+[
   {
-    id,
-    patient_id,
-    source,          // 'patient_profile', 'doctor_note', 'import', etc.
-    recorded_by,     // user_id do médico ou patient_id no caso de auto-registro
-    recorded_at,     // momento do registro no sistema
-    effective_at,    // quando aquela info passou a ser verdadeira (p.ex. início da condição)
-    ...dados_clínicos...
+    "id": "temp_c",
+    "label_pt": "Temperatura corporal",
+    "label_en": "Body temperature",
+    "abbr_pt": ["T", "Temp"],
+    "abbr_en": ["Temp", "BT"],
+    "age_group": "adulto >=18 anos, não gestante",
+    "range_green": { "min": 36.1, "max": 37.2 },
+    "unit": "°C",
+    "sources": [
+      "MedlinePlus - Body temperature norms, 2025",
+      "Mayo Clinic - Fever: first aid",
+      "Cleveland Clinic - Vital Signs"
+    ],
+    "clinical_notes_pt": "Considerar febre >= 38,0 °C; 37,3-37,9 °C zona amarela."
+  },
+  {
+    "id": "hr_bpm",
+    "label_pt": "Frequência cardíaca em repouso",
+    "label_en": "Resting heart rate",
+    "abbr_pt": ["FC"],
+    "abbr_en": ["HR"],
+    "age_group": "adulto >=18 anos, não gestante",
+    "range_green": { "min": 50, "max": 99 },
+    "unit": "bpm",
+    "sources": [
+      "Cleveland Clinic - Heart Rate: Normal Rates",
+      "Mayo Clinic - What's a normal resting heart rate?",
+      "NEWS2 - faixa 0 pontos (51-90 bpm)"
+    ],
+    "clinical_notes_pt": "FC 40-49 ou 100-109: alerta amarelo; <40 ou >=110: alerta vermelho."
+  },
+  {
+    "id": "rr_bpm",
+    "label_pt": "Frequência respiratória em repouso",
+    "label_en": "Respiratory rate",
+    "abbr_pt": ["FR"],
+    "abbr_en": ["RR"],
+    "age_group": "adulto >=18 anos, não gestante",
+    "range_green": { "min": 12, "max": 20 },
+    "unit": "irpm",
+    "sources": [
+      "Cleveland Clinic - Vital Signs (respiratory rate 12-18)",
+      "NEWS2 - faixa 0 pontos (12-20)",
+      "Guia de exame físico/OSCE (12-20)"
+    ],
+    "clinical_notes_pt": "9-11 ou 21-24: alerta amarelo; <=8 ou >=25: alerta vermelho (NEWS2)."
+  },
+  {
+    "id": "sbp_mmHg",
+    "label_pt": "Pressão arterial sistólica (consultório / repouso)",
+    "label_en": "Systolic blood pressure",
+    "abbr_pt": ["PAS"],
+    "abbr_en": ["SBP"],
+    "age_group": "adulto >=18 anos, não gestante",
+    "range_green": { "min": 90, "max": 120 },
+    "unit": "mmHg",
+    "sources": [
+      "Cleveland Clinic - Vital Signs (90/60 a 120/80)",
+      "Diretrizes Brasileiras de HAS 2020 - classificação e BP ótima",
+      "ACC/AHA 2017 - categorias de PA"
+    ],
+    "clinical_notes_pt": "SBP <90 = hipotensão; 121-129 = normal/elevada; 130-139 = pré-hipertensão (BR) / HAS estágio 1 (EUA)."
+  },
+  {
+    "id": "dbp_mmHg",
+    "label_pt": "Pressão arterial diastólica (consultório / repouso)",
+    "label_en": "Diastolic blood pressure",
+    "abbr_pt": ["PAD"],
+    "abbr_en": ["DBP"],
+    "age_group": "adulto >=18 anos, não gestante",
+    "range_green": { "min": 60, "max": 80 },
+    "unit": "mmHg",
+    "sources": [
+      "Cleveland Clinic - Vital Signs (90/60 a 120/80)",
+      "Diretrizes Brasileiras de HAS 2020",
+      "ACC/AHA 2017"
+    ],
+    "clinical_notes_pt": "DBP <60 = hipotensão relativa; 81-84 = normal alto (BR); 80-89 = HAS estágio 1 (EUA)."
   }
-  ```
-
-* **Nunca apagar** registros antigos — sempre criar nova linha e marcar a anterior como desatualizada se precisar.
-
----
-
-## 2) PRD adicional — Módulo “Perfil do Paciente & Hábitos de Vida”
-
-### 2.1. Visão geral
-
-**Produto:**
-Módulo de **Perfil do Paciente** dentro do Health Guardian que:
-
-* Centraliza informações pessoais, hábitos WHO STEPS e antecedentes. ([Organização Mundial da Saúde][5])
-* Gera uma **“baseline epidemiológica”** por paciente, pronta para análise longitudinal e uso em IA/RAG.
-* Permite **autogerenciamento** (paciente editando pelo app) e **enriquecimento pelo médico** no prontuário.
-
----
-
-### 2.2. Objetivos
-
-1. **Clínico:**
-
-   * Capturar fatores de risco não comunicáveis (tabagismo, álcool, atividade física, dieta, obesidade) segundo OMS. ([Organização Mundial da Saúde][5])
-2. **Produto:**
-
-   * Aumentar engajamento do paciente no app ao permitir edição guiada e visualmente clara.
-3. **Dados/IA:**
-
-   * Criar base estruturada e padronizada para:
-
-     * modelos de risco cardiovascular,
-     * personalização de recomendações,
-     * estudos epidemiológicos internos.
-
----
-
-### 2.3. Escopo IN
-
-* Tela `/patient/profile?tab=edit` com seções descritas acima.
-* Salvamento seção-a-seção, com percentuais.
-* Novo modelo de dados para:
-
-  * **antropometria versionada**,
-  * **lifestyle snapshots** WHO-like,
-  * **antecedentes** com onset e resolução.
-* API REST para leitura e escrita.
-* Integração com prontuário:
-
-  * peso, altura e antecedentes podem ser atualizados também por eventos clínicos (notas, evoluções, calculadoras).
-
-### 2.4. Escopo OUT (v1)
-
-* Nenhum cálculo de risco CV complexo (SCORE2, Framingham etc).
-* Nenhuma integração externa (wearables, SIGA, operadoras).
-* Nenhum fluxo de aprovação médica para alterações do paciente (pode vir no v2).
-
----
-
-### 2.5. Requisitos funcionais chave
-
-1. **RF-01 — Visualização e edição de contato**
-2. **RF-02 — Visualização e edição de identificação**
-3. **RF-03 — Registro e histórico de antropometria**
-4. **RF-04 — Registro de hábitos de vida WHO STEPS** (tabaco, álcool, atividade física, dieta básica). ([Organização Mundial da Saúde][5])
-5. **RF-05 — Registro de antecedentes alérgicos, cirúrgicos e patológicos**
-6. **RF-06 — Registro de antecedentes gineco-obstétricos (quando aplicável)**
-7. **RF-07 — Percentual de preenchimento por seção e global**
-8. **RF-08 — Versionamento com timestamp e origem dos dados**
-9. **RF-09 — API consistente e segura (autenticação, autorização, escopos)**
-
----
-
-### 2.6. Requisitos não funcionais
-
-* **Segurança:**
-
-  * Seguir LGPD, criptografar campos sensíveis em repouso (telefone, email).
-  * Logs de acesso às seções de perfil.
-* **Escalabilidade:**
-
-  * Modelos de dados desenhados para milhões de linhas de antropometria/lifestyle.
-* **Observabilidade:**
-
-  * Logging estruturado no backend (já existe Winston), adicionar logs de “profile_update”. ([GitHub][1])
-
----
-
-### 2.7. Critérios de aceite (v1)
-
-* Usuário paciente consegue:
-
-  * ver e editar **cada seção** independentemente,
-  * ver uma barra de progresso do perfil,
-  * salvar sem que erro em uma seção derrube as outras.
-* No banco:
-
-  * cada atualização de peso/altura gera **nova linha** em tabela específica,
-  * cada preenchimento de hábitos gera novo `LifestyleSnapshot`,
-  * nenhum dado é sobrescrito destrutivamente.
-* É possível, via SQL simples, obter:
-
-  * “peso mais recente do paciente X”,
-  * “trajetória de IMC nos últimos 12 meses”,
-  * “pacientes com tabagismo atual e > 20 pack-years”.
-
----
-
-## 3) Base de Verdades (campos canônicos + regras clínicas)
-
-Aqui está **a “fonte de verdade”** que você pode colocar num doc interno ou até em `docs/PROFILE-SPEC.md`.
-
-### 3.1. Antropometria
-
-* **weight_kg**
-
-  * Unidade: quilogramas.
-  * Origem: paciente ou médico.
-  * Uso: IMC, cálculo de gasto energético a partir de MET (kcal = MET × kg × horas).
-* **height_m**
-
-  * Unidade: metros (ex: 1.75).
-* **bmi = weight_kg / (height_m²)**
-
-  * Classificação OMS: <18.5 baixo peso, 18.5–24.9 normal, 25–29.9 sobrepeso, ≥30 obesidade. ([Organização Mundial da Saúde][6])
-
-### 3.2. Tabagismo
-
-* **smoking_status**
-
-  * `'never' | 'former' | 'current'`
-* **cigarettes_per_day**
-
-  * Número inteiro.
-* **years_smoked**
-
-  * Número (anos).
-* **pack_years = (cigarettes_per_day / 20) × years_smoked**
-
-  * Variável padrão em coortes e diretrizes (câncer de pulmão, DPOC etc).
-* **years_since_quit** (se ex-fumante)
-
-  * Útil para modelagem de redução de risco ao longo do tempo.
-
-### 3.3. Álcool
-
-* **drinks_per_week**
-
-  * Doses padrão por semana.
-  * 1 drink ~ 10–14 g de etanol puro (OMS/CDC/NIAAA). ([INAAA][2])
-* **binge_last_30_days**
-
-  * `'none' | '1' | '2-3' | '4+'`
-  * Binge (OMS): ≥ 60 g etanol em uma ocasião (~6 doses). ([Organização Mundial da Saúde][3])
-
-### 3.4. Atividade física
-
-* **mod_minutes_per_week**
-* **vig_minutes_per_week**
-* **equivalent_moderate_minutes = mod_minutes_per_week + 2 * vig_minutes_per_week**
-* **meets_who_pa_guidelines (bool)**:
-
-  * true se `equivalent_moderate_minutes ≥ 150`. ([PubMed][4])
-
-Opcional (quando for fazer gasto energético):
-
-* **met_minutes_per_week = 4 * mod_minutes_per_week + 8 * vig_minutes_per_week**
-  (4 METs p/ moderado, 8 p/ vigoroso — aproximação padrão em questionários WHO GPAQ). ([cdn.who.int][7])
-
-### 3.5. Dieta simplificada
-
-* **ultraprocessed_portions_per_day**
-
-  * Categorias: 0–1, 2–3, ≥4 (≥4 associado a maior risco CV/metabólico na literatura baseada em NOVA/OMS). ([iris.paho.org][8])
-* **fruit_veg_portions_per_day**
-
-  * Categorias: 0–1, 2–3, ≥4 (≥4–5 porções/dia como alvo de proteção). ([Organização Mundial da Saúde][6])
-
-### 3.6. Sono
-
-* **sleep_hours_per_night**
-* **sleep_quality**
-
-  * `'good' | 'fair' | 'poor'`
-
-### 3.7. Estresse
-
-* **perceived_stress_level**
-
-  * `'low' | 'moderate' | 'high'`
-  * Baseado em single-item de estresse percebido (compatível com WHO well-being tools).
-
-### 3.8. Antecedentes
-
-* **Allergies**
-
-  * `allergies[]`:
-
-    * `substance`, `reaction`, `severity`, `recorded_at`, `source`.
-* **Conditions (antecedentes patológicos)**
-
-  * `conditions[]`:
-
-    * `condition_name` (depois mapeável para SNOMED/ICD),
-    * `onset_date`,
-    * `resolution_date` (nullable),
-    * `status` (`'active' | 'resolved'`),
-    * `recorded_at`, `source`.
-* **Surgeries**
-
-  * `surgeries[]`: `name`, `date`, `notes`, `source`.
-* **Medications**
-
-  * `medications[]`: `drug_name`, `dose`, `schedule`, `indication`, `recorded_at`, `source`.
-faça as adaptações necessarias (não quero destruir o que ja existe em favor do rigor pelo banco de daos aqui sugerido)
-Boa pergunta — vale checar mesmo em vez de só “acreditar”.
-
-### 1. Está certinho pro HG?
-
-**Em alto nível: sim, está compatível com o HG atual**, porque:
-
-* Backend que usei como base = **Node.js + Express + Sequelize + Postgres** → exatamente o que está no `backend` do repo. ([GitHub][1])
-* Frontend que considerei = **React 18 + Vite + TypeScript + React Router + Zustand + Tailwind + React Hook Form** → exatamente a stack descrita no `frontend`. ([GitHub][1])
-* Padrão de comunicação = **API REST `/api/*`** → mesmo padrão descrito no README. ([GitHub][1])
-
-O que eu tinha colocado que **não aparece explicitamente no README**:
-
-* Mencionei **shadcn/ui** como se fosse parte oficial do stack.
-
-  * No README, você cita apenas Tailwind + Lucide + React Hook Form, não shadcn. ([GitHub][1])
-  * Como eu lembro de você usar componentes nesse estilo, dá pra manter como *opcional*, mas **não vou assumir como hard dependency no PRD**.
-
-O resto (conceito de dividir em seções, salvar por div, versionar antropometria e hábitos, usar WHO STEPS/OMS como base etc.) é tudo compatível com a arquitetura atual e não quebra nada.
-
-Então:
-
-* **Nada que eu propus conflita com o HG**.
-* Mas dá para deixar o **prompt e o PRD ainda mais “aderentes ao repositório”** removendo suposições extras (tipo shadcn) e usando uma nomenclatura mais neutra.
-
-A seguir eu te mando a **versão 2 — ajustada especificamente pro HG**, pra você copiar e colar no Notion/.plans/PRD onde quiser.
-
----
-
-## 2. Prompt v2 — alinhado ao repo `HG`
-
-Usa apenas o que já está descrito no README + o que você pediu.
-
-```txt
-Contexto geral
-
-Repositório: https://github.com/hugoeg123/HG
-
-Arquitetura:
-- Backend: Node.js + Express + Sequelize + PostgreSQL (pasta /backend)
-- Frontend: React 18 + Vite + TypeScript + React Router v6 + Zustand + React Hook Form + Tailwind CSS + Lucide Icons (pasta /frontend)
-- API REST: endpoints sob /api/*
-
-Tela alvo:
-- Rota: /patient/profile?tab=edit
-- Há uma aba "Editar Perfil" (Radix Tabs) já existente, com um botão com título "Editar Perfil".
-- Objetivo: dentro desta aba, implementar um formulário de edição de perfil do paciente, dividido em seções ("divs") independentes, com salvamento separado e indicador de progresso.
-
-Requisitos de UX/funcionalidade
-
-Na aba "Editar Perfil", criar as seguintes seções (em cards ou blocos separados):
-
-1) Contato e dados de conta (alta confidencialidade)
-   - Campos:
-     - phone_main (celular principal) – opcional, mas recomendado
-     - phone_emergency (contato de emergência) – opcional
-     - email (email da conta; apenas leitura se for o login)
-     - first_name
-     - last_name
-   - Requisitos:
-     - Destacar visualmente sigilo/privacidade (ícone + tooltip).
-     - Botão "Salvar contato" que salva só essa seção.
-     - Não deixar erro aqui quebrar outras seções.
-
-2) Identificação
-   - Campos:
-     - birth_date
-     - gender (M/F/Outro/Prefiro não informar) – deixar estrutura aberta para futura expansão
-     - ethnicity (branco, preto, pardo, amarelo, indígena, outro, prefiro não informar)
-     - occupation (trabalho atual)
-   - Requisitos:
-     - Botão "Salvar identificação".
-     - Parte desses campos pode contar para % de perfil completo.
-
-3) Antropometria (peso/altura)
-   - Campos:
-     - weight_kg (peso em kg)
-     - height_m (altura em metros, ex: 1.75)
-   - Requisitos:
-     - Ao salvar, não sobrescrever valores antigos.
-     - Criar um registro temporal de antropometria (ex.: tabela patient_anthropometrics) com:
-       - patient_id
-       - weight_kg
-       - height_m
-       - recorded_at (quando foi registrado no sistema)
-       - effective_at (quando passou a valer; pode ser igual ao recorded_at)
-       - source (ex.: 'patient_profile', 'encounter_note')
-       - recorded_by (id do usuário médico ou flag indicando auto-registro pelo paciente)
-     - Backend deve expor:
-       - último snapshot (peso/altura atuais) no GET /api/patients/:id/profile
-       - histórico completo em um endpoint separado (por exemplo GET /api/patients/:id/anthropometrics)
-
-4) Hábitos de vida (modelo WHO STEPS / OMS)
-   Na primeira camada, exibir 3 switches do tipo "Sim/Não":
-   - "Fumo ou já fumei?"
-   - "Bebo bebidas alcoólicas?"
-   - "Pratico atividade física regularmente?"
-
-   Cada um abre sub-formulário quando marcado como "Sim":
-
-   4.1) Tabagismo
-   - Campos:
-     - smoking_status: 'never' | 'former' | 'current'
-     - cigarettes_per_day (número)
-     - years_smoked (número)
-     - years_since_quit (opcional, se ex-fumante)
-   - Cálculo:
-     - pack_years = (cigarettes_per_day / 20) * years_smoked
-   - Requisitos:
-     - Se o usuário marcar que nunca fumou, registrar smoking_status='never' e ignorar os demais.
-     - Os dados devem ir para um snapshot de estilo de vida (tabela patient_lifestyle, por exemplo).
-
-   4.2) Álcool
-   - Campos:
-     - drinks_per_week (nº de doses por semana; 1 dose ~ 10–14g etanol)
-     - binge_last_30_days (categorias: 'none' | '1' | '2-3' | '4+')
-   - Regras:
-     - Se "não bebo", salvar drinks_per_week=0 e binge_last_30_days='none'.
-
-   4.3) Atividade física
-   - Campos:
-     - mod_minutes_per_week (minutos/sem de atividade moderada)
-     - vig_minutes_per_week (minutos/sem de atividade vigorosa)
-     - strength_days_per_week (dias/sem de musculação/fortalecimento, 0–7)
-   - Cálculos opcionais no backend:
-     - equivalent_moderate_minutes = mod_minutes_per_week + 2 * vig_minutes_per_week
-     - meets_who_guidelines = equivalent_moderate_minutes >= 150
-   - Regras:
-     - Se marcar "não me exercito", setar todos como 0.
-
-   Todos esses dados podem ser agrupados em um modelo temporal:
-   - patient_lifestyle_snapshots (ou similar) com:
-     - patient_id
-     - smoking_status, cigarettes_per_day, years_smoked, pack_years, years_since_quit
-     - drinks_per_week, binge_last_30_days
-     - mod_minutes_per_week, vig_minutes_per_week, strength_days_per_week, equivalent_moderate_minutes, meets_who_guidelines
-     - recorded_at, effective_at, source, recorded_by
-
-5) Antecedentes
-   5.1) Alergias
-   - Campo "Tem alergias relevantes?"
-     - Se "Sim", permitir listar:
-       - allergies[]: { substance, reaction, severity, notes }
-   - Dados mapeáveis no futuro para AllergyIntolerance (FHIR).
-
-   5.2) Gineco-obstétrico (apenas se paciente for mulher ou marcar opção correspondente)
-   - Campos:
-     - já esteve grávida? (sim/não)
-     - gravidity (nº gestações)
-     - parity_normal (nº partos vaginais)
-     - parity_cesarean (nº cesáreas)
-     - abortions (nº abortos)
-     - currently_pregnant (sim/não)
-
-   5.3) Cirúrgicos
-   - Lista de cirurgias:
-     - surgeries[]: { name, date (ideal ano ou data aproximada), notes }
-
-   5.4) Patológicos (doenças/condições)
-   - Lista de condições:
-     - conditions[]: {
-         condition_name,
-         onset_date,
-         resolution_date (opcional),
-         status ('active' | 'resolved'),
-         notes
-       }
-   - Esses dados devem ser compatíveis com o modelo de "Hipóteses Diagnósticas" (#HD) usado no prontuário.
-   - Importante: guardar onset_date e resolution_date, e não apenas "tem/não tem".
-
-   5.5) Medicações de uso contínuo
-   - Lista:
-     - medications[]: {
-         drug_name,
-         dose,
-         schedule,   // ex: "1x/dia", "12/12h"
-         indication,
-         notes
-       }
-
-   Cada sub-seção de antecedentes deve ter seu próprio botão de salvar e não interferir nas outras.
-
-Indicadores de progresso
-
-- Cada seção terá:
-  - um cálculo simples de "campos essenciais preenchidos / campos essenciais totais", para exibir uma barra ou badge de progresso (ex.: "60% desta seção").
-- A tela inteira:
-  - um percentual global baseado em um conjunto mínimo de campos chave (ex.: contato, identificação, antropometria, ao menos um bloco de hábitos, se aplicável antecedentes).
-
-API e backend (alto nível)
-
-- Adicionar endpoints REST seguindo o padrão já usado no backend (/api/...):
-  - GET /api/patients/:id/profile            → retorna perfil completo agregando todas as seções e os snapshots atuais.
-  - PATCH /api/patients/:id/profile/contact  → atualiza só a seção de contato.
-  - PATCH /api/patients/:id/profile/identification
-  - POST /api/patients/:id/anthropometrics   → cria nova linha de antropometria.
-  - POST /api/patients/:id/lifestyle         → cria novo snapshot de hábitos de vida.
-  - CRUD endpoints para allergies, conditions, surgeries, medications (podem ser agrupados em /api/patients/:id/history).
-
-- Padrão de versionamento:
-  - Nunca apagar registros antigos de antropometria ou lifestyle.
-  - Sempre criar nova linha com recorded_at + effective_at + source.
-  - Manter um "view" ou método helper no backend que devolve o snapshot mais recente para exibir no perfil.
-
-Tecnologias a usar (respeitando stack atual):
-
-- Frontend:
-  - React + TypeScript
-  - React Hook Form para os formulários das seções
-  - Zustand para gerenciar o estado de carregamento e progresso (opcional)
-  - Tailwind CSS para layout e estilos
-  - Ícones Lucide para feedback visual (salvo, erro, privacidade)
-
-- Backend:
-  - Sequelize para criar os novos models/migrations (patient_anthropometrics, patient_lifestyle_snapshots, etc.)
-  - Validar dados com a mesma abordagem já usada (Joi ou equivalente).
-  - Seguir padrão de controllers/routers já existente.
-
-Objetivo principal
-
-- Implementar a aba "Editar Perfil" como um mini-WHO STEPS: dados de contato, identificação, antropometria, hábitos de vida e antecedentes, todos versionados no backend, salváveis por seção e seguros.
-- Fazer isso de forma incremental, sem quebrar o que já funciona no app, mantendo compatibilidade com o estilo de código atual do HG.
+]
 ```
 
 ---
 
-## 3. Base de verdades (resumo rápido)
+Se você quiser, na próxima rodada posso **expandir para pediatria** usando PALS + Diretrizes Brasileiras (e aquela tabela da sua imagem) e já desenhar o “semáforo” completo (verde/amarelo/vermelho) para cada faixa etária.
 
-Pra não te entupir de texto de novo, deixo a **essência**:
+[1]: https://my.clevelandclinic.org/health/articles/10881-vital-signs "Vital Signs"
+[2]: https://my.clevelandclinic.org/health/diagnostics/heart-rate?utm_source=chatgpt.com "Heart Rate: Normal Rates & What To Know"
+[3]: https://medlineplus.gov/ency/article/001982.htm?utm_source=chatgpt.com "Body temperature norms: MedlinePlus Medical Encyclopedia"
+[4]: https://www.rcp.ac.uk/media/alxev00t/news2-chart-1_the-news-scoring-system_0_0.pdf?utm_source=chatgpt.com "news2-chart-1_the-news-scoring-system_0_0.pdf"
+[5]: https://www.scielo.br/j/abc/a/Z6m5gGNQCvrW3WLV7csqbqh/?lang=en "SciELO  Brasil - Diretrizes Brasileiras de Hipertensão Arterial – 2020 Diretrizes Brasileiras de Hipertensão Arterial – 2020 "
+[6]: https://professional.heart.org/en/science-news/-/media/597477e610c64866bdde138e1729066d.ashx "Slide Set: 2017 ACC/AHA/AAPA/ABC/ACPM/AGS/ APhA/ASH/ASPC/NMA/PCNA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults"
+[7]: https://www.ncbi.nlm.nih.gov/books/NBK602290/?utm_source=chatgpt.com "Details of each early warning score - NCBI - NIH"
+[8]: https://geekymedics.com/basic-observations-vital-signs-osce/?utm_source=chatgpt.com "Measuring Basic Observations (Vital Signs) - OSCE Guide"
+Vou direto ao ponto e focar em **pediatria**, como continuação do que já definimos para adultos.
+A ideia é: esses valores viram o **“verde”** do semáforo; tudo fora disso o sistema marca como **alerta** (amarelo/vermelho).
 
-* **Antropometria**
+---
 
-  * Campos canônicos: `weight_kg`, `height_m`, `bmi`, `recorded_at`, `effective_at`, `source`, `recorded_by`.
+## 1. Abreviações – PT-BR e EN
 
-* **Tabagismo**
+**Variáveis principais**
 
-  * `smoking_status`, `cigarettes_per_day`, `years_smoked`, `pack_years`, `years_since_quit`.
+* **Temperatura**
 
-* **Álcool**
+  * PT-BR: Temperatura (geralmente axilar)
+  * EN: Body temperature (BT, “T”)
 
-  * `drinks_per_week`, `binge_last_30_days`.
+* **Frequência cardíaca**
 
-* **Atividade física**
+  * PT-BR: FC – Frequência Cardíaca
+  * EN: HR – Heart Rate
 
-  * `mod_minutes_per_week`, `vig_minutes_per_week`, `strength_days_per_week`, `equivalent_moderate_minutes`, `meets_who_guidelines`.
+* **Frequência respiratória**
 
-* **Dieta simplificada**
+  * PT-BR: FR – Frequência Respiratória (irpm)
+  * EN: RR – Respiratory Rate (breaths/min)
 
-  * `ultraprocessed_portions_per_day`, `fruit_veg_portions_per_day`.
+* **Pressão arterial**
 
-* **Sono**
+  * PT-BR: PA – Pressão Arterial
+  * EN: BP – Blood Pressure
 
-  * `sleep_hours_per_night`, `sleep_quality`.
+* **Pressão arterial sistólica**
 
-* **Estresse**
+  * PT-BR: PAS – Pressão Arterial Sistólica
+  * EN: SBP – Systolic Blood Pressure
 
-  * `perceived_stress_level`.
+* **Pressão arterial diastólica**
 
-* **Antecedentes**
+  * PT-BR: PAD – Pressão Arterial Diastólica
+  * EN: DBP – Diastolic Blood Pressure
 
-  * `allergies[]`, `conditions[]`, `surgeries[]`, `medications[]`, todos com `recorded_at`, `source`, e quando fizer sentido `onset_date`/`resolution_date`.
+(Adultos continuam com os limites que já combinamos: FC 60–100, FR 12–20, PA ~90–120/60–80 para 18–64 anos, etc.)
 
-Tudo isso é:
+---
 
-* consistente com o que a OMS/WHO STEPS recomenda para fatores de risco,
-* compatível com a arquitetura documentada no próprio repo,
-* e não cria dependência estranha fora da sua stack atual.
+## 2. Temperatura – normalidade e diferença Brasil x EUA
 
-Se você quiser, no próximo passo eu posso focar só em **uma parte** (ex.: só antropometria + lifestyle) e te devolver:
+### 2.1. Faixa “normal” para o app (crianças e adultos)
 
-* o **modelo Sequelize/migration**,
-* e o **esqueleto do componente React** pra aba `Editar Perfil`.
+Para fins de alerta simples e unificado (axilar):
+
+* **Normal (verde): 36,0 a 37,4 °C**
+  – Coerente com faixas descritas em revisões sobre temperatura normal em crianças e adultos.
+
+* **Febrícula / estado febril leve (amarelo): 37,5 a 37,9 °C (axilar)**
+  – Muito usado na prática clínica, literatura geral e educação em saúde.
+
+* **Febre (vermelho “simples” de laboratório/algoritmo):**
+
+  * **Brasil – SBP (2025):** considera **febre ≥37,5 °C axilar** para fins de definição em estudos e classificação clínica, mas ressalta que isso *não* é automaticamente indicação de antitérmico ou de emergência.
+  * **EUA / OMS / AAP:** ainda usam **febre ≥38,0 °C** (via oral/retal ou equivalente) como corte padrão.
+
+* **Hipotermia clínica:** **T < 35,0 °C** (qualquer idade) – definição clássica de hipotermia.
+
+* **Hiperpirexia / febre muito alta:** **T ≥ 40,5 °C** costuma ser usada como “febre muito alta” em pediatria, associada a maior risco e indicação de avaliação urgente.
+
+👉 **Sugestão para o sistema:**
+
+* Campo padrão: `temperatura_axilar`.
+* **Normal:** 36,0–37,4 °C
+* **Alerta amarelo:** 37,5–37,9 °C
+* **Alerta vermelho:**
+
+  * T ≥ 38,0 °C (compatível com EUA/OMS)
+  * ou T ≥ 37,5 °C se você quiser aderir estritamente à definição da SBP.
+  * T < 35,0 °C ou T ≥ 40,0–40,5 °C como “alerta crítico”.
+
+---
+
+## 3. Faixas **normais pediátricas** de FC, FR, PAS, PAD
+
+### Fontes principais
+
+* **PALS / AHA (Pediatric Advanced Life Support)** – tabela de sinais vitais por idade: FC (acordado), FR e PA (sistólica/diastólica).
+* **Protocolos brasileiros de emergência pediátrica** que adotam as faixas de PALS (por exemplo: “Abordagem da Criança na Emergência”, 2023).
+* Revisões de semiologia/exame físico pediátrico (e.g. materiais de semiologia pediátrica, cursos de enfermagem e pediatria do SUS).
+
+Na prática, **Brasil x EUA**:
+
+* Para **FC, FR, PAS, PAD** pediátricos, **não há divergência relevante** entre PALS (EUA) e protocolos brasileiros modernos – os serviços brasileiros simplesmente citam ou adaptam PALS/OMS.
+
+### 3.1 Tabela – **Faixa de normalidade (“verde”)** no app
+
+Usando categorias clínicas usuais e valores derivados de PALS + protocolos brasileiros:
+
+| Faixa etária (PT-BR) | Age (EN)   | Idade aprox. | FC normal (bpm) | FR normal (irpm) | PAS normal (mmHg) | PAD normal (mmHg) |
+| -------------------- | ---------- | ------------ | --------------- | ---------------- | ----------------- | ----------------- |
+| Recém-nascido        | Neonate    | 0–28 dias    | 110–160         | 30–60            | 60–80             | 30–55             |
+| Lactente             | Infant     | 1–12 meses   | 100–160         | 30–60            | 72–104            | 37–56             |
+| Criança pequena      | Toddler    | 1–3 anos     | 90–150          | 24–40            | 86–112            | 42–72             |
+| Pré-escolar          | Preschool  | 4–5 anos     | 80–140          | 22–34            | 89–112            | 46–72             |
+| Escolar              | School-age | 6–12 anos    | 70–120          | 18–30            | 97–120            | 57–80             |
+| Adolescente          | Adolescent | 13–18 anos   | 60–100          | 12–20            | 110–131           | 64–83             |
+
+* **FC / FR:** faixas alinhadas a PALS e a tabelas brasileiras modernas que citam PALS como fonte (por exemplo, “Abordagem da Criança na Emergência”).
+* **PAS / PAD:** aproximadas a partir da tabela de PALS (neonato, 1–12 meses, 1–2 anos, 3–5, 6–7, 10–12, 12–15) usando o menor e o maior valor de cada bloco para compor as categorias acima.
+
+👉 **Regra de uso no app:**
+Para preenchimento de perfil ou registro clínico, se o valor estiver **dentro da faixa da linha correspondente à idade**, você marca como **“normal (verde)”**.
+Se estiver **fora**, já é pelo menos **alerta amarelo** (o que vocês podem representar como destaque de texto ou badge).
+
+---
+
+## 4. Limites de **hipotensão pediátrica** (alerta vermelho forte)
+
+Aqui temos uma regra bem consolidada e idêntica em Brasil e EUA.
+
+### 4.1 Regra PALS / AHA para hipotensão em crianças
+
+**Definição de hipotensão (PAS) em pediatria, em repouso:**
+
+* **Neonato a termo (0–28 dias):** PAS < **60 mmHg**
+* **Lactente (1–12 meses):** PAS < **70 mmHg**
+* **Crianças de 1 a 10 anos:**
+
+  * **PAS < 70 + (2 × idade em anos)**
+
+    * Ex.: 4 anos → 70 + 2×4 = 78 mmHg → hipotenso se PAS < 78
+* **Crianças >10 anos / adolescentes:** PAS < **90 mmHg**
+
+Esses mesmos cortes aparecem em:
+
+* PALS (AHA)
+* Protocolos brasileiros de choque/suporte avançado em emergência pediátrica
+* Sites didáticos de pediatria e “Roteiros de Pediatria” que citam PALS.
+
+👉 **Sugestão para o sistema:**
+
+* Implementar essa regra como **“alerta vermelho” obrigatório** sempre que houver PAS abaixo do limite calculado para idade.
+* Tudo que estiver **dentro da faixa normal da tabela** mas **próximo do limite inferior** pode ser apenas amarelo (a lógica de “zona de transição” vocês podem ajustar depois).
+
+---
+
+## 5. “Mapa” de variáveis para o time de programação
+
+Abaixo um **exemplo de estrutura JSON** (pode virar schema no backend) com nomes internos, labels PT/EN, unidades e limites principais.
+Os números em `age_bands` são exatamente os da tabela acima.
+
+```json
+{
+  "temperature_axillary": {
+    "label_pt": "Temperatura axilar",
+    "label_en": "Axillary temperature",
+    "unit": "°C",
+    "normal_min": 36.0,
+    "normal_max": 37.4,
+    "fever_threshold_br": 37.5,
+    "fever_threshold_international": 38.0,
+    "hypothermia_threshold": 35.0,
+    "hyperpyrexia_threshold": 40.5
+  },
+  "heart_rate": {
+    "label_pt": "Frequência cardíaca",
+    "label_en": "Heart rate",
+    "abbr_pt": "FC",
+    "abbr_en": "HR",
+    "unit": "bpm",
+    "age_bands": [
+      {
+        "pt": "Recém-nascido",
+        "en": "Neonate",
+        "age_range": "0–28 dias",
+        "hr_min": 110,
+        "hr_max": 160,
+        "rr_min": 30,
+        "rr_max": 60,
+        "sbp_min": 60,
+        "sbp_max": 80,
+        "dbp_min": 30,
+        "dbp_max": 55
+      },
+      {
+        "pt": "Lactente",
+        "en": "Infant",
+        "age_range": "1–12 meses",
+        "hr_min": 100,
+        "hr_max": 160,
+        "rr_min": 30,
+        "rr_max": 60,
+        "sbp_min": 72,
+        "sbp_max": 104,
+        "dbp_min": 37,
+        "dbp_max": 56
+      },
+      {
+        "pt": "Criança pequena",
+        "en": "Toddler",
+        "age_range": "1–3 anos",
+        "hr_min": 90,
+        "hr_max": 150,
+        "rr_min": 24,
+        "rr_max": 40,
+        "sbp_min": 86,
+        "sbp_max": 112,
+        "dbp_min": 42,
+        "dbp_max": 72
+      },
+      {
+        "pt": "Pré-escolar",
+        "en": "Preschool",
+        "age_range": "4–5 anos",
+        "hr_min": 80,
+        "hr_max": 140,
+        "rr_min": 22,
+        "rr_max": 34,
+        "sbp_min": 89,
+        "sbp_max": 112,
+        "dbp_min": 46,
+        "dbp_max": 72
+      },
+      {
+        "pt": "Escolar",
+        "en": "School-age",
+        "age_range": "6–12 anos",
+        "hr_min": 70,
+        "hr_max": 120,
+        "rr_min": 18,
+        "rr_max": 30,
+        "sbp_min": 97,
+        "sbp_max": 120,
+        "dbp_min": 57,
+        "dbp_max": 80
+      },
+      {
+        "pt": "Adolescente",
+        "en": "Adolescent",
+        "age_range": "13–18 anos",
+        "hr_min": 60,
+        "hr_max": 100,
+        "rr_min": 12,
+        "rr_max": 20,
+        "sbp_min": 110,
+        "sbp_max": 131,
+        "dbp_min": 64,
+        "dbp_max": 83
+      }
+    ]
+  },
+  "respiratory_rate": {
+    "label_pt": "Frequência respiratória",
+    "label_en": "Respiratory rate",
+    "abbr_pt": "FR",
+    "abbr_en": "RR",
+    "unit": "irpm",
+    "age_bands_ref": "usar mesmos grupos etários da heart_rate (rr_min/rr_max da tabela)"
+  },
+  "systolic_bp": {
+    "label_pt": "Pressão arterial sistólica",
+    "label_en": "Systolic blood pressure",
+    "abbr_pt": "PAS",
+    "abbr_en": "SBP",
+    "unit": "mmHg",
+    "age_bands_ref": "usar sbp_min/sbp_max da tabela por faixa etária",
+    "hypotension_rule_children_1_10y": "SBP < 70 + 2*idade_em_anos",
+    "hypotension_neonate_term": "<60",
+    "hypotension_infant_1_12m": "<70",
+    "hypotension_child_over_10y": "<90"
+  },
+  "diastolic_bp": {
+    "label_pt": "Pressão arterial diastólica",
+    "label_en": "Diastolic blood pressure",
+    "abbr_pt": "PAD",
+    "abbr_en": "DBP",
+    "unit": "mmHg",
+    "age_bands_ref": "usar dbp_min/dbp_max da tabela por faixa etária"
+  }
+}
+```
+
+---
+
+Se você quiser, no próximo passo eu posso:
+
+* Unificar **adulto + pediatria** num único JSONzão pronto pra ir pro banco;
+* E/ou desenhar o **semáforo completo (verde/amarelo/vermelho)** com regras mais finas (por ex. usar z-score de FC/FR por idade ou inspirar-se em PEWS).

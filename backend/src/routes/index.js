@@ -22,6 +22,7 @@ const marketplaceRoutes = require('./marketplace.routes');
 const patientInputRoutes = require('./patient-input.routes');
 const tagHistoryRoutes = require('./tag-history.routes');
 const aiRoutes = require('./ai.routes');
+const knowledgeRoutes = require('./knowledge.routes');
 const profileRoutes = require('./profile.routes');
 
 // Logging centralizado via morgan em src/index.js; removido logger duplicado nas rotas.
@@ -67,6 +68,7 @@ router.use('/patient-inputs', patientInputRoutes);
 router.use('/tag-history', tagHistoryRoutes);
 router.use('/tag-history', tagHistoryRoutes);
 router.use('/ai', aiRoutes);
+router.use('/knowledge', knowledgeRoutes);
 router.use('/', profileRoutes); // Profile routes are mounted at root level (e.g. /patients/:id/profile)
 
 // Rota 404 para endpoints não encontrados

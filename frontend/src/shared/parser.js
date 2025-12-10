@@ -118,8 +118,10 @@ export const extractNumericData = (text, tagCode) => {
     PA: /(?<sistolica>\d+)\s*\/\s*(?<diastolica>\d+)/, // Pressão arterial
     PESO: /(?<peso>\d+(?:\.\d+)?)\s*kg?/i,
     ALTURA: /(?<altura>\d+(?:\.\d+)?)\s*(?:cm|m)?/i,
-    TEMP: /(?<temperatura>\d+(?:\.\d+)?)\s*°?[cf]?/i,
-    FC: /(?<frequencia>\d+)\s*bpm?/i
+    TEMP: /(?<temperatura>\d+(?:[\.,]\d+)?)\s*°?[cf]?/i,
+    FC: /(?<frequencia>\d+)\s*bpm?/i,
+    FR: /(?<frequencia>\d+)\s*(?:rpm|irpm|respiracoes\/min|respirações\/min)?/i,
+    SPO2: /(?<valor>\d{2,3})\s*%?/
   };
 
   const pattern = patterns[tagCode.toUpperCase()];
