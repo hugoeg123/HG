@@ -18,7 +18,8 @@ exports.getAllTags = async (req, res) => {
     const offset = (page - 1) * limit;
     
     // Opções de ordenação
-    const sortField = req.query.sortField || 'name';
+    let sortField = req.query.sortField || 'name';
+    if (sortField === 'name') sortField = 'nome'; // Map virtual field to DB column
     const sortOrder = req.query.sortOrder === 'desc' ? 'DESC' : 'ASC';
     
     // Opções de filtro
@@ -26,8 +27,8 @@ exports.getAllTags = async (req, res) => {
     if (req.query.search) {
       const { Op } = require('sequelize');
       where[Op.or] = [
-        { name: { [Op.iLike]: `%${req.query.search}%` } },
-        { description: { [Op.iLike]: `%${req.query.search}%` } }
+        { nome: { [Op.iLike]: `%${req.query.search}%` } },
+        { codigo: { [Op.iLike]: `%${req.query.search}%` } }
       ];
     }
     
