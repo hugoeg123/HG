@@ -47,9 +47,9 @@ const TagToolbar = ({
   const defaultCategoriesConfig = {
     'Anamnese': { icon: <BookText size={16} />, order: 1 },
     'Exame Físico': { icon: <Stethoscope size={16} />, order: 2 },
-    'Investigação': { icon: <FlaskConical size={16} />, order: 4 },
-    'Diagnóstico': { icon: <ClipboardList size={16} />, order: 5 },
-    'Plano': { icon: <Pill size={16} />, order: 6 },
+    'Investigação': { icon: <FlaskConical size={16} />, order: 3 },
+    'Diagnóstico': { icon: <ClipboardList size={16} />, order: 4 },
+    'Plano': { icon: <Pill size={16} />, order: 5 },
   };
 
   const categories = Object.keys(categoriesConfig).length > 0 
