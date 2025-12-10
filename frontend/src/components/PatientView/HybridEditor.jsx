@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Save, X, UserCircle, Sparkles, BookText, Stethoscope, FlaskConical, ClipboardList, Pill } from 'lucide-react';
+import { Save, X, UserCircle, Sparkles, BookText, Stethoscope, FlaskConical, ClipboardList, Pill, Activity } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
 import { tagService, templateService } from '../../services/api';
 import { parseSections } from '../../shared/parser.js';
@@ -535,9 +535,10 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
           categoriesConfig={{
             'Anamnese': { icon: <BookText size={16} />, order: 1 },
             'Exame Físico': { icon: <Stethoscope size={16} />, order: 2 },
-            'Investigação': { icon: <FlaskConical size={16} />, order: 3 },
-            'Diagnóstico': { icon: <ClipboardList size={16} />, order: 4 },
-            'Plano': { icon: <Pill size={16} />, order: 5 },
+            'Sinais Vitais': { icon: <Activity size={16} />, order: 3 },
+            'Investigação': { icon: <FlaskConical size={16} />, order: 4 },
+            'Diagnóstico': { icon: <ClipboardList size={16} />, order: 5 },
+            'Plano': { icon: <Pill size={16} />, order: 6 },
           }}
         />
 
