@@ -191,9 +191,12 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
             { id: '6', code: '#SV', name: 'Sinais Vitais', category: 'Exame Físico' },
             { id: '7', code: '>>PA', name: 'Pressão Arterial', category: 'Exame Físico', parentId: '6' },
             { id: '8', code: '>>FC', name: 'Frequência Cardíaca', category: 'Exame Físico', parentId: '6' },
-            { id: '9', code: '#EX_LAB', name: 'Exames Laboratoriais', category: 'Investigação' },
-            { id: '10', code: '#HD', name: 'Hipótese Diagnóstica', category: 'Diagnóstico' },
-            { id: '11', code: '#PL_TX', name: 'Plano Terapêutico', category: 'Plano' },
+            { id: '9', code: '>>FR', name: 'Frequência Respiratória', category: 'Exame Físico', parentId: '6' },
+            { id: '10', code: '>>Temp', name: 'Temperatura', category: 'Exame Físico', parentId: '6' },
+            { id: '11', code: '>>SpO2', name: 'Saturação de O2', category: 'Exame Físico', parentId: '6' },
+            { id: '12', code: '#EX_LAB', name: 'Exames Laboratoriais', category: 'Investigação' },
+            { id: '13', code: '#HD', name: 'Hipótese Diagnóstica', category: 'Diagnóstico' },
+            { id: '14', code: '#PL_TX', name: 'Plano Terapêutico', category: 'Plano' },
           ]);
         }
         
