@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Hash, ChevronDown, ChevronRight, BookText, Stethoscope, FlaskConical, ClipboardList, Pill, X } from 'lucide-react';
+import { Plus, Hash, ChevronDown, ChevronRight, BookText, Stethoscope, FlaskConical, ClipboardList, Pill, X, Activity } from 'lucide-react';
 
 /**
  * TagToolbar Component - Barra de ferramentas para inserção de tags médicas
