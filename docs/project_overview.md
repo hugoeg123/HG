@@ -37,7 +37,7 @@ Esta seção funciona como um índice para a documentação detalhada gerada a p
 | Área Analisada | Documento de Referência | Estado | Resumo das Descobertas |
 | :--- | :--- | :--- | :--- |
 | **Fluxo da API** | [`api_interaction_flow.md`](./api_interaction_flow.md) | ✅ **Bom** | O frontend possui um serviço de API sofisticado com throttling, retries e single-flight. O fluxo está bem definido. |
-| **Integração de IA** | [`ai_integration.md`](./ai_integration.md) | ⚠️ **Conflito** | O frontend espera endpoints de IA (`/chat`, `/suggestions`) que **não estão implementados** no backend. A funcionalidade está quebrada. |
+| **Integração de IA** | [`ai_integration.md`](./ai_integration.md) | ⚠️ **Parcial** | O backend possui `ai.controller.js` com suporte a chat e contexto, mas o frontend pode estar desatualizado esperando endpoints antigos. Requer alinhamento. |
 | **Estratégia de Testes** | [`testing_strategy.md`](./testing_strategy.md) | ❌ **Crítico** | O projeto **não possui testes automatizados**. Este é um débito técnico significativo que precisa ser resolvido com urgência. |
 | **Segurança & Conformidade** | [`security_and_compliance.md`](./security_and_compliance.md) | ⚠️ **Conflito** | A segurança básica (sem `eval`) está boa, mas a conformidade com **FHIR** está **quebrada** devido a um endpoint de exportação ausente no backend. |
 
@@ -49,9 +49,9 @@ Com base na análise, os seguintes pontos requerem atenção imediata para garan
     - **Risco:** Alto risco de regressões a cada nova alteração.
     - **Ação:** Seguir o plano de ação detalhado em [`testing_strategy.md`](./testing_strategy.md).
 
-2.  **Funcionalidades de IA e FHIR Quebradas:**
-    - **Risco:** Funcionalidades prometidas na UI não funcionam, levando a uma má experiência do usuário e inconsistência no sistema.
-    - **Ação:** Implementar os endpoints ausentes no backend, conforme detalhado em [`ai_integration.md`](./ai_integration.md) e [`security_and_compliance.md`](./security_and_compliance.md).
+2.  **Alinhamento de Funcionalidades (IA e FHIR):**
+    - **Risco:** Funcionalidades prometidas na UI podem estar desalinhadas com o backend (especialmente exportação FHIR).
+    - **Ação:** Verificar a integração do `ai.controller.js` e implementar os endpoints de exportação FHIR.
 
 3.  **Coexistência de Modelos de Dados:**
     - **Risco:** O backend possui modelos de dados duplicados (ex: `User`/`Medico`, `Patient`/`Paciente`). Isso pode levar a confusão, dados inconsistentes e lógica de negócios complexa.

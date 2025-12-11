@@ -34,14 +34,13 @@ Uma análise aprofundada do código do frontend revelou pontos críticos que pre
 | :--- | :--- | :--- |
 | [Análise do Frontend](../../docs/frontend/README.md) | - **Componentização bem definida**, mas com baixa coesão em alguns casos.<br>- **Gerenciamento de estado centralizado** com Zustand.<br>- **Comunicação com API bem estruturada** através de serviços. | - **Ausência total de testes automatizados**.<br>- **Funcionalidades de UI implementadas para endpoints inexistentes** (IA e exportação FHIR).<br>- **Inconsistência na chamada da API** para exportação FHIR. |
 | [Estratégia de Testes](../../docs/testing_strategy.md) | - **Nenhum teste automatizado** (unitário, integração ou E2E) foi encontrado. | - **Alto risco de regressões** a cada nova alteração.<br>- **Dificuldade em validar a estabilidade** da aplicação. |
-| [Integração de IA](../../docs/ai_integration.md) | - O frontend possui componentes e serviços para interagir com uma API de IA. | - **A funcionalidade está quebrada**, pois o backend não implementa o endpoint esperado. |
+| [Integração de IA](../../docs/ai_integration.md) | - O frontend possui componentes e serviços para interagir com uma API de IA. | - **Alinhamento Necessário**: O backend implementa `ai.controller.js` mas os endpoints podem divergir do esperado pelo frontend. |
 | [Segurança e Conformidade](../../docs/security_and_compliance.md) | - O frontend tenta exportar dados no padrão FHIR. | - **A funcionalidade de exportação está quebrada**.<br>- A URL da API chamada no frontend (`/export/fhir/:id`) não corresponde à documentada no backend (`/api/records/:id/fhir`). |
 
 **Recomendações:**
 
 1.  **Implementar Testes Urgente:** Iniciar a criação de testes unitários e de integração para componentes críticos e serviços.
-2.  **Alinhar com o Backend:** Sincronizar as implementações da API de IA e de exportação FHIR com a equipe de backend antes de continuar o desenvolvimento de novas funcionalidades.
-3.  **Corrigir a Chamada da API:** Ajustar a chamada da API de exportação FHIR no frontend para corresponder ao endpoint que será implementado no backend.
+2.  **Alinhar com o Backend:** Sincronizar as implementações da API de IA e de exportação FHIR.
 
 ---
 
@@ -71,8 +70,26 @@ Uma análise aprofundada do código do frontend revelou pontos críticos que pre
 
     A aplicação estará disponível em `http://localhost:3000` (ou outra porta, se a 3000 estiver em uso).
 
-## Ganchos de Integração
+## Ganchos de Integração e Componentes Chave
 
+### Editor Híbrido (`HybridEditor.jsx`)
+- **Localização**: `src/components/PatientView/HybridEditor.jsx`
+- **Função**: Interface principal para criação de registros médicos.
+- **Integração**:
+  - Envia dados para `src/services/recordService.js`.
+  - Consome tags de `src/components/MedicalContextCarousel/` (Novo).
+  - Parser local prepara dados para envio ao backend.
+
+### Carrossel de Contexto (`MedicalContextCarousel`)
+- **Localização**: `src/components/MedicalContextCarousel/`
+- **Função**: Seleção de contextos médicos (tags, templates) para o editor.
+- **Fluxo**: Seleção do usuário -> Atualiza estado do Editor -> Insere tags no conteúdo.
+
+### Agenda
+- **Localização**: `src/components/Tools/WeeklyTimeGrid.jsx` (e relacionados).
+- **Integração**: Sincroniza slots de tempo com `src/services/agendaService.js`.
+
+### Infraestrutura
 -   **Conector (API):** A lógica para se comunicar com o backend está centralizada em `src/services/api.js`. Ele utiliza o `axios` para fazer requisições HTTP para a URL definida em `VITE_API_URL`.
 -   **Conector (Estado Global):** O estado global da aplicação é gerenciado pelo Zustand. Os stores estão definidos em `src/store/` e são importados pelos componentes que precisam acessar ou modificar o estado.
 -   **Conector (Rotas):** As rotas da aplicação são definidas em `App.jsx` usando o `react-router-dom`.

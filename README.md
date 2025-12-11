@@ -73,9 +73,10 @@ O ponto de partida para entender o estado atual do projeto é o **[📄 Resumo d
 | Área Analisada | Documento de Referência | Estado | Resumo das Descobertas |
 | :--- | :--- | :--- | :--- |
 | **Fluxo da API** | [`api_interaction_flow.md`](./docs/api_interaction_flow.md) | ✅ **Bom** | O serviço de API do frontend é robusto, com throttling, retries e single-flight. |
-| **Integração de IA** | [`ai_integration.md`](./docs/ai_integration.md) | ⚠️ **Conflito** | O frontend espera endpoints de IA (`/chat`, `/suggestions`) que não estão implementados no backend. |
+| **Integração de IA** | [`ai_integration.md`](./docs/ai_integration.md) | ⚠️ **Parcial** | O backend possui `ai.controller.js` com suporte a chat e contexto, mas o frontend pode estar desatualizado esperando endpoints antigos. Requer alinhamento. |
 | **Estratégia de Testes** | [`testing_strategy.md`](./docs/testing_strategy.md) | ❌ **Crítico** | O projeto **não possui testes automatizados**, representando um débito técnico significativo. |
 | **Segurança & Conformidade** | [`security_and_compliance.md`](./docs/security_and_compliance.md) | ⚠️ **Conflito** | A conformidade com **FHIR** está **quebrada** devido a um endpoint de exportação ausente no backend. |
+| **Mapa de Contexto** | [`context_map.md`](./.context_map.md) | ✅ **Novo** | Mapa de dependências, fluxos de dados e pontos de atenção para intervenções seguras. |
 
 **Prioridade de Ação:** É crucial que novas contribuições se concentrem em resolver os débitos técnicos críticos, especialmente a **criação da suíte de testes** e a **implementação dos endpoints de IA e FHIR** no backend.
 

@@ -36,9 +36,9 @@ Uma análise profunda do backend revelou débitos técnicos e inconsistências q
     - **Problema:** Não há uma suíte de testes para o backend, o que aumenta o risco de regressões.
     - **Ação:** Implementar uma estratégia de testes com Jest e Supertest, conforme detalhado no **[📄 Plano de Testes](./../docs/testing_strategy.md)**.
 
-2.  **⚠️ Endpoints Faltantes (IA & FHIR):**
-    - **Problema:** O frontend espera endpoints para funcionalidades de IA (`/api/ai/*`) e exportação FHIR (`/api/export/fhir/*`) que não estão implementados.
-    - **Ação:** Desenvolver os controladores e rotas necessários. Veja os detalhes em **[📄 Análise de IA](./../docs/ai_integration.md)** e **[📄 Análise de Conformidade](./../docs/security_and_compliance.md)**.
+2.  **⚠️ Alinhamento de Endpoints (IA & FHIR):**
+    - **Status:** O controlador de IA (`ai.controller.js`) está implementado com suporte a chat e contexto. A exportação FHIR ainda está pendente.
+    - **Ação:** Alinhar o frontend para usar os endpoints de IA existentes e implementar a exportação FHIR (`/api/export/fhir/*`).
 
 3.  **⚠️ Modelos de Dados Duplicados:**
     - **Problema:** Existem modelos de dados com conceitos sobrepostos (ex: `User`/`Medico`, `Patient`/`Paciente`), o que pode causar inconsistências.
@@ -86,8 +86,28 @@ Uma análise profunda do backend revelou débitos técnicos e inconsistências q
 
     A API estará disponível em `http://localhost:5001/api`.
 
-## Ganchos de Integração
+## Ganchos de Integração e Conectores
 
+### Registros Médicos (Records)
+- **Arquivo**: `src/controllers/record.controller.js`
+- **Conecta com**: `src/models/Record.js`
+- **Fluxo**:
+  1. Recebe dados do Frontend (`HybridEditor`).
+  2. Valida via `express-validator`.
+  3. `utils/vitalSignParser.js` extrai sinais vitais e gera alertas.
+  4. Salva no banco via Sequelize (`Record.create`).
+
+### Agenda Médica
+- **Arquivo**: `src/controllers/agenda.controller.js`
+- **Conecta com**: `src/models/AvailabilitySlot.js` e `Appointment.js`
+- **Dependência**: Requer `Medico` autenticado.
+
+### Inteligência Artificial
+- **Arquivo**: `src/controllers/ai.controller.js`
+- **Serviço**: `src/services/ai.service.js`
+- **Contexto**: Mantém estado de conversação por `userId`.
+
+### Infraestrutura
 -   **Conector (Banco de Dados):** A conexão com o banco de dados PostgreSQL é gerenciada pelo Sequelize. Os modelos estão em `src/models/` e a configuração em `src/config/database.js`.
 -   **Conector (Frontend):** A API expõe endpoints em `src/routes/` que são consumidos pelo frontend. A rota base é `/api`.
 -   **Conector (Autenticação):** A autenticação é feita via JWT (JSON Web Tokens), com middlewares em `src/middleware/auth.js` para proteger as rotas.

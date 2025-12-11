@@ -7,6 +7,9 @@ import { useDebounce, useDebounceCallback } from '../../hooks/useDebounce';
 import SectionBlock from './SectionBlock';
 import TagToolbar from './TagToolbar';
 import VitalSignEditor from './VitalSignEditor';
+import MedicalContextSelector from '../MedicalContextCarousel/MedicalContextSelector';
+import TagTemplateRenderer from '../MedicalContextCarousel/TagTemplateRenderer';
+import { CONTEXTS, TEMPLATES } from '../MedicalContextCarousel/definitions';
 import { extractNumericData } from '../../shared/parser.js';
 import { calculateSeverity } from '../../lib/vitalSignAlerts.js';
 import { emit as emitEvent } from '../../lib/events';
@@ -58,8 +61,64 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   const [editorContent, setEditorContent] = useState('');
   const [isSegmented, setIsSegmented] = useState(false); // Default to continuous view
   const [availableTags, setAvailableTags] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState('');
+  // const [templates, setTemplates] = useState([]); // Removed: Using static templates for now
+  // const [selectedTemplate, setSelectedTemplate] = useState(''); // Removed
+  
+  // --- CONTEXT & TEMPLATE STATE ---
+  const [contextIndex, setContextIndex] = useState(0);
+  const [activeTemplateId, setActiveTemplateId] = useState(null);
+  const [pinnedContextId, setPinnedContextId] = useState(null);
+  const [pinnedTemplateId, setPinnedTemplateId] = useState(null);
+
+  const currentContext = CONTEXTS[contextIndex];
+  
+  // Determine effective template
+  const effectiveTemplateId = activeTemplateId || pinnedTemplateId || currentContext.defaultTemplateId;
+  const currentTemplate = TEMPLATES.find(t => t.id === effectiveTemplateId) || TEMPLATES[0];
+
+  // Load Persistence
+  useEffect(() => {
+    const savedCtx = localStorage.getItem('hg_pinned_context');
+    if (savedCtx) {
+        setPinnedContextId(savedCtx);
+        const idx = CONTEXTS.findIndex(c => c.id === savedCtx);
+        if (idx !== -1) setContextIndex(idx);
+    }
+    const savedTpl = localStorage.getItem('hg_pinned_template');
+    if (savedTpl) setPinnedTemplateId(savedTpl);
+  }, []);
+
+  // Sync Template on Context Change
+  useEffect(() => {
+    if (!pinnedTemplateId) {
+        setActiveTemplateId(currentContext.defaultTemplateId);
+    }
+  }, [currentContext.id, pinnedTemplateId]);
+
+  // Handlers for Context/Template
+  const handleNextContext = () => setContextIndex(prev => (prev === CONTEXTS.length - 1 ? 0 : prev + 1));
+  const handlePrevContext = () => setContextIndex(prev => (prev === 0 ? CONTEXTS.length - 1 : prev - 1));
+  
+  const handlePinContext = () => {
+    if (pinnedContextId === currentContext.id) {
+        setPinnedContextId(null);
+        localStorage.removeItem('hg_pinned_context');
+    } else {
+        setPinnedContextId(currentContext.id);
+        localStorage.setItem('hg_pinned_context', currentContext.id);
+    }
+  };
+
+  const handlePinTemplate = (tplId) => {
+    if (pinnedTemplateId === tplId) {
+        setPinnedTemplateId(null);
+        localStorage.removeItem('hg_pinned_template');
+    } else {
+        setPinnedTemplateId(tplId);
+        localStorage.setItem('hg_pinned_template', tplId);
+        setActiveTemplateId(tplId);
+    }
+  };
   
   // CORREÇÃO: Gerenciamento de estado local para seções com IDs estáveis
   const [sections, setSections] = useState([]);
@@ -235,11 +294,13 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
           ]);
         }
         
-        // Load templates
+        // Load templates (Deprecated: Now using static definitions)
+        /* 
         const templatesResponse = await templateService.getByType(safeRecordType);
         if (templatesResponse?.data && Array.isArray(templatesResponse.data)) {
           setTemplates(templatesResponse.data);
         }
+        */
       } catch (error) {
         console.error('Error loading editor data:', error);
       }
@@ -606,13 +667,29 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
               {editableTitle}
             </h1>
           )}
-          <p className="text-gray-400">Tipo: {safeRecordType}</p>
+          {/* Replaced static type with MedicalContextSelector */}
+          <MedicalContextSelector 
+            currentContext={currentContext}
+            onNextContext={handleNextContext}
+            onPrevContext={handlePrevContext}
+            onPinContext={handlePinContext}
+            isContextPinned={pinnedContextId === currentContext.id}
+            
+            currentTemplate={currentTemplate}
+            onSelectTemplate={setActiveTemplateId}
+            onPinTemplate={handlePinTemplate}
+            pinnedTemplateId={pinnedTemplateId}
+            
+            contextIndex={contextIndex}
+            totalContexts={CONTEXTS.length}
+          />
         </div>
       </header>
       
       <main className="flex flex-col items-center w-full">
-        {/* Tag Toolbar Component */}
-        <TagToolbar 
+        {/* Tag Template Renderer (Replaces TagToolbar) */}
+        <TagTemplateRenderer 
+          template={currentTemplate}
           availableTags={availableTags}
           onInsertTag={insertTag}
           onCreateTag={handleCreateTag}
