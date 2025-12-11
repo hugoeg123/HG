@@ -46,7 +46,7 @@ Tag.init({
     type: DataTypes.STRING(50),
     allowNull: false,
     validate: {
-      is: /^#\w+|>>\w+/
+      is: /^#\w+|##\w+/
     }
   },
   // Nome da tag

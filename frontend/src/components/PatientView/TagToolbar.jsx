@@ -113,7 +113,7 @@ const TagToolbar = ({
   const handleCreateTag = () => {
     if (!newTag.code || !newTag.name) return;
     
-    const finalTagCode = (newTag.code.startsWith('#') || newTag.code.startsWith('>>')) 
+    const finalTagCode = (newTag.code.startsWith('#') || newTag.code.startsWith('##')) 
       ? newTag.code 
       : `#${newTag.code}`;
     
@@ -242,14 +242,14 @@ const TagToolbar = ({
                 <input 
                   id="tag-code"
                   type="text" 
-                  placeholder="Ex: #TAG ou &gt;&gt;SUB" 
+                  placeholder="Ex: #TAG ou ##SUB" 
                   value={newTag.code} 
                   onChange={(e) => setNewTag({ ...newTag, code: e.target.value })} 
                   className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
                   aria-describedby="tag-code-help"
                 />
                 <p id="tag-code-help" className="text-xs text-gray-400 mt-1">
-                    Use # para tags principais ou &gt;&gt; para subtags
+                    Use # para tags principais ou ## para subtags
                   </p>
               </div>
               

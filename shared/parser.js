@@ -12,7 +12,7 @@
  * Interface para Tag
  * @typedef {Object} Tag
  * @property {string} id - UUID da tag
- * @property {string} codigo - Código da tag (#QP, #HDA, >>subtag)
+ * @property {string} codigo - Código da tag (#QP, #HDA, ##subtag)
  * @property {string} nome - Nome descritivo da tag
  * @property {string} tipo_dado - Tipo de dado (texto, numero, data, booleano, bp)
  * @property {Object} regras_validacao - Regras de validação JSON
@@ -41,7 +41,7 @@ function parseSections(rawText, tags) {
   // Regex para capturar tags e seu conteúdo
   // Captura: #TAG: conteúdo até próxima tag ou fim
   // Permite espaços no início da linha
-  const tagRegex = /^\s*(#\w+|>>\w+):\s*([\s\S]*?)(?=^\s*(?:#\w+|>>\w+):|$)/gm;
+  const tagRegex = /^\s*(#\w+|##\w+):\s*([\s\S]*?)(?=^\s*(?:#\w+|##\w+):|$)/gm;
   const matches = Array.from(rawText.matchAll(tagRegex));
 
   if (matches.length === 0) {
@@ -52,12 +52,12 @@ function parseSections(rawText, tags) {
     const codigo = match[1];
     const valorRaw = match[2].trim();
 
-    // Normalizar código da tag (converter >> para # para busca)
-    // Permite usar >>PA como alias para #PA
-    const searchCode = codigo.startsWith('>>') ? codigo.replace('>>', '#') : codigo;
+    // Normalizar código da tag (converter ## para # para busca)
+    // Permite usar ##PA como alias para #PA
+    const searchCode = codigo.startsWith('##') ? codigo.replace('##', '#') : codigo;
 
     // Encontrar a tag correspondente
-    // Tenta encontrar pelo código normalizado (#) ou pelo original (caso o banco tenha >>)
+    // Tenta encontrar pelo código normalizado (#) ou pelo original (caso o banco tenha ##)
     const tag = tags.find(t => t.codigo === searchCode || t.codigo === codigo);
 
     if (!tag) {

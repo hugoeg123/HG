@@ -48,8 +48,8 @@ const SectionBlock = React.forwardRef(({
       };
     }
 
-    // Try to match subtag pattern (>>SUBTAG:)
-    const subTagMatch = content.match(/^(>>\w+):\s*(.*)$/s);
+    // Try to match subtag pattern (##SUBTAG:)
+    const subTagMatch = content.match(/^(##\w+):\s*(.*)$/s);
     if (subTagMatch) {
       const [, tagCode, value] = subTagMatch;
       const tag = tagMap.get ? tagMap.get(tagCode) : tagMap[tagCode];
@@ -67,7 +67,7 @@ const SectionBlock = React.forwardRef(({
     // Check if content contains multiple lines with tags
     const lines = content.split('\n');
     const firstLine = lines[0] || '';
-    const hasTag = firstLine.match(/^(#\w+|>>\w+):\s*/);
+    const hasTag = firstLine.match(/^(#\w+|##\w+):\s*/);
 
     if (hasTag) {
       const [, tagCode] = hasTag;
@@ -75,8 +75,8 @@ const SectionBlock = React.forwardRef(({
       return {
         tagInfo: {
           code: tagCode,
-          name: tag?.name || tag?.nome || (tagCode.startsWith('#') ? tagCode.substring(1) : tagCode.substring(2)) || 'Tag',
-          type: tagCode.startsWith('#') ? 'main' : 'sub',
+          name: tag?.name || tag?.nome || (tagCode.startsWith('#') && !tagCode.startsWith('##') ? tagCode.substring(1) : tagCode.substring(2)) || 'Tag',
+          type: tagCode.startsWith('#') && !tagCode.startsWith('##') ? 'main' : 'sub',
           category: tag?.category || 'Anamnese'
         },
         contentValue: content

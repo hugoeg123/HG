@@ -194,11 +194,11 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
 
           // Ensure subtags exist
           const requiredSubtags = [
-            { code: '>>PA', name: 'Pressão Arterial' },
-            { code: '>>FC', name: 'Frequência Cardíaca' },
-            { code: '>>FR', name: 'Frequência Respiratória' },
-            { code: '>>Temp', name: 'Temperatura' },
-            { code: '>>SpO2', name: 'Saturação de O2' }
+            { code: '##PA', name: 'Pressão Arterial' },
+            { code: '##FC', name: 'Frequência Cardíaca' },
+            { code: '##FR', name: 'Frequência Respiratória' },
+            { code: '##Temp', name: 'Temperatura' },
+            { code: '##SpO2', name: 'Saturação de O2' }
           ];
 
           requiredSubtags.forEach(sub => {
@@ -220,15 +220,15 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
           setAvailableTags([
             { id: '1', code: '#QP', name: 'Queixa Principal', category: 'Anamnese' },
             { id: '2', code: '#HDA', name: 'História da Doença Atual', category: 'Anamnese' },
-            { id: '3', code: '>>INICIO', name: 'Início dos Sintomas', category: 'Anamnese', parentId: '2' },
-            { id: '4', code: '>>CARACTERISTICA', name: 'Característica da Dor', category: 'Anamnese', parentId: '2' },
+            { id: '3', code: '##INICIO', name: 'Início dos Sintomas', category: 'Anamnese', parentId: '2' },
+            { id: '4', code: '##CARACTERISTICA', name: 'Característica da Dor', category: 'Anamnese', parentId: '2' },
             { id: '5', code: '#HMP', name: 'Hist. Médica Pregressa', category: 'Anamnese' },
             { id: '6', code: '#SV', name: 'Sinais Vitais', category: 'Exame Físico' },
-            { id: '7', code: '>>PA', name: 'Pressão Arterial', category: 'Exame Físico', parentId: '6' },
-            { id: '8', code: '>>FC', name: 'Frequência Cardíaca', category: 'Exame Físico', parentId: '6' },
-            { id: '9', code: '>>FR', name: 'Frequência Respiratória', category: 'Exame Físico', parentId: '6' },
-            { id: '10', code: '>>Temp', name: 'Temperatura', category: 'Exame Físico', parentId: '6' },
-            { id: '11', code: '>>SpO2', name: 'Saturação de O2', category: 'Exame Físico', parentId: '6' },
+            { id: '7', code: '##PA', name: 'Pressão Arterial', category: 'Exame Físico', parentId: '6' },
+            { id: '8', code: '##FC', name: 'Frequência Cardíaca', category: 'Exame Físico', parentId: '6' },
+            { id: '9', code: '##FR', name: 'Frequência Respiratória', category: 'Exame Físico', parentId: '6' },
+            { id: '10', code: '##Temp', name: 'Temperatura', category: 'Exame Físico', parentId: '6' },
+            { id: '11', code: '##SpO2', name: 'Saturação de O2', category: 'Exame Físico', parentId: '6' },
             { id: '12', code: '#EX_LAB', name: 'Exames Laboratoriais', category: 'Investigação' },
             { id: '13', code: '#HD', name: 'Hipótese Diagnóstica', category: 'Diagnóstico' },
             { id: '14', code: '#PL_TX', name: 'Plano Terapêutico', category: 'Plano' },
@@ -411,7 +411,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     if (isSegmented) {
       const lastSection = sections[sections.length - 1];
       if (lastSection && lastSection.content.trim() !== '') {
-        if (!tagCode.startsWith('>>')) {
+        if (!tagCode.startsWith('##')) {
           // Create new section for main tags
           const newContent = `${editorContent}\n\n${tagCode}: `;
           setEditorContent(newContent);

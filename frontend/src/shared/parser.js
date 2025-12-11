@@ -4,7 +4,7 @@
  */
 
 /**
- * Divide o texto em seções baseadas em tags (#TAG: ou >>SUBTAG:) ou quebras de linha duplas
+ * Divide o texto em seções baseadas em tags (#TAG: ou ##SUBTAG:) ou quebras de linha duplas
  * @param {string} text - Texto completo a ser analisado
  * @param {Array} availableTags - Array de tags disponíveis para referência
  * @returns {Array} Array de seções com id, content, tag, category
@@ -14,8 +14,8 @@ export const parseSections = (text, availableTags = []) => {
     return [{ id: 'section-0', content: '', tag: null, category: null }];
   }
 
-  // Regex para identificar tags principais (#TAG:) e subtags (>>SUBTAG:)
-  const tagRegex = /^(#[A-Z_]+:|>>[A-Z_]+:)/gm;
+  // Regex para identificar tags principais (#TAG:) e subtags (##SUBTAG:)
+  const tagRegex = /^(#[A-Z_]+:|##[A-Z_]+:)/gm;
   const sections = [];
   let currentIndex = 0;
   let sectionId = 0;
@@ -41,10 +41,10 @@ export const parseSections = (text, availableTags = []) => {
     
     // Extrair conteúdo da seção
     const sectionContent = text.slice(tagStart, nextTagStart).trim();
-    const tagMatch = sectionContent.match(/^(#[A-Z_]+:|>>[A-Z_]+:)(.*)$/s);
+    const tagMatch = sectionContent.match(/^(#[A-Z_]+:|##[A-Z_]+:)(.*)$/s);
     
     if (tagMatch) {
-      const tagName = tagMatch[1].replace(/[#>:]/g, '').trim();
+      const tagName = tagMatch[1].replace(/[#:]/g, '').trim();
       const content = tagMatch[2].trim();
       
       // Encontrar categoria da tag
@@ -55,8 +55,8 @@ export const parseSections = (text, availableTags = []) => {
         content: sectionContent,
         tag: tagName,
         category: tagInfo?.category || 'outros',
-        isMainTag: match[0].startsWith('#'),
-        isSubTag: match[0].startsWith('>>')
+        isMainTag: match[0].startsWith('#') && !match[0].startsWith('##'),
+        isSubTag: match[0].startsWith('##')
       });
     }
   });
@@ -84,7 +84,7 @@ export const parseSections = (text, availableTags = []) => {
  * @returns {string|null} Valor da tag ou null se não encontrada
  */
 export const extractValueFromTag = (text, tagCode) => {
-  const regex = new RegExp(`(?:#${tagCode}:|>>${tagCode}:)\\s*(.+?)(?=\\n#|\\n>>|$)`, 'is');
+  const regex = new RegExp(`(?:#${tagCode}:|##${tagCode}:)\\s*(.+?)(?=\\n#|\\n##|$)`, 'is');
   const match = text.match(regex);
   return match ? match[1].trim() : null;
 };
