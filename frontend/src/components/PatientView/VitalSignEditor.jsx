@@ -35,7 +35,9 @@ const createVitalSignDecorator = (context) => ViewPlugin.fromClass(class {
         const builder = new RangeSetBuilder();
         for (const { from, to } of view.visibleRanges) {
             const text = view.state.doc.sliceString(from, to);
-            const regex = /(PA|PAS|PAD|FC|FR|SpO2|Temp|T)(?:[:\s=]+)(\d{2,3}(?:[\.,]\d{1,2})?)(?:([x\/])(\d{2,3}))?/gi;
+            // Updated regex to support ## prefix and existing formats
+            // Matches: ##PA:120x80, PA:120x80, ##FC:80, FC:80 etc.
+            const regex = /(?:##)?(PA|PAS|PAD|FC|FR|SpO2|Temp|T)(?:[:\s=]+)(\d{2,3}(?:[\.,]\d{1,2})?)(?:([x\/])(\d{2,3}))?/gi;
 
             let match;
             while ((match = regex.exec(text))) {

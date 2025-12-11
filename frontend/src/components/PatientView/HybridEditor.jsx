@@ -620,20 +620,29 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
           {/* Editor Content */}
           {isSegmented ? (
             <div className="w-full space-y-4">
-              {sections.map((section) => (
-                <SectionBlock
-                  key={section.id}
-                  section={section}
-                  tagMap={tagMap}
-                  onContentChange={handleTextChange}
-                  onKeyDown={handleKeyDown}
-                  onAddToChat={handleAddToChat}
-                  categoryColors={categoryColors}
-                  ref={(el) => {
-                    if (el) sectionRefs.current[section.id] = el;
-                  }}
-                />
-              ))}
+              {sections.length > 0 ? (
+                sections.map((section) => (
+                  <SectionBlock
+                    key={section.id}
+                    section={section}
+                    tagMap={tagMap}
+                    onContentChange={handleTextChange}
+                    onKeyDown={handleKeyDown}
+                    onAddToChat={handleAddToChat}
+                    categoryColors={categoryColors}
+                    ref={(el) => {
+                      if (el) sectionRefs.current[section.id] = el;
+                    }}
+                  />
+                ))
+              ) : (
+                <div 
+                  className="bg-theme-card border border-gray-700 rounded-xl p-8 text-center text-gray-400 cursor-pointer hover:border-teal-500/50 transition-colors"
+                  onClick={() => insertTag('#HDA')}
+                >
+                  <p>O registro está vazio. Clique aqui ou use a barra lateral para adicionar uma tag.</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="relative group">

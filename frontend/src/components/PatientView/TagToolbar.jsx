@@ -155,6 +155,7 @@ const TagToolbar = ({
         {/* Categories and Tags */}
         <div className="space-y-2">
           {Object.entries(categories)
+            .filter(([category]) => category !== 'Sinais Vitais') // Remove Sinais Vitais category button
             .sort(([, a], [, b]) => a.order - b.order)
             .map(([category]) => (
               <div key={category}>
