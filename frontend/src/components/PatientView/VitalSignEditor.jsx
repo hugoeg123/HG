@@ -1,8 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, forwardRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { ViewPlugin, Decoration } from '@codemirror/view';
 import { EditorView } from '@codemirror/view';
 import { calculateSeverity } from '../../lib/vitalSignAlerts';
+import { RangeSetBuilder } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
 
 /**
  * VitalSignEditor
@@ -68,11 +70,7 @@ const createVitalSignDecorator = (context) => ViewPlugin.fromClass(class {
     decorations: v => v.decorations
 });
 
-// Import necessário para RangeSetBuilder que esqueci acima
-import { RangeSetBuilder } from '@codemirror/state';
-import { EditorState } from '@codemirror/state';
-
-const VitalSignEditor = ({ value, onChange, placeholder, style, onKeyDown, context }) => {
+const VitalSignEditor = forwardRef(({ value, onChange, placeholder, style, onKeyDown, context }, ref) => {
 
     const handleChange = useCallback((val) => {
         onChange(val);
@@ -105,8 +103,9 @@ const VitalSignEditor = ({ value, onChange, placeholder, style, onKeyDown, conte
 
     return (
         <CodeMirror
+            ref={ref}
             value={value}
-            height="auto"
+            height="100%"
             onChange={handleChange}
             extensions={[createVitalSignDecorator(context)]}
             theme={theme}
@@ -130,12 +129,12 @@ const VitalSignEditor = ({ value, onChange, placeholder, style, onKeyDown, conte
                 searchKeymap: false,
                 lintKeymap: false,
             }}
-            className="w-full text-base font-sans leading-relaxed"
+            className="w-full h-full text-base font-sans leading-relaxed"
             placeholder={placeholder}
             onKeyDown={onKeyDown} // CodeMirror supports onKeyDown prop in @uiw wrapper
             style={style}
         />
     );
-};
+});
 
 export default VitalSignEditor;

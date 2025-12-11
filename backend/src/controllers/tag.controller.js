@@ -94,7 +94,7 @@ exports.createTag = async (req, res) => {
     }
     
     // Verificar se já existe uma tag com o mesmo nome
-    const existingTag = await Tag.findOne({ where: { name: req.body.name } });
+    const existingTag = await Tag.findOne({ where: { nome: req.body.name } });
     if (existingTag) {
       return res.status(400).json({ message: 'Já existe uma tag com este nome' });
     }
@@ -102,6 +102,7 @@ exports.createTag = async (req, res) => {
     // Criar tag
     const tag = await Tag.create({
       ...req.body,
+      nome: req.body.name, // Ensure nome is set from name
       createdBy: req.user.id
     });
     
@@ -129,7 +130,7 @@ exports.updateTag = async (req, res) => {
       const { Op } = require('sequelize');
       const existingTag = await Tag.findOne({ 
         where: {
-          name: req.body.name,
+          nome: req.body.name,
           id: { [Op.ne]: req.params.id }
         }
       });
@@ -147,6 +148,7 @@ exports.updateTag = async (req, res) => {
     }
     
     // Atualizar tag
+    if (req.body.name) req.body.nome = req.body.name; // Ensure nome is updated
     await tag.update(req.body);
     
     res.json({
@@ -164,7 +166,7 @@ exports.getRootTags = async (req, res) => {
   try {
     const tags = await Tag.findAll({
       where: { parentId: null },
-      order: [['name', 'ASC']]
+      order: [['nome', 'ASC']]
     });
     
     res.json(tags);
@@ -179,7 +181,7 @@ exports.getChildTags = async (req, res) => {
   try {
     const tags = await Tag.findAll({
       where: { parentId: req.params.id },
-      order: [['name', 'ASC']]
+      order: [['nome', 'ASC']]
     });
     
     res.json(tags);

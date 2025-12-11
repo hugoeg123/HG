@@ -76,6 +76,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   const debouncedContent = useDebounce(editorContent, 300);
   const sectionRefs = useRef({});
   const lastAlertRef = useRef(null);
+  const editorRef = useRef(null); // Ref for the main editor
   
 
   
@@ -179,7 +180,41 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
         // Load tags
         const tagsResponse = await tagService.getAll();
         if (tagsResponse?.data && Array.isArray(tagsResponse.data)) {
-          setAvailableTags(tagsResponse.data);
+          // Merge API tags with required vital sign tags
+          // This ensures new vital sign structure exists even if DB is outdated
+          let mergedTags = [...tagsResponse.data];
+          
+          // Find or create #SV tag
+          let svTag = mergedTags.find(t => (t.code === '#SV' || t.codigo === '#SV'));
+          const svId = svTag ? (svTag.id) : '6';
+          
+          if (!svTag) {
+            mergedTags.push({ id: svId, code: '#SV', name: 'Sinais Vitais', category: 'Exame Físico' });
+          }
+
+          // Ensure subtags exist
+          const requiredSubtags = [
+            { code: '>>PA', name: 'Pressão Arterial' },
+            { code: '>>FC', name: 'Frequência Cardíaca' },
+            { code: '>>FR', name: 'Frequência Respiratória' },
+            { code: '>>Temp', name: 'Temperatura' },
+            { code: '>>SpO2', name: 'Saturação de O2' }
+          ];
+
+          requiredSubtags.forEach(sub => {
+            const exists = mergedTags.some(t => (t.code === sub.code || t.codigo === sub.code));
+            if (!exists) {
+              mergedTags.push({
+                id: `auto_${sub.code.replace(/\W/g, '')}`,
+                code: sub.code,
+                name: sub.name,
+                category: 'Exame Físico',
+                parentId: svId
+              });
+            }
+          });
+
+          setAvailableTags(mergedTags);
         } else {
           // Use default tags if API fails
           setAvailableTags([
@@ -604,13 +639,21 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
             <div className="relative group">
               <button 
                 onClick={() => handleAddToChat(editorContent)}
-                className="absolute top-2 right-2 p-1.5 bg-gray-700/50 rounded-full text-teal-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" 
+                className="absolute top-2 right-2 p-1.5 bg-gray-700/50 rounded-full text-teal-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity z-10" 
                 title="Adicionar todo o texto ao Chat"
               >
                 <Sparkles size={16} />
               </button>
-              <div className="w-full h-96 p-4 bg-theme-card border border-gray-700 rounded-xl text-gray-300 placeholder-gray-500">
+              <div 
+                className="w-full h-96 p-4 bg-theme-card border border-gray-700 rounded-xl text-gray-300 placeholder-gray-500 cursor-text overflow-hidden"
+                onClick={() => {
+                  if (editorRef.current && editorRef.current.view) {
+                    editorRef.current.view.focus();
+                  }
+                }}
+              >
                 <VitalSignEditor
+                  ref={editorRef}
                   value={editorContent}
                   onChange={(val) => setEditorContent(val)}
                   placeholder="Digite o registro completo aqui..."
