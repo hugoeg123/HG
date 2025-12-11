@@ -56,33 +56,38 @@ const extractVitals = (content) => {
     const vitals = {};
 
     // Regex Patterns
+    // Updated to support flexible formats:
+    // - Optional ## prefix
+    // - Optional separator (colon, space, equal, or none)
+    // - Matches: ##PA:120x80, PA120x80, FC100, Temp37.5
+
     // PA: Matches 120x80, 120/80, 120 x 80
-    const bpMatch = content.match(/##PA:\s*(\d+)\s*[xX\/]\s*(\d+)/i);
+    const bpMatch = content.match(/(?:##)?PA(?:[:\s=]*)(\d+)\s*[xX\/]\s*(\d+)/i);
     if (bpMatch) {
         vitals.systolic = parseInt(bpMatch[1]);
         vitals.diastolic = parseInt(bpMatch[2]);
     }
 
     // FC (Heart Rate)
-    const hrMatch = content.match(/##FC:\s*(\d+)/i);
+    const hrMatch = content.match(/(?:##)?FC(?:[:\s=]*)(\d+)/i);
     if (hrMatch) {
         vitals.heartRate = parseInt(hrMatch[1]);
     }
 
     // FR (Respiratory Rate)
-    const rrMatch = content.match(/##FR:\s*(\d+)/i);
+    const rrMatch = content.match(/(?:##)?FR(?:[:\s=]*)(\d+)/i);
     if (rrMatch) {
         vitals.respiratoryRate = parseInt(rrMatch[1]);
     }
 
     // SpO2
-    const spo2Match = content.match(/##SpO2:\s*(\d+)/i);
+    const spo2Match = content.match(/(?:##)?SpO2(?:[:\s=]*)(\d+)/i);
     if (spo2Match) {
         vitals.spo2 = parseInt(spo2Match[1]);
     }
 
-    // Temp
-    const tempMatch = content.match(/##Temp:\s*(\d+[.,]?\d*)/i);
+    // Temp (Accepts Temp or T)
+    const tempMatch = content.match(/(?:##)?(?:Temp|T)(?:[:\s=]*)(\d+[.,]?\d*)/i);
     if (tempMatch) {
         vitals.temp = parseFloat(tempMatch[1].replace(',', '.'));
     }
