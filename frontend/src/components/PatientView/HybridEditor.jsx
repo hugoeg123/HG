@@ -278,7 +278,34 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
         temp: temp?.temperatura ? Number(String(temp.temperatura).replace(',', '.')) : undefined
       };
 
-      if (Object.values(vitals).every(v => v === undefined)) return;
+      if (Object.values(vitals).every(v => v === undefined)) {
+        // Fallback: parse free text without requiring #/## tags
+        const regex = /(?:>>\s*)?(?:#{1,2})?(PA|PAS|PAD|FC|FR|SpO2|Temp|T)(?:[:\s=]*)(\d{1,3}(?:[\.,]\d{1,2})?)(?:([x\/])(\d{1,3}))?/gi;
+        let m;
+        while ((m = regex.exec(debouncedContent))) {
+          const type = String(m[1] || '').toLowerCase();
+          const v1 = parseFloat(String(m[2]).replace(',', '.'));
+          const v2 = m[4] ? parseFloat(m[4]) : null;
+          if (type.startsWith('pa') && v2) {
+            vitals.systolic = v1;
+            vitals.diastolic = v2;
+          } else if (type === 'pas' || (type.startsWith('pa') && !v2)) {
+            vitals.systolic = v1;
+          } else if (type === 'pad') {
+            vitals.diastolic = v1;
+          } else if (type === 'fc') {
+            vitals.heartRate = v1;
+          } else if (type === 'fr') {
+            vitals.respiratoryRate = v1;
+          } else if (type === 'spo2') {
+            vitals.spo2 = v1;
+          } else if (type.startsWith('temp') || type === 't') {
+            vitals.temp = v1;
+          }
+        }
+
+        if (Object.values(vitals).every(v => v === undefined)) return;
+      }
 
       const gender = (currentPatient?.gender || '').toLowerCase();
       const isPregnant = Boolean(currentPatient?.obstetrics?.currentlyPregnant);
@@ -305,6 +332,25 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     }
   }, [debouncedContent, currentPatient]);
   
+  // Calculate context for alerts
+  const context = useMemo(() => ({
+    age: (() => {
+      const bd = currentPatient?.birthDate || currentPatient?.dateOfBirth;
+      if (!bd) return 25;
+      const today = new Date();
+      const birth = new Date(bd);
+      let a = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+      return a;
+    })(),
+    isPregnant: Boolean(currentPatient?.obstetrics?.currentlyPregnant),
+    hasCOPD: Array.isArray(currentPatient?.chronicConditions)
+      ? currentPatient.chronicConditions.some(c => String(c.condition_name || c).toLowerCase().includes('dpoc') || String(c.condition_name || c).toLowerCase().includes('copd'))
+      : false,
+    onRoomAir: true
+  }), [currentPatient]);
+
   // Handle view toggle
   const handleToggleView = useCallback(() => {
     setIsSegmented(prev => !prev);
@@ -630,6 +676,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
                     onKeyDown={handleKeyDown}
                     onAddToChat={handleAddToChat}
                     categoryColors={categoryColors}
+                    context={context}
                     ref={(el) => {
                       if (el) sectionRefs.current[section.id] = el;
                     }}
@@ -667,23 +714,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
                   onChange={(val) => setEditorContent(val)}
                   placeholder="Digite o registro completo aqui..."
                   style={{ height: '100%' }}
-                  context={{
-                    age: (() => {
-                      const bd = currentPatient?.birthDate || currentPatient?.dateOfBirth;
-                      if (!bd) return 25;
-                      const today = new Date();
-                      const birth = new Date(bd);
-                      let a = today.getFullYear() - birth.getFullYear();
-                      const m = today.getMonth() - birth.getMonth();
-                      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
-                      return a;
-                    })(),
-                    isPregnant: Boolean(currentPatient?.obstetrics?.currentlyPregnant),
-                    hasCOPD: Array.isArray(currentPatient?.chronicConditions)
-                      ? currentPatient.chronicConditions.some(c => String(c.condition_name || c).toLowerCase().includes('dpoc') || String(c.condition_name || c).toLowerCase().includes('copd'))
-                      : false,
-                    onRoomAir: true
-                  }}
+                  context={context}
                 />
               </div>
             </div>

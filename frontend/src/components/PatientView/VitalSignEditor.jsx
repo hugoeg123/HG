@@ -1,4 +1,4 @@
-import React, { useCallback, forwardRef } from 'react';
+import React, { useCallback, forwardRef, useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { ViewPlugin, Decoration } from '@codemirror/view';
 import { EditorView } from '@codemirror/view';
@@ -17,7 +17,7 @@ import { EditorState } from '@codemirror/state';
  * - onKeyDown: (e) => void
  * - placeholder: string
  * - style: object
- */
+ * */
 
 // Fábrica de plugin do CodeMirror para decorar Sinais Vitais com contexto
 const createVitalSignDecorator = (context) => ViewPlugin.fromClass(class {
@@ -35,12 +35,8 @@ const createVitalSignDecorator = (context) => ViewPlugin.fromClass(class {
         const builder = new RangeSetBuilder();
         for (const { from, to } of view.visibleRanges) {
             const text = view.state.doc.sliceString(from, to);
-            // Updated regex to support:
-            // - Optional ## prefix
-            // - Optional separator (colon, space, equal, or none)
-            // - Various PA formats (120x80, 120/80)
-            // Matches: ##PA:120x80, PA120x80, FC100, Temp37.5
-            const regex = /(?:##)?(PA|PAS|PAD|FC|FR|SpO2|Temp|T)(?:[:\s=]*)(\d{2,3}(?:[\.,]\d{1,2})?)(?:([x\/])(\d{2,3}))?/gi;
+            // Accept optional leading markers (>>), optional single or double #, flexible separators, PA formats
+            const regex = /(?:>>\s*)?(?:#{1,2})?(PA|PAS|PAD|FC|FR|SpO2|Temp|T)(?:[:\s=]*)(\d{1,3}(?:[\.,]\d{1,2})?)(?:([x\/])(\d{1,3}))?/gi;
 
             let match;
             while ((match = regex.exec(text))) {
@@ -81,6 +77,8 @@ const VitalSignEditor = forwardRef(({ value, onChange, placeholder, style, onKey
         onChange(val);
     }, [onChange]);
 
+    const vitalSignExtension = useMemo(() => createVitalSignDecorator(context), [context]);
+
     // Tema customizado para parecer transparente/integrado
     const theme = EditorView.theme({
         "&": {
@@ -112,7 +110,7 @@ const VitalSignEditor = forwardRef(({ value, onChange, placeholder, style, onKey
             value={value}
             height="100%"
             onChange={handleChange}
-            extensions={[createVitalSignDecorator(context)]}
+            extensions={[vitalSignExtension]}
             theme={theme}
             basicSetup={{
                 lineNumbers: false,

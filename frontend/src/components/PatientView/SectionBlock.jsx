@@ -12,7 +12,8 @@ const SectionBlock = React.forwardRef(({
   onAddToChat,
   onKeyDown,
   tagMap = {},
-  categoryColors = {}
+  categoryColors = {},
+  context = {} // New prop for vital sign alerts
 }, ref) => {
   const editorRef = useRef(null); // Ref para o container do CodeMirror (opcional) ou interno
   const [isHovered, setIsHovered] = useState(false);
@@ -33,7 +34,7 @@ const SectionBlock = React.forwardRef(({
     const content = section.content || '';
 
     // Try to match main tag pattern (#TAG:)
-    const mainTagMatch = content.match(/^(#\w+):\s*(.*)$/s);
+    const mainTagMatch = content.match(/^(#\w+):\s*(.*)$/is);
     if (mainTagMatch) {
       const [, tagCode, value] = mainTagMatch;
       const tag = tagMap.get ? tagMap.get(tagCode) : tagMap[tagCode];
@@ -48,8 +49,8 @@ const SectionBlock = React.forwardRef(({
       };
     }
 
-    // Try to match subtag pattern (##SUBTAG:)
-    const subTagMatch = content.match(/^(##\w+):\s*(.*)$/s);
+    // Try to match subtag pattern (##SUBTAG: or >>SUBTAG:)
+    const subTagMatch = content.match(/^((?:##|>>)\w+):\s*(.*)$/is);
     if (subTagMatch) {
       const [, tagCode, value] = subTagMatch;
       const tag = tagMap.get ? tagMap.get(tagCode) : tagMap[tagCode];
@@ -67,7 +68,7 @@ const SectionBlock = React.forwardRef(({
     // Check if content contains multiple lines with tags
     const lines = content.split('\n');
     const firstLine = lines[0] || '';
-    const hasTag = firstLine.match(/^(#\w+|##\w+):\s*/);
+    const hasTag = firstLine.match(/^((?:#|##|>>)\w+):\s*/i);
 
     if (hasTag) {
       const [, tagCode] = hasTag;
@@ -75,7 +76,7 @@ const SectionBlock = React.forwardRef(({
       return {
         tagInfo: {
           code: tagCode,
-          name: tag?.name || tag?.nome || (tagCode.startsWith('#') && !tagCode.startsWith('##') ? tagCode.substring(1) : tagCode.substring(2)) || 'Tag',
+          name: tag?.name || tag?.nome || (tagCode.startsWith('#') && !tagCode.startsWith('##') ? tagCode.substring(1) : tagCode.startsWith('>>') ? tagCode.substring(2) : tagCode.substring(2)) || 'Tag',
           type: tagCode.startsWith('#') && !tagCode.startsWith('##') ? 'main' : 'sub',
           category: tag?.category || 'Anamnese'
         },
@@ -185,6 +186,7 @@ const SectionBlock = React.forwardRef(({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={`Digite o conteúdo para ${tagInfo.name || 'esta seção'}...`}
+          context={context}
         />
       </div>
 
