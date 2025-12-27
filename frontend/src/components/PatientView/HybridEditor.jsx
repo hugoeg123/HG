@@ -98,6 +98,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   // Handlers for Context/Template
   const handleNextContext = () => setContextIndex(prev => (prev === CONTEXTS.length - 1 ? 0 : prev + 1));
   const handlePrevContext = () => setContextIndex(prev => (prev === 0 ? CONTEXTS.length - 1 : prev - 1));
+  const handleSelectContext = (index) => setContextIndex(index);
   
   const handlePinContext = () => {
     if (pinnedContextId === currentContext.id) {
@@ -641,37 +642,13 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       <header className="flex items-center pb-4 mb-6 border-b border-gray-700">
         <UserCircle size={48} className="text-teal-400 mr-4"/>
         <div className="flex-1">
-          {isEditingTitle ? (
-            <input
-              type="text"
-              value={editableTitle}
-              onChange={(e) => setEditableTitle(e.target.value)}
-              onBlur={() => setIsEditingTitle(false)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  setIsEditingTitle(false);
-                } else if (e.key === 'Escape') {
-                  setEditableTitle(safeTitle);
-                  setIsEditingTitle(false);
-                }
-              }}
-              className="text-2xl font-bold text-gray-100 bg-transparent border-b border-teal-400 focus:outline-none focus:border-teal-300 w-full"
-              autoFocus
-            />
-          ) : (
-            <h1 
-              className="text-2xl font-bold text-gray-100 cursor-pointer hover:text-teal-300 transition-colors"
-              onClick={() => setIsEditingTitle(true)}
-              title="Clique para editar o título"
-            >
-              {editableTitle}
-            </h1>
-          )}
+          {/* Title removed as per user request */}
           {/* Replaced static type with MedicalContextSelector */}
           <MedicalContextSelector 
             currentContext={currentContext}
             onNextContext={handleNextContext}
             onPrevContext={handlePrevContext}
+            onSelectContext={handleSelectContext}
             onPinContext={handlePinContext}
             isContextPinned={pinnedContextId === currentContext.id}
             

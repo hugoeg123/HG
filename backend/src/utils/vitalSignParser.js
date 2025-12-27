@@ -92,6 +92,28 @@ const extractVitals = (content) => {
         vitals.temp = parseFloat(tempMatch[1].replace(',', '.'));
     }
 
+    // Weight (Peso)
+    // Matches: #P:70, #Peso:70kg, #P:70.5
+    const weightMatch = content.match(/(?:##|#)?(?:Peso|P)(?:[:\s=]*)(\d+[.,]?\d*)\s*(?:kg|Kg|KG)?/i);
+    if (weightMatch) {
+        vitals.weight = parseFloat(weightMatch[1].replace(',', '.'));
+    }
+
+    // Height (Altura)
+    // Matches: #H:1.75, #Altura:175cm, #H:1,75m
+    const heightMatch = content.match(/(?:##|#)?(?:Altura|H)(?:[:\s=]*)(\d+[.,]?\d*)\s*(cm|m|M)?/i);
+    if (heightMatch) {
+        let val = parseFloat(heightMatch[1].replace(',', '.'));
+        const unit = heightMatch[2] ? heightMatch[2].toLowerCase() : null;
+        
+        // Normalize to cm if in meters (heuristic: < 3.0 implies meters)
+        if (unit === 'm' || (!unit && val < 3.0)) {
+            val = val * 100;
+        }
+        
+        vitals.height = Math.round(val); // Store in cm
+    }
+
     return vitals;
 };
 

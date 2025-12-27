@@ -78,6 +78,20 @@ const ProfileController = {
                 recorded_by: req.user?.id // Assuming auth middleware populates req.user
             });
 
+            // Notify clients about the update
+            try {
+                const { getSocketService } = require('../services/socket.registry');
+                const socketService = getSocketService();
+                if (socketService) {
+                    socketService.sendToRoom(`patient:${patientId}`, `patient:${patientId}:update`, { 
+                        type: 'anthropometrics', 
+                        entry 
+                    });
+                }
+            } catch (sockErr) {
+                console.warn('Socket emit failed:', sockErr.message);
+            }
+
             return res.status(201).json(entry);
         } catch (error) {
             console.error('Error adding anthropometrics:', error);

@@ -84,7 +84,9 @@ app.get('/health', (req, res) => {
 app.use(errorHandler);
 
 // Configurar Socket.io para atualizações em tempo real
-require('./services/socket.service')(io);
+const socketService = require('./services/socket.service')(io);
+const { setSocketService } = require('./services/socket.registry');
+setSocketService(socketService);
 
 // Importar configuração do banco de dados PostgreSQL
 const { sequelize } = require('./config/database-pg');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -7,7 +7,8 @@ import {
   ChevronDown, 
   X,
   Plus,
-  Trash2
+  Trash2,
+  Search
 } from 'lucide-react';
 import { CONTEXTS, TEMPLATES } from './definitions';
 
@@ -21,6 +22,7 @@ export default function MedicalContextSelector({
   currentContext,
   onNextContext,
   onPrevContext,
+  onSelectContext,
   onPinContext,
   isContextPinned,
   
@@ -33,6 +35,17 @@ export default function MedicalContextSelector({
   totalContexts
 }) {
   const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
+  
+  // Combobox state
+  const [isEditing, setIsEditing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isEditing]);
 
   const handleTemplateSelect = (tplId) => {
     onSelectTemplate(tplId);
@@ -48,6 +61,25 @@ export default function MedicalContextSelector({
     // Placeholder for future delete logic
     console.log("Delete template", id);
   };
+
+  const handleContextClick = () => {
+    setSearchQuery(''); // Start empty or could start with currentContext.label
+    setIsEditing(true);
+  };
+
+  const handleContextSelect = (index) => {
+    if (onSelectContext) {
+      onSelectContext(index);
+    }
+    setIsEditing(false);
+    setSearchQuery('');
+  };
+
+  const filteredContexts = CONTEXTS.map((ctx, idx) => ({ ...ctx, originalIndex: idx }))
+    .filter(ctx => 
+      ctx.label.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (ctx.description && ctx.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
   return (
     <div className="w-full">
@@ -74,9 +106,61 @@ export default function MedicalContextSelector({
             {isContextPinned ? "Start Padrão" : "Fixar Contexto"}
           </button>
 
-          <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-            {currentContext.icon && <currentContext.icon size={20} className="text-cyan-500" />}
-            {currentContext.label}
+          <h2 
+            className="text-xl font-bold text-gray-100 flex items-center gap-2 cursor-pointer hover:bg-white/5 px-2 py-1 rounded transition-colors relative"
+            onClick={!isEditing ? handleContextClick : undefined}
+          >
+            {!isEditing ? (
+              <>
+                {currentContext.label}
+              </>
+            ) : (
+              <div className="relative min-w-[200px]">
+                <div className="flex items-center gap-2">
+                  <Search size={16} className="text-cyan-500 absolute left-2" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onBlur={() => setTimeout(() => setIsEditing(false), 200)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (filteredContexts.length > 0) {
+                          handleContextSelect(filteredContexts[0].originalIndex);
+                        }
+                      } else if (e.key === 'Escape') {
+                        setIsEditing(false);
+                      }
+                    }}
+                    placeholder="Buscar contexto..."
+                    className="w-full bg-gray-800 text-white text-sm rounded border border-cyan-500 pl-8 pr-2 py-1 outline-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                
+                {/* Dropdown Results */}
+                <div className="absolute top-full left-0 mt-1 w-full bg-gray-800 border border-gray-700 rounded shadow-xl z-50 max-h-60 overflow-y-auto">
+                  {filteredContexts.length > 0 ? (
+                    filteredContexts.map((ctx) => (
+                      <button
+                        key={ctx.id}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-cyan-900/30 hover:text-cyan-400 flex items-center gap-2 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleContextSelect(ctx.originalIndex);
+                        }}
+                      >
+                        {ctx.icon && <ctx.icon size={14} />}
+                        <span>{ctx.label}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-500">Nenhum resultado</div>
+                  )}
+                </div>
+              </div>
+            )}
           </h2>
 
           {/* Template Switcher (Dropdown Trigger) */}

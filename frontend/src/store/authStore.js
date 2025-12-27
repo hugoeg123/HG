@@ -62,7 +62,11 @@ const useAuthStore = create(
             hasRequest: !!error.request
           };
           
-          console.error('AuthStore: Erro detalhado no login:', errorDetails);
+          if (error.response?.status === 401) {
+             console.warn('AuthStore: Credenciais inválidas para', email);
+          } else {
+             console.error('AuthStore: Erro detalhado no login:', errorDetails);
+          }
           
           // Determinar mensagem de erro específica baseada no tipo de erro
           let errorMessage;
@@ -80,28 +84,36 @@ const useAuthStore = create(
             switch (error.response.status) {
               case 400:
                 errorMessage = error.response.data?.message || 'Dados de login inválidos';
+                console.warn(`AuthStore: Login falhou (400): ${errorMessage}`);
                 break;
               case 401:
                 errorMessage = 'Credenciais inválidas. Verifique seu email e senha.';
+                console.warn(`AuthStore: Login falhou (401): ${errorMessage}`);
                 break;
               case 429:
                 errorMessage = 'Muitas tentativas de login. Tente novamente em alguns minutos.';
+                console.warn(`AuthStore: Login falhou (429): ${errorMessage}`);
                 break;
               case 500:
                 errorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
                 if (error.response.data?.requestId) {
                   console.error(`AuthStore: Erro do servidor com ID: ${error.response.data.requestId}`);
+                } else {
+                  console.error('AuthStore: Erro 500 no login', error.response.data);
                 }
                 break;
               case 503:
                 errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns minutos.';
+                console.warn('AuthStore: Servidor indisponível (503)');
                 break;
               default:
                 errorMessage = error.response.data?.message || `Erro do servidor (${error.response.status})`;
+                console.error(`AuthStore: Erro desconhecido (${error.response.status})`, error.response.data);
             }
           } else {
             // Fallback para casos não cobertos
             errorMessage = 'Falha na autenticação. Verifique a conexão com o servidor.';
+            console.error('AuthStore: Erro não tratado', error);
           }
           
           set({ 

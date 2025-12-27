@@ -21,6 +21,7 @@ import AnthropometricsCard from '../../components/PatientProfile/Anthropometrics
 import VitalSignsCard from '../../components/PatientProfile/VitalSignsCard';
 import LifestyleCard from '../../components/PatientProfile/LifestyleCard';
 import AntecedentsCard from '../../components/PatientProfile/AntecedentsCard';
+import DashboardGrid from '../../components/PatientProfile/Dashboard/DashboardGrid';
 import { Activity, Calendar, User, FileText, Search, Save } from 'lucide-react';
 
 const PatientProfile = () => {
@@ -66,7 +67,9 @@ const PatientProfile = () => {
         setProfileData(res.data);
       } catch (err) {
         if (!mounted) return;
-        console.error('Error fetching profile:', err);
+        if (err?.response?.status !== 401) {
+          console.error('Error fetching profile:', err);
+        }
         setError(err?.response?.data?.message || t('patientProfile.errorLoadingProfile'));
         // Fallback to basic user data if full profile fetch fails
         setProfileData({ patient: user });
@@ -151,83 +154,22 @@ const PatientProfile = () => {
             </TabsTrigger>
           </TabsList>
 
+
           {/* Dashboard */}
           <TabsContent value="dashboard" className="space-y-6">
-            {/* Resumo Rápido */}
-            <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-gray-200 dark:border-gray-800 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{t('patientProfile.personalSummary')}</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('patientProfile.name')}</label>
-                  <Input value={patient?.name || ''} disabled className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('patientProfile.email')}</label>
-                  <Input value={patient?.email || ''} disabled className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('patientProfile.phone')}</label>
-                  <Input value={patient?.phone || ''} disabled className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" />
-                </div>
-                <div className="md:col-span-3 pt-2">
-                  <Button onClick={() => navigate('/marketplace')} className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20">
-                    <Search className="w-4 h-4 mr-2" />
-                    {t('patientProfile.findProfessionals')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <AgendaSummary patientId={patient?.id} />
-
-            {/* Informações de Saúde */}
-            <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-gray-200 dark:border-gray-800 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{t('patientProfile.quickHealthRecord')}</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('patientProfile.weight')}</label>
-                  <Input
-                    name="weight"
-                    value={healthInputs.weight}
-                    onChange={handleHealthInputChange}
-                    placeholder="Ex: 70.5"
-                    className="focus:ring-teal-500"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('patientProfile.height')}</label>
-                  <Input
-                    name="height"
-                    value={healthInputs.height}
-                    onChange={handleHealthInputChange}
-                    placeholder="Ex: 175"
-                    className="focus:ring-teal-500"
-                  />
-                </div>
-                <div className="md:col-span-3 space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('patientProfile.notesSymptoms')}</label>
-                  <Textarea
-                    name="notes"
-                    value={healthInputs.notes}
-                    onChange={handleHealthInputChange}
-                    placeholder={t('patientProfile.describeFeeling')}
-                    className="min-h-[100px] focus:ring-teal-500"
-                  />
-                </div>
-                <div className="md:col-span-3 pt-2">
-                  <Button onClick={handleSaveHealthInputs} variant="outline" className="border-teal-500 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20">
-                    <Save className="w-4 h-4 mr-2" />
-                    {t('patientProfile.saveRecord')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
+            <DashboardGrid patient={patient} />
+            <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+              <AgendaSummary patientId={patient?.id} />
+              {/* Quick Find Professionals Button - Moving here as secondary action */}
+              <div className="flex justify-center mt-6">
+                <Button onClick={() => navigate('/marketplace')} variant="outline" className="text-teal-600 border-teal-200 hover:bg-teal-50">
+                  <Search className="w-4 h-4 mr-2" />
+                  {t('patientProfile.findProfessionals')}
+                </Button>
+              </div>
+            </div>
           </TabsContent>
+
 
           {/* Editar Perfil */}
           <TabsContent value="edit">

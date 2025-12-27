@@ -72,6 +72,18 @@ module.exports = (io) => {
         io.emit('notification', data);
       }
     });
+
+    // Room management for patients
+    socket.on('join:patient', (patientId) => {
+        const room = `patient:${patientId}`;
+        socket.join(room);
+        // console.log(`Socket ${socket.id} joined room ${room}`);
+    });
+
+    socket.on('leave:patient', (patientId) => {
+        const room = `patient:${patientId}`;
+        socket.leave(room);
+    });
   });
 
   // Função para enviar notificação para um usuário específico
@@ -89,10 +101,15 @@ module.exports = (io) => {
     io.emit(eventName, data);
   };
 
+  const sendToRoom = (room, eventName, data) => {
+      io.to(room).emit(eventName, data);
+  };
+
   // Expor funções para uso em outros módulos
   return {
     sendToUser,
     broadcast,
+    sendToRoom,
     getConnectedUsers: () => Array.from(connectedUsers.keys())
   };
 };

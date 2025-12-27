@@ -366,6 +366,20 @@ exports.createRecord = async (req, res) => {
       doctorCRM: json.medicoCriador?.professional_id || null
     };
 
+    // Notify clients about the update
+     try {
+         const { getSocketService } = require('../services/socket.registry');
+         const socketService = getSocketService();
+         if (socketService) {
+              socketService.sendToRoom(`patient:${patientId}`, `patient:${patientId}:update`, { 
+                 type: 'record', 
+                 recordId: record.id 
+              });
+         }
+     } catch (sockErr) {
+         console.warn('Socket emit failed:', sockErr.message);
+     }
+
     res.status(201).json({
       success: true,
       message: 'Registro criado com sucesso',

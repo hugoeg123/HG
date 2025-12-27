@@ -39,7 +39,7 @@ const Navbar = ({ onToggleLeftSidebar, onToggleRightSidebar, rightSidebarCollaps
         </button>
 
         {/* Logo e nome do aplicativo */}
-        <Link to="/dashboard" className="flex items-center">
+        <Link to="/" className="flex items-center">
           <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-lg ${isDarkMode ? 'bg-teal-500 text-theme-background' : 'bg-blue-600 text-theme-background'
             }`}>
             HG
