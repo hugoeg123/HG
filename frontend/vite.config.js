@@ -12,6 +12,9 @@ export default defineConfig({
       plugins: [tailwindcss(), autoprefixer()],
     },
   },
+  test: {
+    environment: 'jsdom',
+  },
   server: {
     port: 3000,
     open: true,

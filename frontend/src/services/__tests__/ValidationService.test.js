@@ -5,6 +5,7 @@
  * IA prompt: Adicionar testes de performance e validações específicas por especialidade
  */
 
+import { describe, test, expect } from 'vitest';
 import { ValidationService, ALERT_LEVELS } from '../ValidationService';
 import { PHYSIOLOGICAL_RANGES } from '../PhysiologicalRanges';
 

@@ -75,18 +75,32 @@ const LeftSidebar = ({ collapsed }) => {
 
   // Manipular clique no paciente
   const handlePatientClick = (patient) => {
-    if (eqId(expandedPatient, patient.id)) {
-      setExpandedPatient(null);
-    } else {
-      setExpandedPatient(patient.id);
-      // Clear current record when selecting a different patient
-      clearCurrentRecord();
-      setCurrentPatient(patient);
-      navigate(`/patients/${patient.id}`);
-      // Lazy load de registros ao expandir, evitando requisições desnecessárias
-      if ((!patient.records || patient.records.length === 0) && (typeof patient.recordCount === 'number' ? patient.recordCount > 0 : true)) {
-        fetchPatientRecords(patient.id);
+    // Verificar se já estamos no dashboard deste paciente (sem registro selecionado)
+    // Se estivermos visualizando um registro, activeRecordId será truthy
+    const isCurrentPatientDashboard = 
+        eqId(activePatientId, patient.id) && 
+        !activeRecordId && 
+        !currentRecord;
+
+    // Se já estamos no dashboard do paciente, o clique funciona como toggle de expansão
+    if (isCurrentPatientDashboard) {
+      if (eqId(expandedPatient, patient.id)) {
+        setExpandedPatient(null);
+      } else {
+        setExpandedPatient(patient.id);
       }
+      return;
+    }
+
+    // Caso contrário (outro paciente, ou mesmo paciente com registro aberto), navegar para o dashboard
+    setExpandedPatient(patient.id);
+    clearCurrentRecord();
+    setCurrentPatient(patient);
+    navigate(`/patients/${patient.id}`);
+    
+    // Lazy load de registros ao expandir, evitando requisições desnecessárias
+    if ((!patient.records || patient.records.length === 0) && (typeof patient.recordCount === 'number' ? patient.recordCount > 0 : true)) {
+      fetchPatientRecords(patient.id);
     }
   };
 

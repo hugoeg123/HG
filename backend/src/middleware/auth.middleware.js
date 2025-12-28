@@ -30,52 +30,80 @@ exports.authenticate = async (req, res, next) => {
 
     const role = decoded.role || 'medico';
 
-    if (role === 'patient') {
-      const patient = await Patient.findByPk(decoded.sub || decoded.id, {
-        attributes: ['id', 'email', 'name']
-      });
-      if (DEBUG_AUTH_MIDDLEWARE) {
-        console.log('Patient found:', patient);
-      }
-      if (!patient) {
-        if (DEBUG_AUTH_MIDDLEWARE) {
-          console.warn('Patient not found for ID:', decoded.sub || decoded.id);
-        }
-        return res.status(401).json({ message: 'Usuário não encontrado' });
-      }
-
+    // Se estiver em modo offline, pular verificação de banco de dados
+    if (global.isDbOffline) {
+      if (DEBUG_AUTH_MIDDLEWARE) console.log('⚠️ Modo Offline: Usando dados do token para autenticação');
       req.user = {
-        id: patient.id,
-        sub: patient.id,
-        name: patient.name,
-        email: patient.email,
-        role: 'patient',
-        roles: decoded.roles || ['patient']
+        id: decoded.sub || decoded.id,
+        sub: decoded.sub || decoded.id,
+        name: decoded.name || decoded.nome || 'Usuário (Modo Offline)',
+        email: decoded.email || 'email@offline.com',
+        role: role,
+        roles: decoded.roles || [role]
       };
-    } else {
-      // Verificar se o médico existe
-      const medico = await Medico.findByPk(decoded.sub || decoded.id, { 
-        attributes: ['id', 'email', 'nome'] 
-      });
-      if (DEBUG_AUTH_MIDDLEWARE) {
-        console.log('Medico found:', medico);
-      }
-      
-      if (!medico) {
-        if (DEBUG_AUTH_MIDDLEWARE) {
-          console.warn('Medico not found for ID:', decoded.sub || decoded.id);
-        }
-        return res.status(401).json({ message: 'Usuário não encontrado' });
-      }
+      return next();
+    }
 
-      // Adicionar usuário à requisição
+    try {
+      if (role === 'patient') {
+        const patient = await Patient.findByPk(decoded.sub || decoded.id, {
+          attributes: ['id', 'email', 'name']
+        });
+        if (DEBUG_AUTH_MIDDLEWARE) {
+          console.log('Patient found:', patient);
+        }
+        if (!patient) {
+          if (DEBUG_AUTH_MIDDLEWARE) {
+            console.warn('Patient not found for ID:', decoded.sub || decoded.id);
+          }
+          return res.status(401).json({ message: 'Usuário não encontrado' });
+        }
+
+        req.user = {
+          id: patient.id,
+          sub: patient.id,
+          name: patient.name,
+          email: patient.email,
+          role: 'patient',
+          roles: decoded.roles || ['patient']
+        };
+      } else {
+        // Verificar se o médico existe
+        const medico = await Medico.findByPk(decoded.sub || decoded.id, { 
+          attributes: ['id', 'email', 'nome'] 
+        });
+        if (DEBUG_AUTH_MIDDLEWARE) {
+          console.log('Medico found:', medico);
+        }
+        
+        if (!medico) {
+          if (DEBUG_AUTH_MIDDLEWARE) {
+            console.warn('Medico not found for ID:', decoded.sub || decoded.id);
+          }
+          return res.status(401).json({ message: 'Usuário não encontrado' });
+        }
+
+        // Adicionar usuário à requisição
+        req.user = {
+          id: medico.id,
+          sub: medico.id,
+          name: medico.nome,
+          email: medico.email,
+          role: 'medico',
+          roles: decoded.roles || ['medico']
+        };
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Erro de banco de dados na autenticação, usando dados do token:', dbError.message);
+      
+      // Fallback: usar dados do token
       req.user = {
-        id: medico.id,
-        sub: medico.id,
-        name: medico.nome,
-        email: medico.email,
-        role: 'medico',
-        roles: decoded.roles || ['medico']
+        id: decoded.sub || decoded.id,
+        sub: decoded.sub || decoded.id,
+        name: decoded.name || decoded.nome || 'Usuário (Modo Offline)',
+        email: decoded.email || 'email@offline.com',
+        role: role,
+        roles: decoded.roles || [role]
       };
     }
 

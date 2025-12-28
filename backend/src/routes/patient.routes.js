@@ -18,8 +18,7 @@ const patientController = require('../controllers/patient.controller');
 router.get('/', authMiddleware, patientController.getAllPatients);
 
 // Obter dashboard consolidado do paciente (deve vir antes da rota genérica /:id)
-// Temporariamente sem autenticação para teste
-router.get('/:id/dashboard', patientController.getPatientDashboard);
+router.get('/:id/dashboard', authMiddleware, patientController.getPatientDashboard);
 
 // Obter paciente por ID
 router.get('/:id', authMiddleware, patientController.getPatientById);

@@ -8,10 +8,12 @@ const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/ai.controller');
 
+router.get('/models', aiController.getModels);
+router.get('/health', aiController.health);
+
 // Middleware de autenticação
 const { authMiddleware } = require('../middleware/auth');
 
-// Todas as rotas requerem autenticação
 router.use(authMiddleware);
 
 // Rotas de Contexto

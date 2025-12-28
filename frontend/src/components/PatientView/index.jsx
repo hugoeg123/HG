@@ -116,7 +116,14 @@ const PatientView = () => {
 
   // React to recordId in URL: fetch and show the record viewer when present
   useEffect(() => {
-    if (!recordId) return;
+    if (!recordId) {
+       // If no recordId is present in URL, ensure we are not in viewer mode (unless editing new)
+       if (viewMode === 'viewer') {
+           setViewMode('dashboard');
+           clearCurrentRecord();
+       }
+       return;
+    }
 
     if (!currentRecord || String(currentRecord.id) !== String(recordId)) {
       fetchRecordById(recordId)
@@ -126,12 +133,14 @@ const PatientView = () => {
         })
         .catch((e) => {
           console.error('Erro ao carregar registro pela URL:', e);
+          // If record not found, fallback to dashboard
+          navigate(`/patients/${id}`);
         });
     } else {
       setViewMode('viewer');
       setShowEditor(false);
     }
-  }, [recordId]);
+  }, [recordId, id]);
 
   // Handle new record creation
   const handleNewRecord = (recordType = 'anamnese') => {

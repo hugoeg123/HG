@@ -38,8 +38,17 @@ const { sequelize } = require('../models/sequelize');
 router.get('/health', async (req, res) => {
   let db = 'unknown';
   try {
-    await sequelize.authenticate();
-    db = 'connected';
+    if (global.isDbOffline) {
+      db = 'disconnected (offline mode)';
+    } else {
+      // Timeout curto para health check
+      const authPromise = sequelize.authenticate();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 1000)
+      );
+      await Promise.race([authPromise, timeoutPromise]);
+      db = 'connected';
+    }
   } catch (e) {
     db = 'disconnected';
   }

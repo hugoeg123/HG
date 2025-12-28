@@ -15,6 +15,7 @@ import {
   AlertDescription
 } from '@/components/ui/alert.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx';
+import { Checkbox } from '@/components/ui/checkbox.tsx';
 import { useTimeSlotStore } from '../store/timeSlotStore';
 
 const AvailabilitySettings = ({ onOpenChange }) => {

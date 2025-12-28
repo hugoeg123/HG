@@ -9,7 +9,7 @@
 
 const request = require('supertest');
 const app = require('../src/app');
-const { Patient, Record } = require('../src/models');
+const { Patient, Record, sequelize } = require('../src/models');
 
 describe('Patient Dashboard Endpoint', () => {
   let authToken;
@@ -33,6 +33,11 @@ describe('Patient Dashboard Endpoint', () => {
       }
     } catch (error) {
       console.log('Cleanup error (expected in mock tests):', error.message);
+    }
+    try {
+      await sequelize.close();
+    } catch (error) {
+      console.log('Sequelize close error (expected in mock tests):', error.message);
     }
   });
 

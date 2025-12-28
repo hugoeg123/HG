@@ -23,16 +23,17 @@ const PatientRecordList = ({
     const { setChatContext } = usePatientStore();
     const [expandedPatients, setExpandedPatients] = useState({});
 
-    const togglePatient = (patientId, e) => {
+    const togglePatientExpansion = (patientId, e) => {
         e.stopPropagation();
         setExpandedPatients(prev => ({
             ...prev,
             [patientId]: !prev[patientId]
         }));
-        // If we are expanding, we might want to trigger the patient selection too
-        if (!expandedPatients[patientId]) {
-            onPatientClick(patients.find(p => p.id === patientId));
-        }
+    };
+
+    const handlePatientSelect = (patient, e) => {
+        e.stopPropagation(); // Previne que eventos de pais capturem, se houver
+        onPatientClick(patient);
     };
 
     const handleAddToChat = (e, item, type) => {
@@ -76,11 +77,11 @@ const PatientRecordList = ({
                                     : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100')
                                 }
               `}
-                            onClick={(e) => togglePatient(patient.id, e)}
+                            onClick={(e) => handlePatientSelect(patient, e)}
                         >
                             <button
                                 className={`mr-1 p-0.5 rounded-sm hover:bg-black/10 transition-transform ${expanded ? 'rotate-90' : ''}`}
-                                onClick={(e) => togglePatient(patient.id, e)}
+                                onClick={(e) => togglePatientExpansion(patient.id, e)}
                             >
                                 <ChevronRight size={14} />
                             </button>

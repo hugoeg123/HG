@@ -11,6 +11,34 @@ const { Record, Tag, Medico } = require('../models');
 const { parseSections, calculateStats } = require('../../../shared/parser');
 const { Op } = require('sequelize');
 
+const DEFAULT_DASHBOARD_TAGS = [
+  { id: '00000000-0000-0000-0000-000000000001', medico_id: null, parent_id: null, codigo: '#DX', nome: 'Diagnóstico', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000002', medico_id: null, parent_id: null, codigo: '#PROBLEMA', nome: 'Problema', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000003', medico_id: null, parent_id: null, codigo: '#ALERGIA', nome: 'Alergia', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000004', medico_id: null, parent_id: null, codigo: '#ALERGIAS', nome: 'Alergias', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000005', medico_id: null, parent_id: null, codigo: '#MEDICAMENTO', nome: 'Medicamento', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000006', medico_id: null, parent_id: null, codigo: '#MEDICAMENTOS', nome: 'Medicamentos', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000007', medico_id: null, parent_id: null, codigo: '#PLANO', nome: 'Plano', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000008', medico_id: null, parent_id: null, codigo: '#EXAME', nome: 'Exame', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000009', medico_id: null, parent_id: null, codigo: '#LABORATORIO', nome: 'Laboratório', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-00000000000a', medico_id: null, parent_id: null, codigo: '#RESULTADO', nome: 'Resultado', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-00000000000b', medico_id: null, parent_id: null, codigo: '#INVESTIGACAO', nome: 'Investigação', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-00000000000c', medico_id: null, parent_id: null, codigo: '#PENDENTE', nome: 'Pendente', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-00000000000d', medico_id: null, parent_id: null, codigo: '#QP', nome: 'Queixa Principal', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-00000000000e', medico_id: null, parent_id: null, codigo: '#HDA', nome: 'História da Doença Atual', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-00000000000f', medico_id: null, parent_id: null, codigo: '#EF', nome: 'Exame Físico', tipo_dado: 'texto', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000010', medico_id: null, parent_id: null, codigo: '#PA', nome: 'Pressão Arterial', tipo_dado: 'bp', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000011', medico_id: null, parent_id: null, codigo: '#TEMP', nome: 'Temperatura', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000012', medico_id: null, parent_id: null, codigo: '#TEMPERATURA', nome: 'Temperatura', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000013', medico_id: null, parent_id: null, codigo: '#FC', nome: 'Frequência Cardíaca', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000014', medico_id: null, parent_id: null, codigo: '#FREQ_CARDIACA', nome: 'Frequência Cardíaca', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000015', medico_id: null, parent_id: null, codigo: '#PULSO', nome: 'Pulso', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000016', medico_id: null, parent_id: null, codigo: '#SPO2', nome: 'Saturação', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000017', medico_id: null, parent_id: null, codigo: '#SAT', nome: 'Saturação', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000018', medico_id: null, parent_id: null, codigo: '#SATURACAO', nome: 'Saturação', tipo_dado: 'numero', regras_validacao: {} },
+  { id: '00000000-0000-0000-0000-000000000019', medico_id: null, parent_id: null, codigo: '#O2', nome: 'Oxigênio', tipo_dado: 'numero', regras_validacao: {} }
+];
+
 /**
  * Busca e consolida dados do dashboard para um paciente
  * @param {string} patientId - UUID do paciente
@@ -44,9 +72,23 @@ async function getPatientDashboardData(patientId) {
 
     // Buscar todas as tags disponíveis para parsing
     console.time('🏷️ Tags Query');
-    const tags = await Tag.findAll({
-      attributes: ['id', 'medico_id', 'parent_id', 'codigo', 'nome', 'tipo_dado', 'regras_validacao', 'createdAt', 'updatedAt']
-    });
+    let tags = [];
+    try {
+      tags = await Tag.findAll({
+        attributes: ['id', 'medico_id', 'parent_id', 'codigo', 'nome', 'tipo_dado', 'regras_validacao', 'createdAt', 'updatedAt']
+      });
+    } catch (error) {
+      tags = [];
+    }
+    if (!Array.isArray(tags) || tags.length === 0) {
+      tags = [...DEFAULT_DASHBOARD_TAGS];
+    }
+    const existingCodigos = new Set(tags.map(t => t?.codigo).filter(Boolean));
+    for (const defaultTag of DEFAULT_DASHBOARD_TAGS) {
+      if (!existingCodigos.has(defaultTag.codigo)) {
+        tags.push(defaultTag);
+      }
+    }
     const tagMap = new Map(tags.map(t => [t.id, t]));
     console.timeEnd('🏷️ Tags Query');
     console.log(`🏷️ Tags carregadas: ${tags.length}`);

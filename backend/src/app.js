@@ -87,10 +87,16 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // Compressão de respostas
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    if (req.originalUrl && req.originalUrl.startsWith('/api/ai/chat')) return false;
+    return compression.filter(req, res);
+  }
+}));
 
 // Rate limiting configurado por ambiente
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isTest = process.env.NODE_ENV === 'test';
 
 // Rate limiting geral - muito permissivo em desenvolvimento
 const limiter = rateLimit({
@@ -111,7 +117,9 @@ const limiter = rateLimit({
   }
 });
 
-app.use('/api', limiter);
+if (!isTest) {
+  app.use('/api', limiter);
+}
 
 // Rate limiting para autenticação - desabilitado em desenvolvimento
 const authLimiter = rateLimit({
@@ -131,7 +139,9 @@ const authLimiter = rateLimit({
   }
 });
 
-app.use('/api/auth/login', authLimiter);
+if (!isTest) {
+  app.use('/api/auth/login', authLimiter);
+}
 
 // Parsing de JSON e URL-encoded
 app.use(express.json({
@@ -252,16 +262,22 @@ app.use((error, req, res, next) => {
 // Função para inicializar o servidor
 const startServer = async () => {
   try {
-    // Testar conexão com banco de dados
-    await sequelize.authenticate();
+    // Testar conexão com banco de dados (timeout de 5s)
+    const authPromise = sequelize.authenticate();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout na conexão com o banco de dados')), 5000)
+    );
+    
+    await Promise.race([authPromise, timeoutPromise]);
     logger.info('✅ Conexão com PostgreSQL estabelecida');
+    global.isDbOffline = false;
 
     // Sincronizar modelos (apenas em desenvolvimento)
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: false });
       logger.info('✅ Modelos sincronizados com o banco');
     }
-
+    
     const PORT = process.env.PORT || 5001;
 
     // Criar servidor HTTP
@@ -337,6 +353,7 @@ const startServer = async () => {
   } catch (error) {
     logger.error('❌ Erro ao inicializar servidor:', error);
     logger.warn('⚠️ Iniciando servidor sem banco de dados (modo degradado).');
+    global.isDbOffline = true;
 
     const PORT = process.env.PORT || 5001;
     const server = createServer(app);

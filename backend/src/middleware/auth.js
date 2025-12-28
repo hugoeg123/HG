@@ -79,6 +79,20 @@ const authMiddleware = async (req, res, next) => {
     // Identificar role para buscar usuário correto
     const role = decoded.role || 'medico';
 
+    if (global.isDbOffline) {
+      req.user = {
+        id: decoded.sub || decoded.id,
+        sub: decoded.sub || decoded.id,
+        email: decoded.email || 'email@offline.com',
+        nome: decoded.nome || decoded.name || 'Usuário (Modo Offline)',
+        iat: decoded.iat,
+        exp: decoded.exp,
+        role: role,
+        roles: decoded.roles || [role]
+      };
+      return next();
+    }
+
     if (role === 'patient') {
       // Verificar se o paciente existe
       const patient = await Patient.findByPk(decoded.sub, {
