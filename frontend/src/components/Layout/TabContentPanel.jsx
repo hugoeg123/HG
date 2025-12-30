@@ -26,7 +26,8 @@ const TabContentPanel = ({
   title, 
   children, 
   className = '', 
-  showTitle = true 
+  showTitle = true,
+  actions
 }) => {
   return (
     <div className={cn(
@@ -35,10 +36,15 @@ const TabContentPanel = ({
     )}>
       {/* Header with title */}
       {showTitle && title && (
-        <div className="border-b border-gray-700/30 px-4 py-3">
+        <div className="border-b border-gray-700/30 px-4 py-3 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-white">
             {title}
           </h3>
+          {actions && (
+            <div className="flex items-center gap-2">
+              {actions}
+            </div>
+          )}
         </div>
       )}
       

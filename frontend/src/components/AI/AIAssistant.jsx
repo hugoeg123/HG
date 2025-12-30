@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, FileText, X, Paperclip, Sparkles, Database, Loader2, Plus, ChevronDown, Square } from 'lucide-react';
+import { Send, Bot, User, FileText, X, Paperclip, Sparkles, Database, Loader2, Plus, ChevronDown, Square, History as HistoryIcon } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
 import { useThemeStore } from '../../store/themeStore';
+import { useChatStore } from '../../store/chatStore';
 import aiService from '../../services/aiService';
 
 const AIAssistant = () => {
-  const [messages, setMessages] = useState([]);
+  const { messages, addMessage, updateMessage, history, loadChat } = useChatStore();
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -211,7 +212,7 @@ const AIAssistant = () => {
       contexts: extractedContexts
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    addMessage(userMessage);
 
     // Clear Input
     inputRef.current.innerHTML = '';
@@ -240,29 +241,23 @@ const AIAssistant = () => {
       isStreaming: true
     };
 
-    setMessages((prev) => [...prev, initialAiMessage]);
+    addMessage(initialAiMessage);
     setIsStreaming(true);
 
     let clientTimeout = null;
+    let collectedContent = ''; // Keep track locally to avoid stale closure state
+
     try {
       const selectedModel = model || availableModels[0]?.id || 'gpt-4';
       const selectedModelMeta = availableModels.find((m) => m.id === selectedModel);
       const isOllamaModel = selectedModelMeta?.provider === 'ollama';
-
-      let collectedContent = '';
       let hasReceivedContent = false;
 
       if (isOllamaModel) {
         try {
           await aiService.getHealth();
         } catch (healthError) {
-          setMessages((prev) =>
-            prev.map(msg =>
-              msg.id === tempAiMsgId
-                ? { ...msg, content: 'Ollama indisponível. Inicie o serviço e tente novamente.', isError: true, isStreaming: false }
-                : msg
-            )
-          );
+          updateMessage(tempAiMsgId, { content: 'Ollama indisponível. Inicie o serviço e tente novamente.', isError: true, isStreaming: false });
           setIsLoading(false);
           setIsStreaming(false);
           abortControllerRef.current = null;
@@ -292,13 +287,7 @@ const AIAssistant = () => {
 
           collectedContent += chunk;
 
-          setMessages((prev) =>
-            prev.map(msg =>
-              msg.id === tempAiMsgId
-                ? { ...msg, content: collectedContent }
-                : msg
-            )
-          );
+          updateMessage(tempAiMsgId, { content: collectedContent });
           // Force scroll to bottom on new content
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
@@ -307,36 +296,18 @@ const AIAssistant = () => {
       clearTimeout(clientTimeout);
 
       // Finalize message state
-      setMessages((prev) =>
-        prev.map(msg =>
-          msg.id === tempAiMsgId
-            ? { ...msg, isStreaming: false } // Done streaming
-            : msg
-        )
-      );
+      updateMessage(tempAiMsgId, { isStreaming: false });
 
     } catch (error) {
       if (error.name === 'AbortError' || error.message === 'canceled') {
-        setMessages((prev) =>
-          prev.map(msg =>
-            msg.id === tempAiMsgId
-              ? {
-                ...msg,
-                content: msg.content || 'Geração interrompida ou tempo limite atingido.',
-                isStreaming: false,
-                isError: !msg.content
-              }
-              : msg
-          )
-        );
+        updateMessage(tempAiMsgId, {
+          content: collectedContent || 'Geração interrompida ou tempo limite atingido.',
+          isStreaming: false,
+          isError: !collectedContent
+        });
       } else {
-      console.error('Error sending message:', error);
+        console.error('Error sending message:', error);
 
-      // Update the placeholder with error info instead of adding new message if possible, 
-      // or append error message. Let's append distinct error for clarity if content was empty.
-
-      setMessages((prev) => {
-        const lastMsg = prev[prev.length - 1];
         const rawMessage = String(error?.message || '');
         const normalized = rawMessage.toLowerCase();
         const resolvedMessage =
@@ -345,24 +316,20 @@ const AIAssistant = () => {
             : (normalized.includes('unauthorized') || normalized.includes('jwt') || normalized.includes('token') || normalized.includes('401'))
               ? 'Sessão expirada ou não autenticado. Faça login novamente.'
               : rawMessage || 'Sem resposta do servidor. Verifique se o backend e o Ollama estão rodando.';
-        if (lastMsg.id === tempAiMsgId && !lastMsg.content) {
+        
+        if (!collectedContent) {
           // If we failed before ANY content, replace the empty bubble with error
-          return prev.map(msg =>
-            msg.id === tempAiMsgId
-              ? { ...msg, content: resolvedMessage, isError: true, isStreaming: false }
-              : msg
-          );
+          updateMessage(tempAiMsgId, { content: resolvedMessage, isError: true, isStreaming: false });
         } else {
           // If we partially streamed or it was something else, add explicit error
-          return [...prev, {
+          addMessage({
             id: Date.now() + 2,
             content: resolvedMessage,
             sender: 'ai',
             timestamp: new Date(),
             isError: true
-          }];
+          });
         }
-      });
       }
     } finally {
       if (clientTimeout) clearTimeout(clientTimeout);
@@ -406,6 +373,36 @@ const AIAssistant = () => {
             <p className="text-xs mt-2 max-w-[250px] text-center opacity-70">
               Use @ para mencionar contextos ou arraste arquivos aqui.
             </p>
+
+            {/* Recent History */}
+            {history.length > 0 && (
+              <div className="mt-8 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <HistoryIcon size={12} />
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Conversas Recentes</h3>
+                </div>
+                <div className="space-y-2">
+                  {history.slice(0, 3).map(chat => (
+                    <button 
+                      key={chat.id}
+                      onClick={() => loadChat(chat.id)}
+                      className={`w-full text-left p-3 rounded-xl border transition-all group relative overflow-hidden ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-teal-500/30' 
+                          : 'bg-white border-gray-200 hover:border-blue-500/30 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="font-medium text-sm text-theme-text group-hover:text-teal-500 transition-colors truncate">{chat.title}</div>
+                      <div className="text-xs text-gray-500 mt-1 truncate pr-8">{chat.preview}</div>
+                      <div className="text-[10px] text-gray-400 mt-2 flex justify-between">
+                        <span>{new Date(chat.date).toLocaleDateString()}</span>
+                        <span>{chat.messages.length} msgs</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

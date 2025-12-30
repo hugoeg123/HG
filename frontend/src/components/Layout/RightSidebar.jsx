@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { MessageSquare, Calculator, AlertTriangle, BookOpen, ChevronLeft, ChevronRight, Database } from 'lucide-react';
+import { MessageSquare, Calculator, AlertTriangle, BookOpen, ChevronLeft, ChevronRight, Database, Plus, History as HistoryIcon, Trash2 } from 'lucide-react';
 import AIAssistant from '../AI/AIAssistant';
 import Calculators from '../Tools/Calculators';
 import Alerts from '../Tools/Alerts';
@@ -8,7 +8,9 @@ import KnowledgeBase from '../Tools/KnowledgeBase';
 import ContextManager from '../AI/ContextManager';
 import TabContentPanel from './TabContentPanel';
 import { useThemeStore } from '../../store/themeStore';
+import { useChatStore } from '../../store/chatStore';
 import { useTranslation } from 'react-i18next';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 /**
  * RightSidebar component - Displays AI assistant, calculators, alerts and knowledge base
@@ -28,8 +30,10 @@ import { useTranslation } from 'react-i18next';
 const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('chat');
+  const [showHistory, setShowHistory] = useState(false);
   const { id: patientId } = useParams(); // Get current patient ID from URL
   const { isDarkMode } = useThemeStore();
+  const { startNewChat, history, loadChat, deleteChat } = useChatStore();
 
   const tabConfig = {
     chat: { title: t('layout.chat'), component: <AIAssistant />, icon: <MessageSquare size={16} /> },
@@ -41,6 +45,25 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
 
   const ActiveComponent = tabConfig[activeTab].component;
   const activeTitle = tabConfig[activeTab].title;
+
+  const chatActions = (
+    <>
+      <button 
+        onClick={() => startNewChat()} 
+        className={`p-1.5 rounded-md transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}
+        title="Nova Conversa"
+      >
+        <Plus size={18} />
+      </button>
+      <button 
+        onClick={() => setShowHistory(true)} 
+        className={`p-1.5 rounded-md transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}
+        title="Histórico"
+      >
+        <HistoryIcon size={18} />
+      </button>
+    </>
+  );
 
   return (
     <div className={`right-pane h-full bg-theme-background flex flex-col p-4 space-y-4 ${collapsed ? 'hidden' : ''}`}>
@@ -78,10 +101,51 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
 
       {/* Painel de Conteúdo Unificado */}
       <div className="flex-1 overflow-hidden">
-        <TabContentPanel title={activeTitle}>
+        <TabContentPanel 
+          title={activeTitle}
+          actions={activeTab === 'chat' ? chatActions : null}
+        >
           {ActiveComponent}
         </TabContentPanel>
       </div>
+
+      {/* Dialog de Histórico */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Histórico de Conversas</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2 mt-4">
+            {history.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">Nenhuma conversa salva.</p>
+            ) : (
+              history.map(chat => (
+                <div 
+                  key={chat.id} 
+                  className={`group flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${
+                    isDarkMode 
+                      ? 'border-gray-700/50 hover:border-teal-500/30 bg-theme-card hover:bg-theme-surface' 
+                      : 'border-gray-200 hover:border-blue-500/30 bg-white hover:bg-gray-50'
+                  }`} 
+                  onClick={() => { loadChat(chat.id); setShowHistory(false); }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`font-medium text-sm truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{chat.title}</h4>
+                    <p className="text-xs text-gray-500 mt-1">{new Date(chat.date).toLocaleDateString()} • {chat.messages.length} msgs</p>
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }} 
+                    className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400 rounded-md transition-all"
+                    title="Excluir conversa"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
