@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { MessageSquare, Calculator, AlertTriangle, BookOpen, ChevronLeft, ChevronRight, Database, Plus, History as HistoryIcon, Trash2 } from 'lucide-react';
+import { MessageSquare, Calculator, AlertTriangle, BookOpen, ChevronLeft, ChevronRight, Database, Plus, History as HistoryIcon, Trash2, Maximize2, Minimize2 } from 'lucide-react';
 import AIAssistant from '../AI/AIAssistant';
 import Calculators from '../Tools/Calculators';
 import Alerts from '../Tools/Alerts';
@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
  * Hook: Uses useParams to get current patientId and pass to Calculators component
  * IA prompt: Adicionar histórico de interações com IA e favoritos de calculadoras
  */
-const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
+const RightSidebar = ({ collapsed, expanded, maximized, onToggleExpansion, onToggleMaximization }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('chat');
   const [showHistory, setShowHistory] = useState(false);
@@ -70,13 +70,22 @@ const RightSidebar = ({ collapsed, expanded, onToggleExpansion }) => {
       {/* Botão de Expansão */}
       <div className="flex justify-between items-center">
         <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t('layout.tools')}</h2>
-        <button
-          onClick={onToggleExpansion}
-          className={`p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent ${isDarkMode ? 'hover:border-teal-500/30' : 'hover:border-blue-500/30'} rounded-lg transition-all duration-200`}
-          title={expanded ? 'Reduzir barra lateral' : 'Expandir barra lateral'}
-        >
-          {expanded ? <ChevronRight size={16} className="text-gray-400" /> : <ChevronLeft size={16} className="text-gray-400" />}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onToggleExpansion}
+            className={`p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent ${isDarkMode ? 'hover:border-teal-500/30' : 'hover:border-blue-500/30'} rounded-lg transition-all duration-200`}
+            title={expanded ? 'Reduzir barra lateral' : 'Expandir barra lateral'}
+          >
+            {expanded ? <ChevronRight size={16} className="text-gray-400" /> : <ChevronLeft size={16} className="text-gray-400" />}
+          </button>
+          <button
+            onClick={onToggleMaximization}
+            className={`p-2 bg-theme-card text-gray-300 hover:bg-theme-surface hover:text-white border border-transparent ${isDarkMode ? 'hover:border-teal-500/30' : 'hover:border-blue-500/30'} rounded-lg transition-all duration-200`}
+            title={maximized ? 'Restaurar' : 'Maximizar'}
+          >
+            {maximized ? <Minimize2 size={16} className="text-gray-400" /> : <Maximize2 size={16} className="text-gray-400" />}
+          </button>
+        </div>
       </div>
       {/* Navegação por Abas Estilizada */}
       <nav className="grid grid-cols-2 lg:grid-cols-5 gap-1 bg-theme-card p-1 rounded-lg" aria-label="Tabs">

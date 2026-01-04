@@ -399,6 +399,61 @@ Content-Type: application/json
 GET /api/calculators/history/?patient=42&calculator=1&page=1
 ```
 
+### 🕵️ Anonymization (LGPD)
+
+Transforma dados SQL sensíveis (Patient + Records) em um documento JSON anonimizador, pronto para indexação (RAG/Vector Store), sem alterar o banco original.
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| GET | `/api/anonymization/patient/{id}` | Documento anonimizador do paciente | ✅ (roles: `medico`/`admin`) |
+
+#### Variáveis de Ambiente
+
+- `ANONYMIZER_KEY` (obrigatória, mínimo 32 chars): segredo HMAC usado para pseudonimização determinística.
+- `ANONYMIZER_STRICT_MODE` (`true`/`false`): quando `true`, qualquer vazamento detectado na auditoria aborta o endpoint (fail-closed).
+- `ANONYMIZER_AGE_BUCKET_SIZE` (padrão `5`): tamanho do bucket de idade.
+
+#### Comportamento (alto nível)
+
+- IDs são substituídos por hashes determinísticos (`patient_hash`, `record_hash`) via HMAC-SHA256.
+- Datas absolutas são convertidas para `relative_date` no formato `Day +X` (referência: `dateOfBirth`).
+- Texto livre (`record.content`) passa por redaction de PII (CPF/CNS/email/telefone/CEP/datas) e remoção dinâmica do nome do próprio paciente.
+- Auditoria final procura campos blacklisted e padrões de PII; em strict mode o endpoint falha (não retorna documento parcial).
+
+#### Exemplo (resumo de resposta)
+
+```json
+{
+  "patient": {
+    "id": "f3b9... (hash)",
+    "patient_hash": "f3b9... (hash)",
+    "age_bucket": "30-34",
+    "gender": "masculino",
+    "meta": {
+      "anonymizer_version": "1.0.0",
+      "generated_at": "2026-01-02T00:00:00.000Z"
+    }
+  },
+  "timeline": [
+    {
+      "record_hash": "a8c1... (hash)",
+      "patient_hash": "f3b9... (hash)",
+      "type": "consulta",
+      "relative_date": "Day +45",
+      "day_offset": 45,
+      "content_redacted": "[PATIENT_NAME] ... [CPF_REDACTED] ...",
+      "tags": []
+    }
+  ],
+  "meta": {
+    "total_records": 10,
+    "anonymized_count": 10,
+    "skipped_count": 0,
+    "doc_path": "patient/f3b9.../full_history"
+  }
+}
+```
+
 ### 🤖 AI (Inteligência Artificial)
 
 | Método | Endpoint | Descrição | Auth |

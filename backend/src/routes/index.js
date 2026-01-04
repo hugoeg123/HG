@@ -43,7 +43,7 @@ router.get('/health', async (req, res) => {
     } else {
       // Timeout curto para health check
       const authPromise = sequelize.authenticate();
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), 1000)
       );
       await Promise.race([authPromise, timeoutPromise]);
@@ -78,6 +78,9 @@ router.use('/tag-history', tagHistoryRoutes);
 router.use('/tag-history', tagHistoryRoutes);
 router.use('/ai', aiRoutes);
 router.use('/knowledge', knowledgeRoutes);
+if (process.env.ANONYMIZER_KEY && process.env.ANONYMIZER_KEY.length >= 32) {
+  router.use('/anonymization', require('./anonymization.routes'));
+}
 router.use('/', profileRoutes); // Profile routes are mounted at root level (e.g. /patients/:id/profile)
 
 // Rota 404 para endpoints não encontrados

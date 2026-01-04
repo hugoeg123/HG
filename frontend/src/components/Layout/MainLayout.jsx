@@ -37,6 +37,7 @@ const MainLayout = ({
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(initialLeftCollapsed);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(initialRightCollapsed);
   const [rightSidebarExpanded, setRightSidebarExpanded] = useState(false);
+  const [rightSidebarMaximized, setRightSidebarMaximized] = useState(false);
   const { user } = useAuthStore();
   const { toast } = useToast();
 
@@ -92,7 +93,18 @@ const MainLayout = ({
   };
 
   const toggleRightSidebarExpansion = () => {
-    setRightSidebarExpanded(!rightSidebarExpanded);
+    if (rightSidebarMaximized) {
+      setRightSidebarMaximized(false);
+    } else {
+      setRightSidebarExpanded(!rightSidebarExpanded);
+    }
+  };
+
+  const toggleRightSidebarMaximization = () => {
+    if (!rightSidebarMaximized) {
+      setRightSidebarCollapsed(false); // Ensure it's visible
+    }
+    setRightSidebarMaximized(!rightSidebarMaximized);
   };
 
   return (
@@ -112,24 +124,30 @@ const MainLayout = ({
         data-fill-disable-in-dark="true"
       >
         {/* Left Sidebar */}
-        <aside className={`transition-all duration-300 flex-shrink-0 ${leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
+        <aside className={`transition-all duration-300 flex-shrink-0 ${rightSidebarMaximized ? 'w-0 overflow-hidden' : leftSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64 md:w-80'}`}>
           <LeftSidebarComponent collapsed={leftSidebarCollapsed} />
         </aside>
         
         {/* Main Content */}
         {/* Note: center-pane class allows light-mode specific background override */}
         <main
-          className="flex-1 p-2 sm:p-4 overflow-y-auto bg-theme-background min-w-0 center-pane"
+          className={`${rightSidebarMaximized ? 'hidden' : 'flex-1'} p-2 sm:p-4 overflow-y-auto bg-theme-background min-w-0 center-pane`}
         >
           {children || <Outlet />}
         </main>
         
         {/* Right Sidebar */}
-        <aside className={`transition-all duration-300 flex-shrink-0 ${rightSidebarCollapsed ? 'w-0 overflow-hidden' : rightSidebarExpanded ? 'w-96 lg:w-1/2' : 'w-72 md:w-80 lg:w-96'}`}>
+        <aside className={`transition-all duration-300 flex-shrink-0 ${
+          rightSidebarCollapsed ? 'w-0 overflow-hidden' : 
+          rightSidebarMaximized ? 'w-full' :
+          rightSidebarExpanded ? 'w-96 lg:w-1/2' : 'w-72 md:w-80 lg:w-96'
+        }`}>
           <RightSidebarComponent 
             collapsed={rightSidebarCollapsed} 
             expanded={rightSidebarExpanded}
+            maximized={rightSidebarMaximized}
             onToggleExpansion={toggleRightSidebarExpansion}
+            onToggleMaximization={toggleRightSidebarMaximization}
           />
         </aside>
       </div>

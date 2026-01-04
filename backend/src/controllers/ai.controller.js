@@ -28,6 +28,7 @@ const aiController = {
                     name: `${m.name} (Local)`,
                     provider: 'ollama'
                 }));
+                console.log('Local models processed:', localModels.map(m => m.name));
             } catch (err) {
                 console.warn('Could not fetch local models:', err.message);
                 // Don't fail completely if local models are unavailable

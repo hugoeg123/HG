@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Save, X, UserCircle, Sparkles, BookText, Stethoscope, FlaskConical, ClipboardList, Pill, Activity } from 'lucide-react';
+import { Save, X, UserCircle, Sparkles, BookText, Stethoscope, FlaskConical, ClipboardList, Pill, Activity, ArrowLeft } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
 import { tagService, templateService } from '../../services/api';
+import { draftService } from '../../services/draftService';
 import { parseSections } from '../../shared/parser.js';
 import { useDebounce, useDebounceCallback } from '../../hooks/useDebounce';
 import SectionBlock from './SectionBlock';
@@ -47,7 +48,7 @@ import { emit as emitEvent } from '../../lib/events';
  */
 const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Novo Registro', onSave, onCancel }) => {
   // Validate props to prevent rendering objects as text
-  const safePatientId = typeof patientId === 'string' ? patientId : '';
+  const safePatientId = (typeof patientId === 'string' || typeof patientId === 'number') ? String(patientId) : '';
   const safeRecordType = typeof recordType === 'string' ? recordType : 'anamnese';
   const safeTitle = typeof title === 'string' ? title : 'Novo Registro';
   
@@ -56,6 +57,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
   
   const { createRecord, updateRecord, isLoading, setChatContext } = usePatientStore();
   const { currentPatient } = usePatientStore();
+  const shouldPersistDraftRef = useRef(true);
   
   // Core editor state
   const [editorContent, setEditorContent] = useState('');
@@ -227,11 +229,63 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       // Set segmented view for existing records with content
       setIsSegmented(Boolean(safeRecord.content && safeRecord.content.trim()));
     } else {
-      setEditorContent('');
-      setEditableTitle(safeTitle);
-      setIsSegmented(false);
+      // Check for draft if no existing record
+      const draft = draftService.getDraft(safePatientId);
+      if (draft) {
+          console.log('Draft loaded:', draft);
+          setEditorContent(draft.content || '');
+          setEditableTitle(draft.title || safeTitle);
+          setIsSegmented(Boolean(draft.content && draft.content.trim()));
+      } else {
+          setEditorContent('');
+          setEditableTitle(safeTitle);
+          setIsSegmented(false);
+      }
     }
-  }, [safeRecord, safeTitle]);
+  }, [safeRecord, safeTitle, safePatientId]);
+
+  // Auto-save draft
+  useEffect(() => {
+    // Only save draft if it's a new record (no existing record ID) and we have a patient ID
+    if (!safeRecord && safePatientId) {
+        if (!shouldPersistDraftRef.current) return;
+        // Save only if content has substantial changes (non-empty) or title changed
+        const hasContent = debouncedContent && debouncedContent.trim().length > 0;
+        
+        if (hasContent || (editableTitle !== safeTitle)) {
+            draftService.saveDraft(safePatientId, {
+                content: debouncedContent,
+                title: editableTitle,
+                type: safeRecordType
+            });
+        } else if (!hasContent && editableTitle === safeTitle) {
+            // If content is empty and title is default, clear draft
+            // This handles the case where user deletes everything or hasn't typed anything
+            draftService.clearDraft(safePatientId);
+        }
+    }
+  }, [debouncedContent, editableTitle, safePatientId, safeRecord, safeTitle, safeRecordType]);
+
+  // Hook: Save draft on unmount if dirty
+  useEffect(() => {
+    return () => {
+        if (!safeRecord && safePatientId) {
+             if (!shouldPersistDraftRef.current) return;
+             const hasContent = editorContent && editorContent.trim().length > 0;
+             if (hasContent) {
+                 draftService.saveDraft(safePatientId, {
+                    content: editorContent, // Use immediate content, not debounced
+                    title: editableTitle,
+                    type: safeRecordType
+                });
+             } else {
+                 // Ensure draft is cleared if leaving with empty content
+                 draftService.clearDraft(safePatientId);
+             }
+        }
+    };
+  }, [safeRecord, safePatientId, editorContent, editableTitle, safeRecordType]);
+
   
   // Load available tags and templates
   useEffect(() => {
@@ -580,6 +634,11 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
         result = await createRecord(recordData);
         console.log('Registro criado com sucesso:', result);
       }
+
+      if (!safeRecord && safePatientId) {
+        shouldPersistDraftRef.current = false;
+        draftService.clearDraft(safePatientId);
+      }
       
       if (onSave) {
         onSave();
@@ -627,6 +686,19 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     }
   }, [editorContent, editableTitle, safeTitle, safePatientId, safeRecordType, safeRecord, updateRecord, createRecord, onSave]);
   
+  // Handle discard draft (Cancelar registro)
+  const handleDiscard = useCallback(() => {
+    if (window.confirm('Tem certeza que deseja cancelar? O rascunho atual será perdido.')) {
+      if (safePatientId) {
+        shouldPersistDraftRef.current = false;
+        draftService.clearDraft(safePatientId);
+      }
+      if (onCancel) {
+        onCancel();
+      }
+    }
+  }, [safePatientId, onCancel]);
+
   // Handle add to chat
   const handleAddToChat = useCallback((content) => {
     // Hook: Integrates with AIAssistant.jsx via patientStore.setChatContext
@@ -707,6 +779,16 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
                 </button>
               </div>
               
+              {onCancel && (
+                <button 
+                  onClick={handleDiscard}
+                  className="btn btn-ghost flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  title="Cancelar e descartar rascunho"
+                >
+                  <X size={16} /> Cancelar
+                </button>
+              )}
+
               <button 
                 onClick={handleSave}
                 disabled={isLoading}

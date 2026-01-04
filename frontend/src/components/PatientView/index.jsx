@@ -64,6 +64,14 @@ const PatientView = () => {
     
     // Clear current record when navigating to a different patient
     clearCurrentRecord();
+
+    // Fix: Always reset to dashboard when navigating to a new patient ID
+    // UNLESS we are deep-linking to a record (handled by recordId check)
+    // This fixes the bug where switching patients while in editor mode kept the editor open
+    if (!recordId) {
+      setViewMode('dashboard');
+      setShowEditor(false);
+    }
     
     // Clear current patient if we are switching patients to avoid stale data
     // and ensure the loading spinner is shown correctly
@@ -83,7 +91,7 @@ const PatientView = () => {
       }
     };
     load();
-  }, [id]);
+  }, [id, recordId]);
 
   // Hook: Validate currentPatient to prevent rendering crashes
   useEffect(() => {
@@ -319,17 +327,10 @@ const PatientView = () => {
                 </p>
               </div>
             </div>
-
-            {/* Botão "Voltar ao Dashboard" - Direita */}
-            <button
-              onClick={handleBackToDashboard}
-              className="px-3 py-1 bg-theme-card text-white rounded hover:bg-theme-card/80 transition-colors"
-            >
-              ← Voltar ao Dashboard
-            </button>
           </div>
           
           <HybridEditor 
+            key={`${id}-${activeTab}`}
             patientId={id} 
             recordType={activeTab}
             title={`${isNewPatient ? 'Primeiro' : 'Novo'} ${tabs.find(t => t.id === activeTab)?.label || 'Registro'}`}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../store/patientStore';
+import { draftService } from '../../services/draftService';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useMultipleAbortControllers } from '../../hooks/useAbortController';
 import { useToast } from '../ui/Toast';
@@ -236,6 +237,7 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
   const [editedName, setEditedName] = useState('');
   const [isEditingBirthDate, setIsEditingBirthDate] = useState(false);
   const [editedBirthDate, setEditedBirthDate] = useState('');
+  const [hasDraft, setHasDraft] = useState(false);
 
   const isMountedRef = useRef(false);
 
@@ -351,6 +353,27 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
 
     console.log('🔍 PatientDashboard loading for patient:', safePatientId);
     loadDashboard();
+    
+    // Check for drafts - verify if content is non-empty
+    const checkDraft = () => {
+      const draft = draftService.getDraft(safePatientId);
+      setHasDraft(draft && draft.content && draft.content.trim().length > 0);
+    };
+    
+    checkDraft();
+
+    // Listen for draft updates
+    const handleDraftUpdate = (e) => {
+      if (e.detail && String(e.detail.patientId) === String(safePatientId)) {
+        checkDraft();
+      }
+    };
+
+    window.addEventListener('draft_updated', handleDraftUpdate);
+    
+    return () => {
+      window.removeEventListener('draft_updated', handleDraftUpdate);
+    };
   }, [safePatientId, loadDashboard]); // Added loadDashboard to dependencies
 
   // Handle retry with force refresh to bypass cache
@@ -690,6 +713,27 @@ const PatientDashboard = ({ patientId, onNewRecord }) => {
         <main className="flex flex-col xl:flex-row gap-4 sm:gap-6 xl:gap-8">
 
           {/* Painel Principal - Flexbox com flex-grow para ocupar espaço disponível */}
+            
+            {hasDraft && (
+              <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in fade-in slide-in-from-top-2">
+                <div>
+                  <h3 className="text-yellow-400 font-semibold flex items-center gap-2">
+                    <AlertTriangle size={18} />
+                    Registro não finalizado
+                  </h3>
+                  <p className="text-yellow-200/80 text-sm mt-1">
+                    Você tem um registro em andamento para este paciente.
+                  </p>
+                </div>
+                <button
+                  onClick={() => safeOnNewRecord()}
+                  className="btn btn-warning btn-sm flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Edit2 size={16} />
+                  Continuar Registro
+                </button>
+              </div>
+            )}
           <div className="flex-1 space-y-4 sm:space-y-6 order-1 xl:order-1 min-w-0 overflow-hidden">
 
             <div className="patient-dashboard-panel p-3 sm:p-4 rounded-lg border border-gray-700/30 flex flex-col gap-3 sm:gap-4 bg-theme-background overflow-hidden">

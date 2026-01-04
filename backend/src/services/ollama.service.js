@@ -17,7 +17,9 @@ class OllamaService {
 
     async getTags() {
         try {
+            console.log(`Fetching Ollama tags from ${this.baseUrl}/api/tags`);
             const response = await axios.get(`${this.baseUrl}/api/tags`);
+            console.log(`Ollama tags fetched: ${response.data.models?.length || 0} models found`);
             return response.data.models || [];
         } catch (error) {
             console.error('Error fetching Ollama tags:', error.message);
