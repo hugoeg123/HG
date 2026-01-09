@@ -189,6 +189,61 @@ class PatientAnonymizer {
 
         return anonymizedRecord;
     }
+
+    /**
+     * Helper to get full anonymized patient data for indexing
+     */
+    async getAnonymizedPatientData(patientId) {
+        // Dynamic import to avoid circular dependency if models import this service
+        const { Patient, Record } = require('../../models/sequelize'); // Adjust path as needed
+
+        // 1. Fetch Raw Data
+        const patient = await Patient.findByPk(patientId);
+        if (!patient) {
+            throw new Error(`Patient ${patientId} not found`);
+        }
+
+        const records = await Record.findAll({
+            where: { patientId: patientId, isDeleted: false },
+            order: [['date', 'ASC']]
+        });
+
+        // 2. Anonymize Patient
+        const anonymizedPatient = this.anonymizePatient(patient);
+
+        // 3. Anonymize Records (w/ Context)
+        const anonymizedRecords = [];
+        const failClosed = this.strictMode;
+
+        for (const record of records) {
+            try {
+                const anonRecord = this.anonymizeRecord(record, patient);
+                anonymizedRecords.push(anonRecord);
+            } catch (err) {
+                if (err.message.startsWith('PII_AUDIT_FAILURE')) {
+                    if (failClosed) {
+                        throw err;
+                    }
+                    console.error(`Skipping Record ${record.id} due to PII Audit Failure.`);
+                    continue;
+                }
+                throw err;
+            }
+        }
+
+        // 4. Construct Final Document
+        return {
+            patient_hash: anonymizedPatient.patient_hash, // Explicit top-level hash
+            patient: anonymizedPatient,
+            timeline: anonymizedRecords,
+            meta: {
+                total_records: records.length,
+                anonymized_count: anonymizedRecords.length,
+                skipped_count: records.length - anonymizedRecords.length,
+                doc_path: `patient/${anonymizedPatient.patient_hash}/full_history`
+            }
+        };
+    }
 }
 
 module.exports = new PatientAnonymizer();

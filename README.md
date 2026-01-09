@@ -59,6 +59,7 @@ O projeto está dividido em componentes principais:
 
 ### Documentação (`./docs`)
 - **Técnica**: Especificações de API e arquitetura
+- **[IA & RAG](./docs/IA_RAG_OVERVIEW.md)**: Arquitetura de Inteligência Artificial e Anonimização
 - **Usuário**: Guias de uso e configuração
 - **Desenvolvimento**: Padrões de código e contribuição
 

@@ -5,7 +5,8 @@ $models = @(
     "phi4:14b",
     "deepseek-r1:14b",
     "phi3.5",
-    "qwen2.5:7b"
+    "qwen2.5:7b",
+    "bge-m3"
 )
 
 foreach ($model in $models) {

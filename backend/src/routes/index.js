@@ -75,12 +75,10 @@ router.use('/agenda', agendaRoutes);
 router.use('/marketplace', marketplaceRoutes);
 router.use('/patient-inputs', patientInputRoutes);
 router.use('/tag-history', tagHistoryRoutes);
-router.use('/tag-history', tagHistoryRoutes);
 router.use('/ai', aiRoutes);
 router.use('/knowledge', knowledgeRoutes);
-if (process.env.ANONYMIZER_KEY && process.env.ANONYMIZER_KEY.length >= 32) {
-  router.use('/anonymization', require('./anonymization.routes'));
-}
+router.use('/anonymization', require('./anonymization.routes'));
+router.use('/retrieval', require('./retrieval.routes'));
 router.use('/', profileRoutes); // Profile routes are mounted at root level (e.g. /patients/:id/profile)
 
 // Rota 404 para endpoints não encontrados

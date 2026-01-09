@@ -11,6 +11,8 @@ const { Record, Patient, Tag, Medico, Alert, PatientVitalSigns } = require('../m
 const { Op } = require('sequelize');
 const { calculateAlerts, extractVitals } = require('../utils/vitalSignParser');
 const { parseSections } = require('../../../shared/parser');
+const vectorIndexer = require('../services/rag/VectorIndexer');
+const patientAnonymizer = require('../services/anonymizer/PatientAnonymizer');
 
 // Obter todos os registros de um paciente
 exports.getPatientRecords = async (req, res) => {
@@ -367,18 +369,32 @@ exports.createRecord = async (req, res) => {
     };
 
     // Notify clients about the update
-     try {
-         const { getSocketService } = require('../services/socket.registry');
-         const socketService = getSocketService();
-         if (socketService) {
-              socketService.sendToRoom(`patient:${patientId}`, `patient:${patientId}:update`, { 
-                 type: 'record', 
-                 recordId: record.id 
-              });
-         }
-     } catch (sockErr) {
-         console.warn('Socket emit failed:', sockErr.message);
-     }
+    try {
+      const { getSocketService } = require('../services/socket.registry');
+      const socketService = getSocketService();
+      if (socketService) {
+        socketService.sendToRoom(`patient:${patientId}`, `patient:${patientId}:update`, {
+          type: 'record',
+          recordId: record.id
+        });
+      }
+    } catch (sockErr) {
+      console.warn('Socket emit failed:', sockErr.message);
+    }
+
+    // --- RAG INDEXING HOOK ---
+    // Fire-and-forget indexing in background
+    (async () => {
+      try {
+        console.log(`[RAG] Triggering indexing for patient ${patientId}...`);
+        const anonymizedData = await patientAnonymizer.getAnonymizedPatientData(patientId);
+        await vectorIndexer.indexPatient(anonymizedData);
+        console.log(`[RAG] Indexing triggered successfully for patient ${patientId}`);
+      } catch (ragError) {
+        console.error('[RAG] Indexing Trigger Error:', ragError);
+      }
+    })();
+    // -------------------------
 
     res.status(201).json({
       success: true,
@@ -492,6 +508,20 @@ exports.updateRecord = async (req, res) => {
     await record.update(updateData);
 
     console.log('Registro atualizado com sucesso:', record.id);
+
+    // --- RAG INDEXING HOOK ---
+    // Fire-and-forget indexing (using record.patientId which is immutable usually, or fetch from record)
+    (async () => {
+      try {
+        console.log(`[RAG] Triggering re-indexing for patient ${record.patientId}...`);
+        const anonymizedData = await patientAnonymizer.getAnonymizedPatientData(record.patientId);
+        await vectorIndexer.indexPatient(anonymizedData);
+        console.log(`[RAG] Re-indexing triggered successfully for patient ${record.patientId}`);
+      } catch (ragError) {
+        console.error('[RAG] Re-indexing Trigger Error:', ragError);
+      }
+    })();
+    // -------------------------
 
     res.json({
       success: true,

@@ -1,0 +1,48 @@
+Searching for "dor"...
+Patient Hash: 22e829041a66e392b701b88afb1aecce97c51002b380c8da22a7d0ce9e380a94
+SEARCH FAILED: Unauthorized access to file: "https://huggingface.co/Xenova/bge-reranker-v2-m3/resolve/main/tokenizer.json".
+Error: Unauthorized access to file: "https://huggingface.co/Xenova/bge-reranker-v2-m3/resolve/main/tokenizer.json".
+    at handleError (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/utils/hub.js:238:11)
+    at getModelFile (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/utils/hub.js:471:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async getModelJSON (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/utils/hub.js:572:18)
+    at async Promise.all (index 0)
+    at async loadTokenizer (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/tokenizers.js:61:18)
+    at async AutoTokenizer.from_pretrained (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/tokenizers.js:4459:50)
+    at async Promise.all (index 0)
+    at async loadItems (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/pipelines.js:3279:5)
+    at async pipeline (file:///C:/Users/hgari/OneDrive/%C3%81rea%20de%20Trabalho/HG1/backend/node_modules/@xenova/transformers/src/pipelines.js:3219:21)
+Searching for "dor"...
+Patient Hash: 22e829041a66e392b701b88afb1aecce97c51002b380c8da22a7d0ce9e380a94
+Found 2 results.
+SEARCH FAILED: Cannot read properties of undefined (reading 'toFixed')
+TypeError: Cannot read properties of undefined (reading 'toFixed')
+    at C:\Users\hgari\OneDrive\Área de Trabalho\HG1\backend\src\scripts\manual-search-debug.js:26:33
+    at Array.forEach (<anonymous>)
+    at testSearch (C:\Users\hgari\OneDrive\Área de Trabalho\HG1\backend\src\scripts\manual-search-debug.js:25:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Searching for "dor"...
+Patient Hash: 22e829041a66e392b701b88afb1aecce97c51002b380c8da22a7d0ce9e380a94
+Found 2 results.
+SEARCH FAILED: Cannot read properties of undefined (reading 'toFixed')
+TypeError: Cannot read properties of undefined (reading 'toFixed')
+    at C:\Users\hgari\OneDrive\Área de Trabalho\HG1\backend\src\scripts\manual-search-debug.js:26:33
+    at Array.forEach (<anonymous>)
+    at testSearch (C:\Users\hgari\OneDrive\Área de Trabalho\HG1\backend\src\scripts\manual-search-debug.js:25:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Searching for "dor"...
+Patient Hash: 22e829041a66e392b701b88afb1aecce97c51002b380c8da22a7d0ce9e380a94
+Found 2 results.
+[0.0328] default/chunk_0: [Day +19724] Dor no peito "que vai e vem".
+##HMA: ...
+[0.0161] demographics: DEMOGRAPHICS
+Age: 50-54
+Gender: não informado...
+Searching for "dor"...
+Patient Hash: 22e829041a66e392b701b88afb1aecce97c51002b380c8da22a7d0ce9e380a94
+Found 2 results.
+[0.0328] default/chunk_0: [Day +19724] Dor no peito "que vai e vem".
+##HMA: ...
+[0.0161] demographics: DEMOGRAPHICS
+Age: 50-54
+Gender: não informado...

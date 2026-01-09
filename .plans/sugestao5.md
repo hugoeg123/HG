@@ -1,142 +1,146 @@
-Assumindo o papel de liderança do protocolo médico do Health Guardian.
-Abaixo, apresento a estruturação definitiva para a **Saturação Periférica de Oxigênio ($SpO_2$)**, integrada aos sinais vitais anteriormente definidos.
+Implementation Plan - Phase 2: RAG Core & Retrieval Engine
+Goal Description
+Implement Phase 2 of the Health Guardian project, transforming anonymized patient JSONs into a robust, searchable Vector Store with Hybrid Retrieval. This involves creating a PostgreSQL database with pgvector, a clinical chunking engine, a vector indexing service, and a hybrid retrieval engine using Reciprocal Rank Fusion (RRF) and reranking. A visual debugger will also be added to the frontend.
 
-Esta resposta elimina emojis, foca na lógica condicional para a equipe de desenvolvimento e alinha as diretrizes da **British Thoracic Society (BTS)** — o padrão-ouro global para oxigenoterapia — com a **Sociedade Brasileira de Pneumologia e Tisiologia (SBPT)** e a **American Thoracic Society (ATS)**.
+User Review Required
+IMPORTANT
 
------
+This implementation requires the pgvector extension to be installed on the PostgreSQL server. Ensure the database user has permissions to create extensions.
 
-### 1\. Protocolo Clínico: Oximetria de Pulso ($SpO_2$)
+WARNING
 
-#### 1.1. Definição da "Verdade" Clínica (Adultos e Pediatria)
+The retrieval engine uses BAAI/bge-m3 via a locally running Ollama instance and @xenova/transformers for reranking. Ensure the system has sufficient resources and the Ollama instance is running with the required model.
 
-A oximetria exige uma lógica condicional: o valor "normal" depende do histórico do paciente (presença de retenção crônica de $CO_2$).
+Proposed Changes
+Proposed Changes
+Backend
+[Dependencies]
+Install ollama and @xenova/transformers.
+Pre-requisite: Ensure ollama pull bge-m3 is executed.
+[Database]
+Migration: Create patient_documents table with robust schema.
+Columns:
+id (UUID, Primary Key)
+patient_hash (FK, Indexed)
+doc_path (Text, NOT NULL)
+context (Varchar, Indexed)
+tags (Text Array, GIN Indexed)
+content (Text, Raw for display)
+embedding_content (Text, Enriched for AI)
+embedding (Vector 1024, HNSW Indexed)
+metadata (JSONB, GIN Indexed)
+day_offset (Integer, for range filtering)
+Constraints:
+UNIQUE (patient_hash, doc_path): To support "filesystem" metaphor and idempotency.
+chk_no_pii: Check constraint using Regex to block CPF/Email/Phone patterns in content.
+Indexes:
+GIN on to_tsvector('portuguese', content) for Full-Text Search.
+HNSW on embedding.
+[Services]
+1. ClinicalChunkingStrategy.js
 
-**População Geral (Sem patologia pulmonar prévia):**
+Logic: Implement "Medical-Semantic Splitting".
+Demographics (Level 0): Static chunk.
+Structured Tags (Level 1): Extract tagged sections (e.g., NEUROLOGICAL).
+Critical: Enrich embedding_content with context (e.g., Context: UTI | System: Neurological | Content: ...).
+Context Strategy (Level 2):
+uti: Group by shift.
+patient_reported: Event-based (high relevance).
+emergencia: Event-based.
+default: Semantic split (max tokens).
+2. VectorIndexer.js
 
-  * **Normal (Verde):** $\geq 93\%$. (A maioria das referências cita $\geq 95\%$ como ideal, mas clinicamente $\geq 93\%$ em repouso é aceitável sem oxigênio suplementar em muitos contextos ambulatoriais).
-  * **Alerta Amarelo (Atenção):** $93\% - 94\%$ (Zona cinzenta; monitorar evolução).
-  * **Alerta Vermelho (Hipoxemia):** $\leq 92\%$. (Gatilho para avaliação médica imediata e consideração de $O_2$ suplementar).
+Process:
+Input: Anonymized Patient JSON.
+Logic: Chunk -> Embed (Batch 10) -> Upsert.
+Idempotency: Use (patient_hash, doc_path) to update existing records without duplication.
+3. ClinicalRetriever.js
 
-**População DPOC / Retentores de Carbono (Chronic Obstructive Pulmonary Disease - COPD):**
-Para estes pacientes, a "normalidade" é mais baixa. Oxigenar demais (ex: levar a 99%) pode causar narcose por $CO_2$ e parada respiratória.
+Pipeline:
+Vector Search: Cosine similarity on patient_documents (embedding).
+Lexical Search: websearch_to_tsquery('portuguese', query) on content.
+Fusion: Reciprocal Rank Fusion (RRF) to combine results.
+Reranking:
+Apply BAAI/bge-reranker-v2-m3 only on Top 20 fused results.
+Return Top 5.
+Optimization: Run Reranking carefully (consider worker threads if performance is an issue).
+4. RetrievalController.js
 
-  * **Alvo Terapêutico (Verde):** $88\% - 92\%$.
-  * **Alerta Vermelho (Hipoxemia Grave):** $< 88\%$.
-  * **Alerta Laranja (Risco de Hipercapnia):** $> 96\%$ (Muitas vezes ignorado, mas crítico: excesso de oxigênio em DPOC é perigoso).
+Endpoints:
+POST /api/retrieval/debug: Debug endpoint.
+Inputs: Query, Filters (Context/Tags).
+Output: Ranked Chunks (showing Score vs Rerank Score).
+Security: Must apply same access controls as patient data.
+Frontend
+[Components]
+RagDebugger.jsx (Right Sidebar)
+Inputs: Text Query, Context Dropdown.
+Display:
+List of chunks.
+Visual indicators for Vector Score vs Rerank Score.
+Highlight matches in content.
 
------
+Phase 2 Verification Walkthrough
+1. Prerequisites
+Ensure Ollama is running on port 11434.
+Ensure model bge-m3 is available (ollama list).
+Ensure PostgreSQL is running and the patient_documents table exists (checked via 
+verify-schema.js
+).
+2. Index a Sample Patient
+To test the "Medical-Semantic Splitting" and Vector Store, you need to load data. Run this curl command in your terminal (Git Bash or similar) to index a dummy patient:
 
-#### 1.2. Convergência e Divergência: Brasil vs. EUA/Reino Unido
-
-  * **Padrão Ouro (Global):** A diretriz da **British Thoracic Society (BTS 2017)** é a referência mundial para prescrição de oxigênio. Ela estabelece o alvo de **88-92%** para pacientes com risco de falência respiratória hipercápnica (DPOC).
-  * **Brasil (SBPT):** Segue estritamente a mesma lógica. A "I Recomendação Brasileira de Espirometria e Oximetria" considera valores normais acima de 95% ao nível do mar, mas aceita \>93% em prática clínica antes de intervir.
-  * **Diferença:** Não há conflito de valores. A diferença é semântica: manuais brasileiros (Manole, USP) tendem a focar na hipoxemia (\<90-92%), enquanto protocolos americanos/britânicos (Mayo/BTS) enfatizam igualmente o perigo da **hiperóxia** em DPOC.
-  * **Para o App:** A nossa "verdade" será híbrida e segura: alerta de hipoxemia em $\leq 92\%$ para gerais e $< 88\%$ para DPOC.
-
------
-
-### 2\. Mapa de Variáveis para Equipe de Programação
-
-Aqui está a lógica algorítmica para a implementação dos alertas, incluindo a condicional de DPOC.
-
-#### 2.1. Tabela Humana e Definições de Variáveis
-
-| ID Técnico | Nome PT-BR | Nome EN-US | Abrev. | Faixa Verde (Geral) | Faixa Verde (DPOC) | Alerta Vermelho (Geral) | Alerta Vermelho (DPOC) | Fonte |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `spo2_pct` | Saturação de Oxigênio | Oxygen Saturation | $SpO_2$ | $93\% - 100\%$ | $88\% - 92\%$ | $\leq 92\%$ | $< 88\%$ | BTS Guideline / SBPT |
-
-#### 2.2. Pseudo-código para Regra de Negócio
-
-```javascript
-// Input: valor spo2 (int), paciente_tem_dpoc (bool)
-
-if (paciente_tem_dpoc == true) {
-    // Lógica para DPOC (Alvo 88-92%)
-    if (spo2 < 88) {
-        return "ALERTA_VERMELHO"; // Hipoxemia grave
-    } else if (spo2 >= 88 && spo2 <= 92) {
-        return "NORMAL_VERDE";    // Alvo terapêutico ideal
-    } else if (spo2 > 92 && spo2 <= 95) {
-        return "ALERTA_AMARELO";  // Aceitável, mas atenção para não subir muito
-    } else { // spo2 > 96
-        return "ALERTA_LARANJA";  // Risco de Hipercapnia (excesso de O2)
-    }
-} else {
-    // Lógica Geral (Alvo >= 93%)
-    if (spo2 <= 92) {
-        return "ALERTA_VERMELHO"; // Hipoxemia - Intervenção necessária
-    } else if (spo2 >= 93 && spo2 <= 94) {
-        return "ALERTA_AMARELO";  // Zona de atenção
-    } else {
-        return "NORMAL_VERDE";    // Saturação adequada
-    }
-}
-```
-
------
-
-### 3\. Estrutura JSON Atualizada (Vitas Completos)
-
-Este JSON consolida Temperatura, FC, FR, PA e agora inclui o objeto `oxygen_saturation` com a lógica de exceção explícita.
-
-```json
-[
-  {
-    "id": "oxygen_saturation",
-    "label_pt": "Saturação Periférica de Oxigênio",
-    "label_en": "Oxygen Saturation",
-    "abbr_pt": ["SpO2", "SatO2"],
-    "abbr_en": ["SpO2", "O2 Sat"],
-    "unit": "%",
-    "logic_type": "conditional_threshold",
-    "inputs_required": ["value", "has_copd_history"],
-    "thresholds_general_adult_pediatric": {
-      "red_low": 92,
-      "yellow_low": 94,
-      "green_min": 95,
-      "green_max": 100,
-      "clinical_note": "Abaixo de 92% em ar ambiente indica hipoxemia significativa."
-    },
-    "thresholds_copd_exception": {
-      "red_low": 87,
-      "green_min": 88,
-      "green_max": 92,
-      "alert_high_hypercapnia_risk": 96,
-      "clinical_note": "Pacientes retentores crônicos (DPOC). Alvo 88-92%. Evitar >96%."
-    },
-    "sources": [
-      "British Thoracic Society (BTS) Guideline for Oxygen Use 2017",
-      "Sociedade Brasileira de Pneumologia e Tisiologia (SBPT)",
-      "Mayo Clinic - Hypoxemia definition"
+curl -X POST http://localhost:5001/api/retrieval/index-sample \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patient_hash": "SAMPLE_PATIENT_001",
+    "demographics": { "age_bucket": "40-45", "gender": "F" },
+    "timeline": [
+      {
+        "id": "rec_001",
+        "relative_date": "Day +1",
+        "context": "uti",
+        "type": "evolution",
+        "content_redacted": "Patient admitted with signs of septic shock. BP 85/50. Started Noradrenaline.",
+        "structured_data": { 
+           "CARDIOVASCULAR": "BP 85/50, HR 110bpm, Lactate 4.5",
+           "NEUROLOGICAL": "GCS 14 (confused)"
+        },
+        "tags": ["SEPTIC_SHOCK", "VASOPRESSOR"]
+      },
+      {
+        "id": "rec_002",
+        "relative_date": "Day +1",
+        "context": "uti",
+        "type": "lab",
+        "content_redacted": "Hemoculture positive for E. coli.",
+        "tags": ["INFECTION"]
+      }
     ]
-  },
-  {
-    "id": "systolic_bp",
-    "label_pt": "Pressão Arterial Sistólica",
-    "thresholds": {
-        "adult_hypotension": 90,
-        "pediatric_hypotension_formula": "70 + (2 * age_in_years)"
-    }
-  },
-  {
-    "id": "heart_rate",
-    "label_pt": "Frequência Cardíaca",
-    "thresholds": {
-        "adult_bradycardia": 50,
-        "adult_tachycardia": 100,
-        "pediatric_critical_low": 60
-    }
-  }
-]
-```
+  }'
+Expected Output:
 
------
+{ "success": true, "chunks": 5 }
+(Chunks: 1 Demographics + 1 Shift/Day Chunk + 2 Structured Tags + maybe more depending on logic)
 
-### 4\. Considerações Finais sobre a Literatura Consultada
+3. Verify in Frontend (RAG Debugger)
+Open the application (http://localhost:5173).
+Login (if required).
+Open the Right Sidebar (Tools).
+Click on the new "RAG Debug" tab (Database Icon).
+Enter a query:
+"choque sético"
+"noradrenalina"
+"neurological status"
+Click Buscar.
+What to check:
 
-1.  **Toronto Notes & Mayo Clinic:** Ambos definem hipoxemia geralmente como $SpO_2 < 90\%$, mas para fins de *triagem segura* em um aplicativo, o corte de **92%** é superior pois antecipa a descompensação. O app deve ser mais sensível que específico para segurança.
-2.  **Manuais Brasileiros (USP/Manole):** Enfatizam o exame físico (cianose) mas corroboram a oximetria como o "quinto sinal vital". O protocolo de sepse do **Instituto Latino Americano de Sepse (ILAS)** usa disfunção orgânica/hipoxemia como critério de alerta, alinhado com o corte de 92%.
-3.  **Pediatria:** A regra de $\leq 92\%$ é segura e amplamente aceita para crianças (PALS/AAP). Em recém-nascidos, a faixa alvo pode variar, mas para um app de uso geral/prontuário, manter o alerta em 92% previne erros graves.
-
-**Próximo Passo:**
-Deseja que eu refine as mensagens de texto exatas (copywriting médico) que aparecerão para o usuário quando esses limites forem violados (ex: "Saturação crítica: verifique se há falta de ar e considere procurar emergência")?
+Results List: You should see chunks from SAMPLE_PATIENT_001.
+Scoring:
+RRF: Score from fusion (e.g. 0.03...).
+Rerank: Score from Cross-Encoder (e.g. 0.98 for relevant, 0.01 for irrelevant).
+High relevance items should have high Rerank scores.
+Context Filtering: Try filtering by UTI vs Emergencia.
+4. Troubleshooting
+If Reranking is slow or fails, check server logs for @xenova/transformers download progress (first run takes time).
+If DB Error, ensure the migration ran successfully (table patient_documents exists).

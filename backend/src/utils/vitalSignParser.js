@@ -9,7 +9,7 @@
 const THRESHOLDS = {
     // Blood Pressure (mmHg)
     BP: {
-        HYPERTENSIVE_EMERGENCY: { sys: 180, dia: 120 },
+        HYPERTENSIVE_EMERGENCY: { sys: 180, dia: 100 },
         HYPERTENSIVE_URGENCY: { sys: 140, dia: 90 },
         HYPOTENSION: { sys: 90, dia: 60 },
         SEVERE_HYPOTENSION: { sys: 80, dia: 50 },
@@ -28,7 +28,7 @@ const THRESHOLDS = {
     },
     // Oxygen Saturation (%)
     SPO2: {
-        HYPOXEMIA: 94,
+        HYPOXEMIA: 92,
         SEVERE_HYPOXEMIA: 90,
     },
     // Temperature (Celsius)

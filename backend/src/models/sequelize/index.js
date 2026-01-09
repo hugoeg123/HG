@@ -25,6 +25,7 @@ const KnowledgeNote = require('./KnowledgeNote');
 const KnowledgeNoteRating = require('./KnowledgeNoteRating');
 const KnowledgeNoteComment = require('./KnowledgeNoteComment');
 const PatientVitalSigns = require('./PatientVitalSigns');
+const PatientDocument = require('../patientDocument')(sequelize);
 
 // Novos modelos do sistema de tags dinâmicas
 const Medico = require('./Medico')(sequelize);
@@ -125,7 +126,8 @@ const models = {
   Appointment,
   Patient,
   PatientTagEntry,
-  Review
+  Review,
+  PatientDocument
 };
 
 // Executar associações dos novos modelos
@@ -163,5 +165,6 @@ module.exports = {
   AvailabilitySlot,
   Appointment,
   PatientTagEntry,
-  Review
+  Review,
+  PatientDocument
 };

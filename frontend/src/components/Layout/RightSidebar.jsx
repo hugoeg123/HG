@@ -7,6 +7,7 @@ import Alerts from '../Tools/Alerts';
 import KnowledgeBase from '../Tools/KnowledgeBase';
 import ContextManager from '../AI/ContextManager';
 import TabContentPanel from './TabContentPanel';
+import RagDebugger from '../RightSidebar/RagDebugger';
 import { useThemeStore } from '../../store/themeStore';
 import { useChatStore } from '../../store/chatStore';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +42,7 @@ const RightSidebar = ({ collapsed, expanded, maximized, onToggleExpansion, onTog
     calculators: { title: t('layout.calculators'), component: <Calculators patientId={patientId} />, icon: <Calculator size={16} /> },
     alerts: { title: t('layout.alerts'), component: <Alerts />, icon: <AlertTriangle size={16} /> },
     knowledge: { title: t('layout.knowledge'), component: <KnowledgeBase />, icon: <BookOpen size={16} /> },
+    debug: { title: 'RAG Debug', component: <RagDebugger patientId={patientId} />, icon: <Database size={16} /> },
   };
 
   const ActiveComponent = tabConfig[activeTab].component;
@@ -48,15 +50,15 @@ const RightSidebar = ({ collapsed, expanded, maximized, onToggleExpansion, onTog
 
   const chatActions = (
     <>
-      <button 
-        onClick={() => startNewChat()} 
+      <button
+        onClick={() => startNewChat()}
         className={`p-1.5 rounded-md transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}
         title="Nova Conversa"
       >
         <Plus size={18} />
       </button>
-      <button 
-        onClick={() => setShowHistory(true)} 
+      <button
+        onClick={() => setShowHistory(true)}
         className={`p-1.5 rounded-md transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}
         title="Histórico"
       >
@@ -110,7 +112,7 @@ const RightSidebar = ({ collapsed, expanded, maximized, onToggleExpansion, onTog
 
       {/* Painel de Conteúdo Unificado */}
       <div className="flex-1 overflow-hidden">
-        <TabContentPanel 
+        <TabContentPanel
           title={activeTitle}
           actions={activeTab === 'chat' ? chatActions : null}
         >
@@ -129,21 +131,20 @@ const RightSidebar = ({ collapsed, expanded, maximized, onToggleExpansion, onTog
               <p className="text-center text-gray-500 py-8">Nenhuma conversa salva.</p>
             ) : (
               history.map(chat => (
-                <div 
-                  key={chat.id} 
-                  className={`group flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${
-                    isDarkMode 
-                      ? 'border-gray-700/50 hover:border-teal-500/30 bg-theme-card hover:bg-theme-surface' 
-                      : 'border-gray-200 hover:border-blue-500/30 bg-white hover:bg-gray-50'
-                  }`} 
+                <div
+                  key={chat.id}
+                  className={`group flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${isDarkMode
+                    ? 'border-gray-700/50 hover:border-teal-500/30 bg-theme-card hover:bg-theme-surface'
+                    : 'border-gray-200 hover:border-blue-500/30 bg-white hover:bg-gray-50'
+                    }`}
                   onClick={() => { loadChat(chat.id); setShowHistory(false); }}
                 >
                   <div className="flex-1 min-w-0">
                     <h4 className={`font-medium text-sm truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{chat.title}</h4>
                     <p className="text-xs text-gray-500 mt-1">{new Date(chat.date).toLocaleDateString()} • {chat.messages.length} msgs</p>
                   </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }} 
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}
                     className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400 rounded-md transition-all"
                     title="Excluir conversa"
                   >

@@ -62,7 +62,7 @@ class OllamaService {
 
             // Pipe the data directly to the express response
             response.data.pipe(res);
-            
+
             await new Promise((resolve, reject) => {
                 let firstTokenTimer = setTimeout(() => controller.abort(), firstTokenTimeoutMs);
                 let receivedFirstToken = false;
@@ -107,6 +107,26 @@ class OllamaService {
         } finally {
             if (overallTimeout) clearTimeout(overallTimeout);
             if (signal) signal.removeEventListener('abort', onParentAbort);
+        }
+    }
+
+    /**
+     * Generate embeddings for a given prompt
+     * @param {string} model Model name (e.g. 'bge-m3')
+     * @param {string} prompt Text to embed
+     * @returns {Promise<number[]>} Vector array
+     */
+    async embeddings(model, prompt) {
+        try {
+            const response = await axios.post(`${this.baseUrl}/api/embeddings`, {
+                model,
+                prompt,
+                keep_alive: this.keepAlive
+            });
+            return response.data.embedding;
+        } catch (error) {
+            console.error(`Error generating embeddings for model ${model}:`, error.message);
+            throw error;
         }
     }
 }
