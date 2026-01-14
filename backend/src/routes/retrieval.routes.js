@@ -12,6 +12,12 @@ const { authenticate } = require('../middleware/auth.middleware');
 // Protected by Auth Middleware to prevent unauthorized access
 router.post('/debug', authenticate, retrievalController.debug);
 
+// Inspect all indexed documents for a patient
+router.get('/inspect/:patientId', authenticate, retrievalController.inspect);
+
+// Manually re-index a patient (Force Sync)
+router.post('/reindex/:patientId', authenticate, retrievalController.reindex);
+
 // Helper to manually index a sample (Dev only)
 // Protected by Auth Middleware
 router.post('/index-sample', authenticate, retrievalController.indexSample);

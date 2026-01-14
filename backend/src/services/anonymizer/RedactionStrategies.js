@@ -10,7 +10,7 @@ class RegexStrategy {
         this.patterns = {
             // CPF: 11 digits, with or without dots/hyphens
             cpf: {
-                regex: /(?:\d{3}\.?){3}-?\d{2}/g,
+                regex: /\b(?:\d{3}\.?){3}-?\d{2}\b/g,
                 replacement: '[CPF_REDACTED]'
             },
             // CNS (Cartão Nacional de Saúde): 15 digits, often starting with 7, 8, 1, 2

@@ -6,6 +6,7 @@ class VectorIndexer {
     constructor() {
         this.modelName = 'bge-m3';
         this.batchSize = 10;
+        this.indexParentEmbeddings = false; // Flag to easy enable "Global Context" (Holistic) embedding later
     }
 
     /**
@@ -27,7 +28,7 @@ class VectorIndexer {
         for (let i = 0; i < chunks.length; i += this.batchSize) {
             const batch = chunks.slice(i, i + this.batchSize);
             await this.processBatch(patient.patient_hash, batch);
-            console.log(`[VectorIndexer] Indexed batch ${i / this.batchSize + 1}/${Math.ceil(chunks.length / this.batchSize)}`);
+            console.log(`[VectorIndexer] Indexed batch ${i / this.batchSize + 1}/${Math.ceil(chunks.length / this.batchSize)}.`);
         }
 
         console.log(`[VectorIndexer] Completed indexing for patient ${patient.patient_hash.substring(0, 8)}.`);
@@ -42,10 +43,20 @@ class VectorIndexer {
 
         for (const chunk of chunks) {
             let vector = null;
-            try {
-                vector = await ollamaService.embeddings(this.modelName, chunk.embedding_content);
-            } catch (err) {
-                console.error(`[VectorIndexer] Error generating embedding for doc_path ${chunk.doc_path}:`, err.message);
+
+            // Check Policy: Do we embed this chunk?
+            const isParent = chunk.metadata && chunk.metadata.type === 'parent';
+            if (isParent && !this.indexParentEmbeddings) {
+                // Skip embedding for Parent, but we still index the document/text
+                // console.log(`[VectorIndexer] Skipping embedding for Parent: ${chunk.doc_path}`);
+            }
+            else if (chunk.embedding_content) {
+                // Standard Child Chunk OR Parent if flag is ON
+                try {
+                    vector = await ollamaService.embeddings(this.modelName, chunk.embedding_content);
+                } catch (err) {
+                    console.error(`[VectorIndexer] Error generating embedding for doc_path ${chunk.doc_path}:`, err.message);
+                }
             }
 
             enrichedChunks.push({

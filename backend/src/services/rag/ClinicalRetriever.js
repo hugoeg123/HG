@@ -38,7 +38,7 @@ class ClinicalRetriever {
     /**
      * Main Search Method
      */
-    async search(query, filters = {}, topK = 5) {
+    async search(query, filters = {}, topK = 5, debug = false) {
         const { context, tags, dateFrom, dateTo } = filters;
 
         let queryVector = null;
@@ -60,7 +60,65 @@ class ClinicalRetriever {
         // Only rerank the top 20 fused candidates to save compute
         const finalResults = await this.rerankResults(query, fusedResults, topK);
 
-        return finalResults;
+        // 5. Parent Document Retrieval (The "Structure-Aware" Step)
+        // We have the best Child Chunks. Now we fetch their Parents to give full context.
+        return await this.enrichWithParents(finalResults, filters.patient_hash, debug);
+    }
+
+    /**
+     * Fetches Parent Documents given a list of Child Chunks
+     * Deduplicates by Parent to avoid repeating the same day's record.
+     */
+    async enrichWithParents(childResults, patientHash, debug) {
+        if (!childResults || childResults.length === 0) return [];
+
+        // 1. Collect unique parent paths
+        const parentPaths = new Set();
+        const childMap = new Map(); // path -> child (to keep score info)
+
+        childResults.forEach(child => {
+            const pPath = child.metadata?.parent_path;
+            if (pPath) {
+                parentPaths.add(pPath);
+                // Keep the FIRST (highest scoring) child that pointed to this parent
+                if (!childMap.has(pPath)) {
+                    childMap.set(pPath, child);
+                }
+            }
+        });
+
+        if (parentPaths.size === 0) {
+            return childResults; // No parents linked (legacy data?), return children as is
+        }
+
+        // 2. Fetch Parent Documents
+        const parents = await PatientDocument.findAll({
+            where: {
+                doc_path: Array.from(parentPaths),
+                patient_hash: patientHash
+            }
+        });
+
+        // 3. Map Parents to Results (creating the final context objects)
+        const parentResults = parents.map(parent => {
+            const triggeringChild = childMap.get(parent.doc_path);
+
+            // Reconstruct a result object that looks like a search result but has Parent content
+            return {
+                ...parent.toJSON(), // The Parent Document (Full Context)
+                score: triggeringChild.score || triggeringChild.rerank_score || 0, // Inherit score from the child that found it
+                rerank_score: triggeringChild.rerank_score,
+                // Debug info to know WHICH child triggered this
+                _debug_trigger: debug ? {
+                    child_path: triggeringChild.doc_path,
+                    tag: triggeringChild.metadata?.tag_detected || 'unknown',
+                    child_snippet: triggeringChild.content.substring(0, 50) + '...'
+                } : undefined
+            };
+        });
+
+        // Sort again by inherited score (descending)
+        return parentResults.sort((a, b) => (b.rerank_score || b.score) - (a.rerank_score || a.score));
     }
 
     /**
@@ -92,11 +150,16 @@ class ClinicalRetriever {
         // We want SIMILARITY usually, but Order By Distance ASC is standard.
         // Cosine Distance = 1 - Cosine Similarity.
 
+        const distanceLiteral = Sequelize.literal(`embedding <=> '${JSON.stringify(queryVector)}'`);
+
         return await PatientDocument.findAll({
             where,
-            order: [Sequelize.literal(`embedding <=> '${JSON.stringify(queryVector)}'`)],
+            order: [distanceLiteral],
             limit,
-            attributes: { exclude: ['embedding'] } // Don't return the large vector
+            attributes: {
+                include: [[distanceLiteral, 'vector_distance']],
+                exclude: ['embedding']
+            } // Don't return the large vector
         });
     }
 
@@ -110,13 +173,21 @@ class ClinicalRetriever {
         // ...other filters as above...
 
         // FTS using websearch_to_tsquery for natural language query parsing
-        where[Sequelize.Op.and] = Sequelize.literal(`to_tsvector('portuguese', content) @@ websearch_to_tsquery('portuguese', '${query.replace(/'/g, "''")}')`);
+        const tsQuery = `websearch_to_tsquery('portuguese', '${query.replace(/'/g, "''")}')`;
+        const tsVector = `to_tsvector('portuguese', content)`;
+
+        where[Sequelize.Op.and] = Sequelize.literal(`${tsVector} @@ ${tsQuery}`);
+
+        const rankLiteral = Sequelize.literal(`ts_rank(${tsVector}, ${tsQuery})`);
 
         return await PatientDocument.findAll({
             where,
             // Rank by relevance
-            order: [Sequelize.literal(`ts_rank(to_tsvector('portuguese', content), websearch_to_tsquery('portuguese', '${query.replace(/'/g, "''")}')) DESC`)],
-            limit
+            order: [[rankLiteral, 'DESC']],
+            limit,
+            attributes: {
+                include: [[rankLiteral, 'lexical_score']]
+            }
         });
     }
 

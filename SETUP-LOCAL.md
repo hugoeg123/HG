@@ -1,99 +1,78 @@
 # Guia de Configuração Local - Health Guardian
 
-## Status da Configuração
+## Status da Configuração (Atualizado: 2026-01-14)
 
-✅ **Configurações de Porta Corrigidas:**
-- Backend: Porta 5001 (configurada)
-- Frontend: Porta 3000 (configurada)
-- PostgreSQL: Porta 5432 (padrão)
-- API URL: http://localhost:5001/api
+✅ **Backend**: Rodando na porta 5001
+✅ **Frontend**: Rodando na porta 3000
+✅ **Banco de Dados**: PostgreSQL conectado e migrado (localhost:5432)
+✅ **AI**: Ollama detectado com modelos locais
 
-## Pré-requisitos Necessários
+## Serviços em Execução
 
-### 1. PostgreSQL (OBRIGATÓRIO)
-O PostgreSQL não está instalado no sistema. Escolha uma das opções:
+### Backend
+- **URL**: http://localhost:5001/api
+- **Health Check**: http://localhost:5001/api/health
+- **Status**: Online
 
-#### Opção A: Instalação Local do PostgreSQL
-1. Baixe o PostgreSQL 14+ em: https://www.postgresql.org/download/windows/
-2. Durante a instalação:
-   - Porta: 5432 (padrão)
-   - Usuário: postgres
-   - Senha: postgres (ou configure no .env)
-3. Crie o banco de dados:
-   ```sql
-   CREATE DATABASE health_guardian;
-   ```
+### Frontend
+- **URL**: http://localhost:3000
+- **Login de Teste**: `medico@teste.com` / `123456`
+- **Status**: Online
 
-#### Opção B: Docker Desktop (Recomendado)
-1. Instale o Docker Desktop: https://www.docker.com/products/docker-desktop/
-2. Inicie o Docker Desktop
-3. Execute o comando:
-   ```bash
-   docker-compose -f docker-compose-postgres.yml up -d
-   ```
+### Banco de Dados (PostgreSQL)
+- **Host**: localhost
+- **Porta**: 5432
+- **Database**: health_guardian
+- **Status**: Conectado e Migrado
 
-### 2. Node.js
-✅ Verificado - Node.js está instalado
+### Ollama (AI)
+- **URL**: http://localhost:11434
+- **Status**: Online
+- **Modelos Detectados**:
+  - `llama3:8b` (Recomendado para chat geral)
+  - `deepseek-r1:8b`
+  - `mistral-nemo:latest`
+  - `qwen2.5:7b`
+  - `phi4:14b`
 
-## Configuração Atual
+## Notas Técnicas Importantes
 
-### Backend (.env)
-```env
-PORT=5001
-NODE_ENV=development
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=health_guardian
-DB_USER=postgres
-DB_PASSWORD=postgres
+### Compatibilidade Node.js
+O ambiente atual utiliza **Node.js v20.11.0**.
+- **Frontend**: Foi necessário realizar downgrade do Vite para a versão **5.4.11** para garantir compatibilidade, pois a versão mais recente exigia Node.js v20.19+.
+- **Backend**: Funciona nativamente com a versão instalada.
+
+## Como Iniciar os Serviços
+
+Se precisar reiniciar os serviços, utilize os comandos abaixo em terminais separados:
+
+### 1. Backend
+```bash
+cd backend
+npm run dev
 ```
 
-### Frontend (.env)
-```env
-VITE_API_URL=http://localhost:5001/api
-VITE_SOCKET_URL=http://localhost:5001
-VITE_NODE_ENV=development
+### 2. Frontend
+```bash
+cd frontend
+npm run dev
 ```
 
-## Próximos Passos
+### 3. Banco de Dados (Manutenção)
+Se precisar resetar ou atualizar o banco:
+```bash
+cd backend
+# Executa migrações e seed (dados iniciais)
+npm run db:setup
+```
 
-1. **Instalar PostgreSQL** (escolha uma opção acima)
-2. **Testar conexão com banco**:
-   ```bash
-   cd backend
-   npm run pg:check
-   ```
-3. **Executar migrações**:
-   ```bash
-   cd backend
-   npm run db:migrate
-   npm run db:seed
-   ```
-4. **Iniciar serviços**:
-   ```bash
-   # Terminal 1 - Backend
-   cd backend
-   npm run dev
-   
-   # Terminal 2 - Frontend
-   cd frontend
-   npm run dev
-   ```
+## Solução de Problemas
 
-## Verificação de Funcionamento
-
-- Backend: http://localhost:5001/api/health
-- Frontend: http://localhost:3000
-- Login teste: medico@teste.com / 123456
-
-## Problemas Identificados
-
-❌ **PostgreSQL não instalado** - Conexão recusada na porta 5432
-❌ **Docker Desktop não está rodando** - Necessário para usar containers
-
-## Soluções
-
-1. Instale PostgreSQL localmente OU
-2. Instale e inicie o Docker Desktop
-3. Execute os comandos de migração
-4. Teste a aplicação completa
+### Erro "crypto.hash is not a function" no Frontend
+Este erro ocorre devido à incompatibilidade entre Node 20.11 e Vite 6+.
+**Solução**: O projeto já foi fixado com Vite 5.4.11. Se o erro persistir, apague `node_modules` e reinstale:
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```

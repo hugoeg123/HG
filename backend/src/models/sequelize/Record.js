@@ -14,7 +14,7 @@ const { sequelize } = require('../../config/database-pg');
  * @class Record
  * @extends Model
  */
-class Record extends Model {}
+class Record extends Model { }
 
 Record.init({
   // ID do registro (chave primária)
@@ -121,18 +121,18 @@ Record.init({
  * @param {string} patientId - ID do paciente (opcional)
  * @returns {Promise<Array>} Lista de registros
  */
-Record.findByTag = async function(tagName, patientId = null) {
+Record.findByTag = async function (tagName, patientId = null) {
   const query = {
     isDeleted: false,
     tags: {
       [sequelize.Op.contains]: [{ name: tagName.toUpperCase() }]
     }
   };
-  
+
   if (patientId) {
     query.patientId = patientId;
   }
-  
+
   return await this.findAll({
     where: query,
     order: [['date', 'DESC']]
@@ -145,20 +145,60 @@ Record.findByTag = async function(tagName, patientId = null) {
  * @param {string} patientId - ID do paciente (opcional)
  * @returns {Promise<Array>} Lista de registros
  */
-Record.findByType = async function(type, patientId = null) {
+Record.findByType = async function (type, patientId = null) {
   const query = {
     type,
     isDeleted: false
   };
-  
+
   if (patientId) {
     query.patientId = patientId;
   }
-  
+
   return await this.findAll({
     where: query,
     order: [['date', 'DESC']]
   });
 };
+
+Record.addHook('afterCreate', async (record, options) => {
+  try {
+    // Dynamic import to avoid circular dependency issues during model init
+    // Ideally RetrievalService should be robust enough, but let's be safe.
+    // However, services usually import models, so importing service here is circular.
+    // We can use a lazy require inside the hook.
+
+    // Check if we are in a transaction? Usually safe to fire-and-forget or await if critical.
+    // For RAG, we can fire-and-forget or catch errors to not block the main transaction if possible.
+    // But since hooks run within transaction if options.transaction is present, we should be careful.
+    // We'll run it purely async without awaiting, or await if we want to guarantee consistency.
+    // Let's run it non-blocking to avoid latency in UI.
+
+    const retrievalService = require('../../services/RetrievalService');
+    console.log(`[Record Hook] New record created for patient ${record.patientId}. Triggering background re-index...`);
+
+    // Fire and forget
+    retrievalService.indexPatient(record.patientId).catch(err => {
+      console.error(`[Record Hook] Background Indexing failed for ${record.patientId}:`, err);
+    });
+
+  } catch (error) {
+    console.error('[Record Hook] Error triggering index:', error);
+  }
+});
+
+Record.addHook('afterUpdate', async (record, options) => {
+  try {
+    const retrievalService = require('../../services/RetrievalService');
+    console.log(`[Record Hook] Record updated for patient ${record.patientId}. Triggering background re-index...`);
+
+    retrievalService.indexPatient(record.patientId).catch(err => {
+      console.error(`[Record Hook] Background Indexing failed for ${record.patientId}:`, err);
+    });
+
+  } catch (error) {
+    console.error('[Record Hook] Error triggering index:', error);
+  }
+});
 
 module.exports = Record;

@@ -156,6 +156,9 @@ class PatientAnonymizer {
             patientName: patientData.name // Used for self-leakage removal
         };
 
+        const recordHash = this.hashId(r.id);
+        const patientHash = this.hashId(patientData.id);
+
         // 1. Redact Content
         // Assuming record has 'content', 'title', 'notes'
         // We iterate over likely text fields
@@ -167,13 +170,22 @@ class PatientAnonymizer {
         const relDate = this.calculateRelativeDay(r.date, patientData.dateOfBirth);
 
         const anonymizedRecord = {
-            record_hash: this.hashId(r.id),
-            patient_hash: this.hashId(patientData.id),
+            id: recordHash,
+            record_hash: recordHash,
+            patient_hash: patientHash,
             type: r.type,
+            context: r?.metadata?.context || 'default',
             relative_date: relDate,
             day_offset: relDate ? parseInt(relDate.replace('Day ', ''), 10) : null,
             content_redacted: redactedContent,
-            tags: r.tags || [] // Watch out for PII in tags
+            tags: (r.tags || []).map(tag => {
+                if (typeof tag === 'string') {
+                    return redactionStrategy.process(tag, context);
+                } else if (typeof tag === 'object' && tag !== null && tag.name) {
+                    return { ...tag, name: redactionStrategy.process(tag.name, context) };
+                }
+                return tag;
+            })
         };
 
         // 3. Audit Checks (Fail-Closed)
@@ -195,7 +207,7 @@ class PatientAnonymizer {
      */
     async getAnonymizedPatientData(patientId) {
         // Dynamic import to avoid circular dependency if models import this service
-        const { Patient, Record } = require('../../models/sequelize'); // Adjust path as needed
+        const { Patient, Record } = require('../../models'); // Matches RetrievalController usage
 
         // 1. Fetch Raw Data
         const patient = await Patient.findByPk(patientId);
@@ -217,17 +229,20 @@ class PatientAnonymizer {
 
         for (const record of records) {
             try {
+                // Paranoid check for record validity
+                if (!record) continue;
+
                 const anonRecord = this.anonymizeRecord(record, patient);
                 anonymizedRecords.push(anonRecord);
             } catch (err) {
+                console.error(`[PatientAnonymizer] Error anonymizing record ${record.id}:`, err);
                 if (err.message.startsWith('PII_AUDIT_FAILURE')) {
-                    if (failClosed) {
-                        throw err;
-                    }
-                    console.error(`Skipping Record ${record.id} due to PII Audit Failure.`);
+                    if (failClosed) throw err;
                     continue;
                 }
-                throw err;
+                // Don't crash the whole patient for one bad record, unless critical
+                // For now, logging and skipping is safer for resilience
+                console.error(`[PatientAnonymizer] SKIPPING Record ${record.id} due to processing error.`);
             }
         }
 

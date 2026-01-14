@@ -11,6 +11,24 @@ const retrievalService = {
     },
 
     /**
+     * Inspect patient documents
+     * @param {string} patientId
+     */
+    inspect: async (patientId) => {
+        const response = await api.get(`/retrieval/inspect/${patientId}`);
+        return response.data;
+    },
+
+    /**
+     * Force Re-index for a patient
+     * @param {string} patientId
+     */
+    reindex: async (patientId) => {
+        const response = await api.post(`/retrieval/reindex/${patientId}`);
+        return response.data;
+    },
+
+    /**
      * Index sample patient (Dev only)
      * @param {Object} patientData 
      */

@@ -83,7 +83,7 @@ npm run dev
 ### 6. Acessar a Aplicação
 
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
+- **Backend API**: http://localhost:5001
 - **PostgreSQL**: postgresql://localhost:5432/health_guardian
 
 ## Script Automatizado (Alternativa)

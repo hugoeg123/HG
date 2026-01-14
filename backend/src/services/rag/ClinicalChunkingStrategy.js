@@ -84,57 +84,111 @@ class ClinicalChunkingStrategy {
     // STRATEGIES
     // ============================================
 
+    // ============================================
+    // STRATEGIES
+    // ============================================
+
     /**
      * Strategy: Shift-Based (e.g., UTI)
-     * Groups records by relative date (and potentially shift if we had time, but for now Day based)
+     * Groups records by relative date
+     * Creates:
+     * 1. Parent Chunk (Full Day Record) - No Embedding
+     * 2. Child Chunks (Split by Tags) - Vectorized
      */
     strategyShiftBased(patientHash, context, records) {
-        // For now, grouping by Relative Date (Day +X)
         const groups = this.groupByField(records, 'relative_date');
         const chunks = [];
 
         for (const [date, items] of Object.entries(groups)) {
             const combinedContent = items.map(this.formatRecord).join('\n---\n');
-            const enriched = items.map(i => this.enrichRecord(i, context)).join('\n');
+            const parentDocPath = `${context}/${date.replace(/\s+/g, '_')}`;
 
+            // 1. Parent Chunk (The "Source of Truth" for the LLM)
             chunks.push({
-                doc_path: `${context}/${date.replace(/\s+/g, '_')}`,
+                doc_path: parentDocPath,
                 context: context,
                 tags: this.extractUniqueTags(items),
                 content: `DATE: ${date}\n${combinedContent}`,
-                embedding_content: `Context: ${context} | Date: ${date}\n${enriched}`,
-                metadata: { date_range: date, count: items.length },
+                embedding_content: `Context: ${context} | Parent: ${parentDocPath} | Date: ${date}`,
+                metadata: {
+                    type: 'parent',
+                    subtype: 'day',
+                    date_range: date,
+                    count: items.length,
+                    original_ids: items.map(i => i.id)
+                },
                 day_offset: this.extractDayOffset(date)
             });
 
-            // Level 1: Extract Structured Tags into separate chunks
-            chunks.push(...this.extractLevel1Chunks(patientHash, context, items, date));
+            for (const record of items) {
+                const recordParentDocPath = `${parentDocPath}/${this.getRecordId(record)}`;
+                const recordText = this.formatRecord(record);
+
+                chunks.push({
+                    doc_path: recordParentDocPath,
+                    context: context,
+                    tags: this.normalizeTags(record.tags),
+                    content: recordText,
+                    embedding_content: `Context: ${context} | Parent: ${recordParentDocPath} | Date: ${date}`,
+                    metadata: {
+                        type: 'parent',
+                        subtype: 'record',
+                        parent_path: parentDocPath,
+                        id: this.getRecordId(record)
+                    },
+                    day_offset: this.extractDayOffset(date)
+                });
+
+                const childChunks = this.createChildChunksFromText(
+                    recordText,
+                    recordParentDocPath,
+                    context,
+                    this.extractDayOffset(date)
+                );
+                chunks.push(...childChunks);
+            }
+
+            // 3. Structured Data Chunks (Level 1 - Keeping this for extra structure if needed)
+            chunks.push(...this.extractLevel1Chunks(patientHash, context, items, date, parentDocPath));
         }
         return chunks;
     }
 
     /**
-     * Strategy: Event-Based (e.g., Emergency, Patient Reported)
-     * Treats each record as a critical standalone event
+     * Strategy: Event-Based (e.g., Emergencia)
+     * Each record is a Parent. Tags within it are Children.
      */
     strategyEventBased(patientHash, context, records) {
-        return records.map(record => {
+        const chunks = [];
+        for (const record of records) {
             const date = record.relative_date;
-            return {
-                doc_path: `${context}/${date.replace(/\s+/g, '_')}/${record.id}`,
+            const parentDocPath = `${context}/${date.replace(/\s+/g, '_')}/${this.getRecordId(record)}`;
+
+            // 1. Parent Chunk
+            chunks.push({
+                doc_path: parentDocPath,
                 context: context,
-                tags: record.tags || [],
+                tags: this.normalizeTags(record.tags),
                 content: this.formatRecord(record),
-                embedding_content: this.enrichRecord(record, context),
-                metadata: { id: record.id, type: 'event' },
+                embedding_content: `Context: ${context} | Parent: ${parentDocPath} | Date: ${date}`,
+                metadata: { type: 'parent', subtype: 'record', id: this.getRecordId(record) },
                 day_offset: this.extractDayOffset(date)
-            };
-        });
+            });
+
+            // 2. Child Chunks
+            const childChunks = this.createChildChunksFromText(
+                this.formatRecord(record),
+                parentDocPath,
+                context,
+                this.extractDayOffset(date)
+            );
+            chunks.push(...childChunks);
+        }
+        return chunks;
     }
 
     /**
      * Strategy: Visit-Based (Ambulatorio)
-     * Placeholder for now, reusing ShiftBased logic of grouping by date
      */
     strategyVisitBased(patientHash, context, records) {
         return this.strategyShiftBased(patientHash, context, records);
@@ -142,33 +196,10 @@ class ClinicalChunkingStrategy {
 
     /**
      * Strategy: Semantic (Default)
-     * Fallback that groups by token limit (simplified to N records for MVP)
+     * Fallback that groups by batch but still tries to structure chunks
      */
     strategySemantic(patientHash, context, records) {
-        // Simple batching for now (e.g., 3 records per chunk)
-        const BATCH_SIZE = 3;
-        const chunks = [];
-
-        for (let i = 0; i < records.length; i += BATCH_SIZE) {
-            const batch = records.slice(i, i + BATCH_SIZE);
-            const dateRange = `${batch[0].relative_date} - ${batch[batch.length - 1].relative_date}`;
-            const combinedContent = batch.map(this.formatRecord).join('\n---\n');
-            const enriched = batch.map(rec => this.enrichRecord(rec, context)).join('\n');
-
-            chunks.push({
-                doc_path: `${context}/chunk_${Math.floor(i / BATCH_SIZE)}`,
-                context: context,
-                tags: this.extractUniqueTags(batch),
-                content: combinedContent,
-                embedding_content: `Context: ${context} | Range: ${dateRange}\n${enriched}`,
-                metadata: { batch_index: i, count: batch.length },
-                day_offset: this.extractDayOffset(batch[0].relative_date)
-            });
-
-            // Level 1 extraction for default records too? Yes, if meaningful tags exist.
-            chunks.push(...this.extractLevel1Chunks(patientHash, context, batch, dateRange));
-        }
-        return chunks;
+        return this.strategyEventBased(patientHash, context, records);
     }
 
     // ============================================
@@ -176,10 +207,106 @@ class ClinicalChunkingStrategy {
     // ============================================
 
     /**
-     * Level 1: Extract Structured Tags
-     * If a record has "structured_data" with keys like "NEUROLOGICAL", save them as focused chunks.
+     * core Logic: Split text by Tags (#HMA, #ExameFisico, etc.)
+     * Handles "Orphan" text (text before first tag) as a 'default' chunk.
      */
-    extractLevel1Chunks(patientHash, context, records, dateReference) {
+    createChildChunksFromText(fullText, parentPath, context, dayOffset) {
+        const chunks = [];
+
+        const blocks = this.parseStructuredBlocks(fullText);
+        if (blocks.length === 0) {
+            return chunks;
+        }
+
+        if (blocks.length === 1 && blocks[0].type === 'preamble') {
+            chunks.push(this.createChildChunk(
+                blocks[0].content,
+                'default',
+                parentPath,
+                context,
+                dayOffset
+            ));
+            return chunks;
+        }
+
+        for (const block of blocks) {
+            if (!block.content || block.content.trim().length === 0) continue;
+            chunks.push(this.createChildChunk(
+                block.content,
+                block.type === 'tag' ? block.tag : 'general',
+                parentPath,
+                context,
+                dayOffset
+            ));
+        }
+
+        return chunks;
+    }
+
+    parseStructuredBlocks(fullText) {
+        const text = String(fullText || '');
+        if (!text.trim()) return [];
+
+        const lines = text.split(/\r?\n/);
+        const blocks = [];
+
+        let current = { type: 'preamble', tag: null, lines: [] };
+
+        const flush = () => {
+            const content = current.lines.join('\n').trim();
+            if (content) {
+                blocks.push({
+                    type: current.type,
+                    tag: current.tag,
+                    content
+                });
+            }
+        };
+
+        for (const line of lines) {
+            const match = line.match(/^\s*(#|>>)([A-Za-z0-9_]+)\b\s*:?\s*(.*)\s*$/);
+            if (match) {
+                flush();
+                const [, , rawTag, inlineValue] = match;
+                current = { type: 'tag', tag: rawTag, lines: [] };
+                if (inlineValue && inlineValue.trim()) {
+                    current.lines.push(inlineValue.trim());
+                }
+                continue;
+            }
+            current.lines.push(line);
+        }
+
+        flush();
+        return blocks;
+    }
+
+    createChildChunk(content, tagName, parentPath, context, dayOffset) {
+        const safeTag = tagName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        // Unique path for child: parent/tag_index (using hash of content to be safe or random)
+        const uniqueSuffix = crypto.createHash('md5').update(content).digest('hex').substring(0, 6);
+
+        return {
+            doc_path: `${parentPath}/${safeTag}_${uniqueSuffix}`,
+            context: context,
+            tags: [tagName], // The specific tag of this chunk
+            content: content,
+            // Embedding should be focused on specific medical content
+            embedding_content: `Context: ${context} | Tag: ${tagName} | Content: ${content}`,
+            metadata: {
+                type: 'child',
+                parent_path: parentPath,
+                tag_detected: tagName
+            },
+            day_offset: dayOffset
+        };
+    }
+
+    /**
+     * Level 1: Extract Structured Tags
+     * (Updated to link to Parent)
+     */
+    extractLevel1Chunks(patientHash, context, records, dateReference, parentPath) {
         const chunks = [];
 
         records.forEach(record => {
@@ -187,7 +314,8 @@ class ClinicalChunkingStrategy {
 
             Object.entries(record.structured_data).forEach(([tag, content]) => {
                 const enriched = `Context: ${context} | System: ${tag} | Date: ${record.relative_date} | Content: ${content}`;
-                const docPath = `${context}/${record.relative_date.replace(/\s+/g, '_')}/${tag}_${record.id.substring(0, 6)}`;
+                const recordId = this.getRecordId(record);
+                const docPath = `${parentPath}/${tag}_${String(recordId).substring(0, 6)}`;
 
                 chunks.push({
                     doc_path: docPath,
@@ -195,7 +323,7 @@ class ClinicalChunkingStrategy {
                     tags: [tag],
                     content: `[${tag}] ${content}`,
                     embedding_content: enriched,
-                    metadata: { parent_id: record.id, type: 'structured_tag' },
+                    metadata: { type: 'child', parent_path: parentPath, origin: 'structured_data' },
                     day_offset: this.extractDayOffset(record.relative_date)
                 });
             });
@@ -205,22 +333,61 @@ class ClinicalChunkingStrategy {
     }
 
     formatRecord(record) {
-        let text = `[${record.relative_date}] ${record.content_redacted}`;
+        let text = String(record.content_redacted || '');
+        // Note: We don't append structured_data here to the text block automatically 
+        // because we treat it separately or it might duplicate.
+        // But for the Parent Record (Search Result), we WANT everything.
         if (record.structured_data) {
             text += '\n' + JSON.stringify(record.structured_data, null, 2);
         }
-        return text;
+        return text.trim();
     }
 
     enrichRecord(record, context) {
-        // Create a dense representation for embedding
-        return `Context: ${context} | Date: ${record.relative_date} | Tags: ${(record.tags || []).join(',')} | Content: ${record.content_redacted}`;
+        // Normalize tags to strings for embedding text
+        const tagStrings = (record.tags || []).map(t => {
+            if (typeof t === 'string') return t;
+            if (typeof t === 'object' && t !== null && t.name) return t.name;
+            return '';
+        }).filter(t => t);
+
+        return `Context: ${context} | Date: ${record.relative_date} | Tags: ${tagStrings.join(', ')} | Content: ${record.content_redacted}`;
     }
 
     extractUniqueTags(records) {
         const tags = new Set();
-        records.forEach(r => (r.tags || []).forEach(t => tags.add(t)));
-        return Array.from(tags);
+        records.forEach(r => {
+            (r.tags || []).forEach(t => {
+                if (typeof t === 'string') {
+                    tags.add(t.replace(/^(#|>>)/, ''));
+                } else if (typeof t === 'object' && t !== null && t.name) {
+                    tags.add(String(t.name).replace(/^(#|>>)/, ''));
+                }
+            });
+        });
+        return Array.from(tags).filter(t => t); // Remove empty
+    }
+
+    normalizeTags(tagList) {
+        const tags = [];
+        for (const t of (tagList || [])) {
+            if (typeof t === 'string') {
+                const cleaned = t.trim().replace(/^(#|>>)/, '');
+                if (cleaned) tags.push(cleaned);
+                continue;
+            }
+            if (typeof t === 'object' && t !== null) {
+                const name = t.name || t.nome || t.codigo;
+                if (typeof name === 'string' && name.trim()) {
+                    tags.push(name.trim().replace(/^(#|>>)/, ''));
+                }
+            }
+        }
+        return tags;
+    }
+
+    getRecordId(record) {
+        return record?.id || record?.record_hash || record?.recordHash || 'unknown';
     }
 
     groupByField(array, field) {
@@ -232,9 +399,6 @@ class ClinicalChunkingStrategy {
         }, {});
     }
 
-    /**
-     * Extracts integer day offset from "Day +45"
-     */
     extractDayOffset(dateString) {
         if (!dateString) return 0;
         const match = dateString.match(/Day \+(\d+)/);

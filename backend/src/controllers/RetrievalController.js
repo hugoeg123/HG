@@ -1,5 +1,6 @@
 const clinicalRetriever = require('../services/rag/ClinicalRetriever');
 const vectorIndexer = require('../services/rag/VectorIndexer');
+const retrievalService = require('../services/RetrievalService');
 const patientAnonymizer = require('../services/anonymizer/PatientAnonymizer');
 const { Patient } = require('../models');
 
@@ -39,26 +40,94 @@ class RetrievalController {
             console.log(`[RetrievalController] Debugging query: "${query}" with filters:`, safeFilters);
 
             // Call Retriever (getting more results for debug visualization)
-            const results = await clinicalRetriever.search(query, safeFilters, 10);
+            // Enable debug mode to get full pipeline details
+            const results = await clinicalRetriever.search(query, safeFilters, 10, true);
 
-            // Return results with scoring details
+            // Return results directly as they are already formatted by ClinicalRetriever in debug mode
             return res.json({
                 success: true,
-                count: results.length,
-                results: results.map(r => ({
-                    id: r.id,
-                    doc_path: r.doc_path,
-                    content: r.content, // Snippet or full? Full for debug
-                    context: r.context,
-                    tags: r.tags,
-                    score_rrf: r.rrf_score,
-                    score_rerank: r.rerank_score
-                }))
+                results
             });
 
         } catch (error) {
             console.error('[RetrievalController] Error:', error);
             return res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * GET /api/retrieval/inspect/:patientId
+     * Inspect all indexed documents for a patient
+     */
+    async inspect(req, res) {
+        try {
+            const { patientId } = req.params;
+
+            const patient = await Patient.findByPk(patientId);
+            if (!patient) {
+                return res.status(404).json({ error: 'Paciente não encontrado' });
+            }
+
+            if (req.user && req.user.id && patient.createdBy !== req.user.id) {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+
+            const patient_hash = patientAnonymizer.hashId(patient.id);
+            const { PatientDocument } = require('../models');
+
+            const documents = await PatientDocument.findAll({
+                where: { patient_hash },
+                order: [['created_at', 'DESC']],
+                attributes: ['id', 'doc_path', 'context', 'tags', 'content', 'created_at', 'metadata']
+            });
+
+            // Count with embeddings
+            const total = documents.length;
+            const withEmbedding = await PatientDocument.count({
+                where: {
+                    patient_hash,
+                    embedding: { [require('sequelize').Op.ne]: null }
+                }
+            });
+
+            res.json({
+                total,
+                withEmbedding,
+                documents
+            });
+        } catch (error) {
+            console.error('[RetrievalController] Inspect Error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * POST /api/retrieval/reindex/:patientId
+     * Manually trigger full re-indexing for a patient
+     */
+    async reindex(req, res) {
+        try {
+            const { patientId } = req.params;
+
+            const patient = await Patient.findByPk(patientId);
+            if (!patient) {
+                return res.status(404).json({ error: 'Paciente não encontrado' });
+            }
+
+            if (req.user && req.user.id && patient.createdBy !== req.user.id) {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+
+            const result = await retrievalService.indexPatient(patientId);
+            return res.json(result);
+        } catch (error) {
+            console.error('[RetrievalController] Reindex Error:', error);
+            // Return full error details for debugging
+            return res.status(500).json({
+                error: error.message,
+                stack: error.stack,
+                type: error.name
+            });
         }
     }
 
