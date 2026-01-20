@@ -142,6 +142,14 @@ class ClinicalRetriever {
             if (filters.dayOffsetTo !== undefined) where.day_offset[Sequelize.Op.lte] = filters.dayOffsetTo;
         }
 
+        // EXCLUDE PARENTS from Search. They are Context only.
+        where.metadata = {
+            [Sequelize.Op.or]: [
+                { type: 'child' },
+                { type: 'demographics' }
+            ]
+        };
+
         // Vector Search Query
         // Sequelize doesn't have native Order for vector distance yet in generic abstraction. 
         // We rely on literal order.
@@ -177,6 +185,14 @@ class ClinicalRetriever {
         const tsVector = `to_tsvector('portuguese', content)`;
 
         where[Sequelize.Op.and] = Sequelize.literal(`${tsVector} @@ ${tsQuery}`);
+
+        // EXCLUDE PARENTS from Search
+        where.metadata = {
+            [Sequelize.Op.or]: [
+                { type: 'child' },
+                { type: 'demographics' }
+            ]
+        };
 
         const rankLiteral = Sequelize.literal(`ts_rank(${tsVector}, ${tsQuery})`);
 

@@ -36,6 +36,11 @@ Executa a busca híbrida quando o usuário faz uma pergunta:
 3.  **RRF (Reciprocal Rank Fusion)**: Combina os resultados.
 4.  **Reranking**: Refina os top-N resultados com Cross-Encoder (`bge-reranker-v2-m3`).
 
+## ⚡ Comportamento Atual de Performance
+
+- **Rerank sequencial**: o reranking processa cada candidato um por vez, então top‑N maiores aumentam a latência.
+- **Embeddings sequenciais**: a indexação gera embeddings de cada chunk em sequência, o que alonga o tempo total de indexação.
+
 ## 🛠️ Como Usar
 
 ### Indexação (Programática)

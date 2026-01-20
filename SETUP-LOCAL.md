@@ -22,7 +22,7 @@
 ### Banco de Dados (PostgreSQL)
 - **Host**: localhost
 - **Porta**: 5432
-- **Database**: health_guardian
+- **Database**: health-guardian
 - **Status**: Conectado e Migrado
 
 ### Ollama (AI)

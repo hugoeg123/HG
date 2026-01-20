@@ -373,7 +373,6 @@ export const alertService = {
 
 export const aiService = {
   chat: (message, patientId) => throttledApi.post('/ai/chat', { message, patientId }),
-  getSuggestions: (patientId) => throttledApi.get(`/ai/suggestions/${patientId}`),
 };
 
 // Patient Input Service

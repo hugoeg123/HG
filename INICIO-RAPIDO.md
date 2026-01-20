@@ -38,8 +38,8 @@ cd ..
 ### 3. Iniciar o PostgreSQL
 
 ```bash
-# Iniciar o PostgreSQL com Docker
-docker-compose up -d postgres
+# Iniciar o PostgreSQL com Docker (pgvector)
+docker compose -f docker-compose-postgres.yml up -d postgres
 
 # Verificar se está rodando
 docker ps
@@ -47,8 +47,8 @@ docker ps
 
 Você deve ver algo como:
 ```
-CONTAINER ID   IMAGE         COMMAND                  CREATED         STATUS         PORTS                    NAMES
-xxxxxxxxx      postgres:15   "docker-entrypoint.s…"   X seconds ago   Up X seconds   0.0.0.0:5432->5432/tcp   health-guardian-postgres
+CONTAINER ID   IMAGE                 COMMAND                  CREATED         STATUS         PORTS                    NAMES
+xxxxxxxxx      pgvector/pgvector:14  "docker-entrypoint.s…"   X seconds ago   Up X seconds   0.0.0.0:5432->5432/tcp   health-guardian-postgres
 ```
 
 ### 4. Configurar o Banco de Dados
@@ -84,7 +84,7 @@ npm run dev
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:5001
-- **PostgreSQL**: postgresql://localhost:5432/health_guardian
+- **PostgreSQL**: postgresql://localhost:5432/health-guardian
 
 ## Script Automatizado (Alternativa)
 
@@ -110,7 +110,7 @@ Erro: port is already allocated
 **Solução**: 
 ```bash
 # Parar outros serviços PostgreSQL
-docker-compose down
+docker compose -f docker-compose-postgres.yml down
 # ou
 docker stop $(docker ps -q --filter "publish=5432")
 ```
@@ -145,9 +145,9 @@ docker logs health-guardian-postgres
 docker-compose down
 
 # Resetar o banco de dados
-docker-compose down
+docker compose -f docker-compose-postgres.yml down
 docker volume rm hg1_postgres_data
-docker-compose up -d postgres
+docker compose -f docker-compose-postgres.yml up -d postgres
 cd backend && npm run db:migrate && npm run db:seed
 
 # Verificar status dos contêineres

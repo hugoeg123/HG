@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class OllamaService {
     constructor() {
-        this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+        this.baseUrl = process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
         this.keepAlive = process.env.OLLAMA_KEEP_ALIVE || '10m';
     }
 
