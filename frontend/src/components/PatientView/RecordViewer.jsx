@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Copy, CheckCheck, ToggleLeft, ToggleRight, Calendar, User, Tag } from 'lucide-react';
 import { usePatientStore } from '../../store/patientStore';
 import { normalizeTags, formatTagForDisplay } from '../../utils/tagUtils';
+import { parseSections } from '../../shared/parser.js';
 
 /**
  * RecordViewer component - Displays a medical record in read-only mode
@@ -74,15 +75,19 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
   const renderSegmentedContent = (content) => {
     if (!segmentToggle || !content) return content;
 
-    // Split content by sections (improved regex for medical records)
-    const sections = content.split(/\n\n|\n(?=[A-Z][a-z]*:)|\n(?=#[A-Z])/g);
+    // Use shared parser for consistent segmentation
+    const sections = parseSections(content);
     
     return sections.map((section, index) => {
-      const trimmedSection = section.trim();
-      if (!trimmedSection) return null;
+      // Reconstruct full text for actions
+      const fullText = section.tagCode 
+        ? `${section.tagCode}: ${section.content}` 
+        : section.content;
+
+      if (!fullText.trim()) return null;
 
       const sectionId = `section-${index}`;
-      const isSectionTitle = /^[A-Z][a-z]*:|^#[A-Z]/.test(trimmedSection);
+      const isSectionTitle = Boolean(section.tag);
       
       return (
         <div 
@@ -96,14 +101,19 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
               <p className={`whitespace-pre-wrap leading-relaxed ${
-                isSectionTitle ? 'font-semibold text-teal-300' : 'text-gray-300'
+                isSectionTitle ? 'text-gray-200' : 'text-gray-300'
               }`}>
-                {trimmedSection}
+                {isSectionTitle && (
+                  <span className="font-semibold text-teal-300 mr-2">
+                    {section.tagCode}:
+                  </span>
+                )}
+                {section.content}
               </p>
             </div>
             <div className="flex gap-1 ml-2">
               <button
-                onClick={() => handleCopySection(trimmedSection, sectionId)}
+                onClick={() => handleCopySection(fullText, sectionId)}
                 className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-theme-surface rounded-md transition-colors"
                 title="Copiar seção"
               >
@@ -114,7 +124,7 @@ const RecordViewer = ({ record, onBack, onSendToChat }) => {
                 )}
               </button>
               <button
-                onClick={() => handleSendToChat(trimmedSection, isSectionTitle ? trimmedSection.split(':')[0] : '')}
+                onClick={() => handleSendToChat(fullText, section.tagCode || '')}
                 className="p-1.5 text-teal-400 hover:text-teal-300 hover:bg-teal-900/20 rounded-md transition-colors"
                 title="Enviar para chat"
               >

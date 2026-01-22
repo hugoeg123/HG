@@ -179,28 +179,36 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
     }
     
     try {
-      // Split by double newlines for sections
-      const sectionTexts = content.split('\n\n').filter(text => text.trim());
+      // Use shared parser instead of simple split
+      // This ensures we respect tags and natural headers
+      const parsedSections = parseSections(content, availableTags);
       
       setSections(prevSections => {
-        // Reutilizar IDs existentes quando possível para manter estabilidade
-        const newSections = sectionTexts.map((sectionContent, index) => {
-          const existingSection = prevSections[index];
-          if (existingSection && existingSection.content === sectionContent.trim()) {
-            return existingSection; // Manter seção existente
-          }
-          
-          // Criar nova seção com ID estável
-          return {
-            id: existingSection?.id || `section_${sectionIdCounter + index}`,
-            content: sectionContent.trim()
-          };
+        const newSections = parsedSections.map((parsed, index) => {
+            // Reconstruct full content for SectionBlock (which expects "Tag: Content")
+            // Note: parsed.content is just the body, parsed.tagCode is the tag (e.g. #Subjetivo)
+            const fullContent = parsed.tagCode 
+                ? `${parsed.tagCode}: ${parsed.content}` 
+                : parsed.content;
+
+            const existingSection = prevSections[index];
+            
+            // If the content is exactly the same, reuse the object entirely to prevent re-renders
+            if (existingSection && existingSection.content === fullContent) {
+                return existingSection;
+            }
+
+            // Reuse ID if available at this index, otherwise create new
+            return {
+                id: existingSection?.id || `section_${sectionIdCounter + index}`,
+                content: fullContent
+            };
         });
         
-        // Atualizar contador apenas se criamos novas seções
-        const newSectionsCount = newSections.filter((_, index) => !prevSections[index]).length;
-        if (newSectionsCount > 0) {
-          setSectionIdCounter(prev => prev + newSectionsCount);
+        // Update counter only if we created new sections that exceed previous count
+        // (This logic is a bit loose but sufficient for unique IDs)
+        if (newSections.length > prevSections.length) {
+             setSectionIdCounter(prev => prev + (newSections.length - prevSections.length));
         }
         
         return newSections;
@@ -210,7 +218,7 @@ const HybridEditor = ({ record, patientId, recordType = 'anamnese', title = 'Nov
       setSections([{ id: `section_${sectionIdCounter}`, content }]);
       setSectionIdCounter(prev => prev + 1);
     }
-  }, [sectionIdCounter]);
+  }, [sectionIdCounter, availableTags]);
   
   // CORREÇÃO: Sincronizar seções quando o conteúdo do editor mudar
   useEffect(() => {

@@ -268,6 +268,33 @@ class ClinicalChunkingStrategy {
         const lines = text.split(/\r?\n/);
         const blocks = [];
 
+        // Known natural headers (SOAP format & others)
+        // Maps lowercase header -> standardized tag
+        const NATURAL_HEADERS = {
+            'subjetivo': 'subjetivo',
+            'subjective': 'subjetivo',
+            's': 'subjetivo',
+            'objetivo': 'objetivo',
+            'objective': 'objetivo',
+            'o': 'objetivo',
+            'avaliação': 'avaliacao',
+            'avaliacao': 'avaliacao',
+            'assessment': 'avaliacao',
+            'a': 'avaliacao',
+            'plano': 'conduta',
+            'conduta': 'conduta',
+            'plan': 'conduta',
+            'p': 'conduta',
+            'hpp': 'hpp',
+            'hda': 'hda',
+            'queixa principal': 'qp',
+            'qp': 'qp',
+            'historia': 'hda',
+            'history': 'hda',
+            'exame fisico': 'ef',
+            'physical exam': 'ef'
+        };
+
         let current = { type: 'preamble', tag: null, lines: [] };
 
         const flush = () => {
@@ -282,6 +309,7 @@ class ClinicalChunkingStrategy {
         };
 
         for (const line of lines) {
+            // 1. Try Standard #TAG or >>TAG
             const match = line.match(/^\s*(#|>>)([A-Za-z0-9_]+)\b\s*:?\s*(.*)\s*$/);
             if (match) {
                 flush();
@@ -292,6 +320,24 @@ class ClinicalChunkingStrategy {
                 }
                 continue;
             }
+
+            // 2. Try Natural Language Header (e.g., "Subjetivo:")
+            const naturalMatch = line.match(/^\s*([A-Za-zÀ-ÿ ]+)\s*:\s*(.*)$/);
+            if (naturalMatch) {
+                const headerRaw = naturalMatch[1].trim().toLowerCase();
+                const mappedTag = NATURAL_HEADERS[headerRaw];
+                
+                if (mappedTag) {
+                    flush();
+                    current = { type: 'tag', tag: mappedTag, lines: [] };
+                    const inlineValue = naturalMatch[2];
+                    if (inlineValue && inlineValue.trim()) {
+                        current.lines.push(inlineValue.trim());
+                    }
+                    continue;
+                }
+            }
+
             current.lines.push(line);
         }
 

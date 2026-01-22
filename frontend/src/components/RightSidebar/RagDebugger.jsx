@@ -187,7 +187,7 @@ const RagDebugger = ({ patientId }) => {
     };
 
     const getScoreColor = (score) => {
-        if (score >= 0.8) return 'text-emerald-500';
+        if (score >= 0.8) return 'text-blue-500 dark:text-emerald-500';
         if (score >= 0.5) return 'text-yellow-500';
         return 'text-red-500';
     };
@@ -204,14 +204,17 @@ const RagDebugger = ({ patientId }) => {
 
         // Determine Source Badge
         let sourceBadge = null;
+        // Common badge style
+        const badgeStyle = "bg-blue-500/10 text-blue-500 border-blue-500/20 dark:bg-emerald-500/10 dark:text-emerald-500 dark:border-emerald-500/20";
+        
         if (isParent) {
             sourceBadge = <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-gray-500/10 text-gray-500 rounded border border-gray-500/20"><Layout size={10} /> Context (Parent)</span>;
         } else if (chunk.vector_distance !== undefined && chunk.lexical_score !== undefined) {
-            sourceBadge = <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-500 rounded border border-purple-500/20"><Zap size={10} /> Híbrido</span>;
+            sourceBadge = <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${badgeStyle}`}><Zap size={10} /> Híbrido</span>;
         } else if (chunk.vector_distance !== undefined) {
-            sourceBadge = <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-indigo-500/10 text-indigo-500 rounded border border-indigo-500/20"><Database size={10} /> Vetor</span>;
+            sourceBadge = <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${badgeStyle}`}><Database size={10} /> Vetor</span>;
         } else if (chunk.lexical_score !== undefined) {
-            sourceBadge = <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-500 rounded border border-blue-500/20"><AlignLeft size={10} /> Léxico</span>;
+            sourceBadge = <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${badgeStyle}`}><AlignLeft size={10} /> Léxico</span>;
         }
 
         return (
@@ -219,7 +222,7 @@ const RagDebugger = ({ patientId }) => {
                 <div className="p-3 cursor-pointer" onClick={() => setExpandedChunk(isExpanded ? null : chunk.id)}>
                     <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2">
-                            <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${rank <= 3 ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
+                            <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${rank <= 3 ? 'bg-blue-500 dark:bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
                                 {rank}
                             </span>
                             {sourceBadge}
@@ -235,13 +238,13 @@ const RagDebugger = ({ patientId }) => {
                             {lexicalScore !== 'N/A' && (
                                 <div className="flex flex-col items-end">
                                     <span className="text-gray-400">Léxico</span>
-                                    <span className="text-blue-500">{lexicalScore}</span>
+                                    <span className="text-blue-500 dark:text-emerald-500">{lexicalScore}</span>
                                 </div>
                             )}
                             {rerankScore !== 'N/A' && (
                                 <div className="flex flex-col items-end border-l pl-2 ml-1 border-gray-600">
                                     <span className="text-gray-400">Rerank</span>
-                                    <span className="text-emerald-500 font-bold">{rerankScore}</span>
+                                    <span className="text-blue-500 dark:text-emerald-500 font-bold">{rerankScore}</span>
                                 </div>
                             )}
                         </div>
@@ -303,9 +306,9 @@ const RagDebugger = ({ patientId }) => {
         let Icon = FileText;
         let colorClass = 'text-gray-400';
 
-        if (isDemog) { Icon = User; colorClass = 'text-purple-500'; }
-        else if (isParent) { Icon = isExpanded ? FolderOpen : Folder; colorClass = 'text-blue-500'; }
-        else if (isChild) { Icon = FileText; colorClass = 'text-emerald-500'; }
+        if (isDemog) { Icon = User; colorClass = 'text-blue-500 dark:text-emerald-500'; }
+        else if (isParent) { Icon = isExpanded ? FolderOpen : Folder; colorClass = 'text-blue-500 dark:text-emerald-500'; }
+        else if (isChild) { Icon = FileText; colorClass = 'text-blue-500 dark:text-emerald-500'; }
 
         return (
             <div className="select-none">
@@ -383,7 +386,7 @@ const RagDebugger = ({ patientId }) => {
                         </div>
                         <div>
                             <div className="font-bold text-gray-500 mb-1">Embedding Content (Used for Vector):</div>
-                            <div className={`p-2 rounded border whitespace-pre-wrap ${node.embedding_content === 'PARENT_CONTEXT_ONLY' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'}`}>
+                            <div className={`p-2 rounded border whitespace-pre-wrap ${node.embedding_content === 'PARENT_CONTEXT_ONLY' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' : 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-emerald-500/10 dark:text-emerald-600 dark:border-emerald-500/20'}`}>
                                 {node.embedding_content || 'N/A'}
                             </div>
                         </div>
@@ -435,8 +438,8 @@ const RagDebugger = ({ patientId }) => {
                                 return null;
                             }}
                         />
-                        <Scatter name="Chunks" data={plotData} fill="#10b981">
-                            {plotData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.y > entry.x ? "#10b981" : "#6366f1"} />)}
+                        <Scatter name="Chunks" data={plotData} fill={isDarkMode ? "#10b981" : "#3b82f6"}>
+                            {plotData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.y > entry.x ? (isDarkMode ? "#10b981" : "#3b82f6") : (isDarkMode ? "#34d399" : "#60a5fa")} />)}
                         </Scatter>
                     </ScatterChart>
                 </ResponsiveContainer>
@@ -450,13 +453,13 @@ const RagDebugger = ({ patientId }) => {
             <div className="flex border-b border-theme-border bg-theme-bg-subtle">
                 <button
                     onClick={() => setActiveTab(activeTab === 'inspector' ? 'final' : activeTab)}
-                    className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1 ${activeTab !== 'inspector' ? 'text-blue-600 border-b-2 border-blue-600 bg-white dark:bg-gray-800' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                    className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1 ${activeTab !== 'inspector' ? 'text-blue-600 dark:text-emerald-500 border-b-2 border-blue-600 dark:border-emerald-500 bg-white dark:bg-gray-800' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                 >
                     <Search size={12} /> Debug Query
                 </button>
                 <button
                     onClick={() => setActiveTab('inspector')}
-                    className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1 ${activeTab === 'inspector' ? 'text-blue-600 border-b-2 border-blue-600 bg-white dark:bg-gray-800' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                    className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1 ${activeTab === 'inspector' ? 'text-blue-600 dark:text-emerald-500 border-b-2 border-blue-600 dark:border-emerald-500 bg-white dark:bg-gray-800' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                 >
                     <Database size={12} /> Inspector
                 </button>
@@ -475,7 +478,7 @@ const RagDebugger = ({ patientId }) => {
                     </select>
                     <User size={12} className="absolute left-2.5 top-2 text-gray-400" />
                 </div>
-                <button onClick={loadPatients} className="p-1.5 text-gray-400 hover:text-blue-500 rounded"><RefreshCw size={12} /></button>
+                <button onClick={loadPatients} className="p-1.5 text-gray-400 hover:text-blue-500 dark:hover:text-emerald-500 rounded"><RefreshCw size={12} /></button>
                 <button onClick={handleReindex} disabled={!selectedPatientId || reindexing} className={`px-2 py-1 rounded border flex items-center gap-1 text-[10px] font-medium transition-colors ${reindexing ? 'bg-yellow-500/10 text-yellow-600 border-yellow-200 cursor-wait' : 'bg-white dark:bg-gray-800 text-gray-600 border-gray-200 dark:border-gray-700'}`}>
                     <RefreshCcw size={10} className={reindexing ? 'animate-spin' : ''} />
                     {reindexing ? 'Indexando...' : 'Reindex'}
@@ -488,7 +491,7 @@ const RagDebugger = ({ patientId }) => {
                     <div>
                         {inspectorLoading && (
                             <div className="flex justify-center py-10">
-                                <RefreshCw className="animate-spin h-8 w-8 text-blue-500 opacity-50" />
+                                <RefreshCw className="animate-spin h-8 w-8 text-blue-500 dark:text-emerald-500 opacity-50" />
                             </div>
                         )}
 
@@ -500,13 +503,13 @@ const RagDebugger = ({ patientId }) => {
                             <div className="space-y-2">
                                 {/* Metrics Cards */}
                                 <div className="grid grid-cols-2 gap-2 mb-4">
-                                    <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800">
-                                        <div className="text-[10px] text-blue-500 uppercase font-bold">Total Chunks</div>
-                                        <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{inspectorData.total}</div>
+                                    <div className="bg-blue-50 dark:bg-emerald-900/20 p-2 rounded border border-blue-100 dark:border-emerald-800">
+                                        <div className="text-[10px] text-blue-500 dark:text-emerald-500 uppercase font-bold">Total Chunks</div>
+                                        <div className="text-lg font-bold text-blue-700 dark:text-emerald-300">{inspectorData.total}</div>
                                     </div>
-                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded border border-emerald-100 dark:border-emerald-800">
-                                        <div className="text-[10px] text-emerald-500 uppercase font-bold">Vector Ready</div>
-                                        <div className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{inspectorData.withEmbedding}</div>
+                                    <div className="bg-blue-50 dark:bg-emerald-900/20 p-2 rounded border border-blue-100 dark:border-emerald-800">
+                                        <div className="text-[10px] text-blue-500 dark:text-emerald-500 uppercase font-bold">Vector Ready</div>
+                                        <div className="text-lg font-bold text-blue-700 dark:text-emerald-300">{inspectorData.withEmbedding}</div>
                                     </div>
                                 </div>
 
@@ -529,7 +532,7 @@ const RagDebugger = ({ patientId }) => {
                         <div className="mb-4">
                             <form onSubmit={handleSearch} className="space-y-3">
                                 <div className="relative">
-                                    <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Query de teste..." className={`w-full pl-9 pr-3 py-2 text-sm rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`} />
+                                    <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Query de teste..." className={`w-full pl-9 pr-3 py-2 text-sm rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500`} />
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                                 </div>
                                 <div className="flex gap-2">
@@ -539,7 +542,7 @@ const RagDebugger = ({ patientId }) => {
                                         <option value="emergencia">Emergência</option>
                                         <option value="ambulatorio">Ambulatório</option>
                                     </select>
-                                    <button type="submit" disabled={loading} className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${loading ? 'bg-blue-600/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'} flex items-center gap-2`}>
+                                    <button type="submit" disabled={loading} className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${loading ? 'bg-blue-600/50 dark:bg-emerald-600/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white'} flex items-center gap-2`}>
                                         {loading ? <RefreshCw className="animate-spin h-3 w-3" /> : 'Debug'}
                                     </button>
                                 </div>
@@ -551,7 +554,7 @@ const RagDebugger = ({ patientId }) => {
                                 {activeTab === 'final' && (
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center mb-2">
-                                            <h3 className="text-xs font-bold uppercase text-emerald-500 flex items-center gap-1">
+                                            <h3 className="text-xs font-bold uppercase text-blue-500 dark:text-emerald-500 flex items-center gap-1">
                                                 <Zap size={12} /> Top {debugData.results.length} Reranked
                                             </h3>
                                             <span className="text-[10px] text-gray-400">Pós-RRF & Cross-Encoder</span>
@@ -566,7 +569,7 @@ const RagDebugger = ({ patientId }) => {
                                 )}
                                 {activeTab === 'vector' && debugData.raw_results?.vector && (
                                     <div className="space-y-2">
-                                        <h3 className="text-xs font-bold uppercase text-indigo-500">Raw Vector</h3>
+                                        <h3 className="text-xs font-bold uppercase text-blue-500 dark:text-emerald-500">Raw Vector</h3>
                                         {debugData.raw_results.vector.map((chunk, i) => <ChunkCard key={chunk.id} chunk={chunk} rank={i + 1} />)}
                                     </div>
                                 )}

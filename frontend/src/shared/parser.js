@@ -14,67 +14,147 @@ export const parseSections = (text, availableTags = []) => {
     return [{ id: 'section-0', content: '', tag: null, category: null }];
   }
 
-  // Regex para identificar tags principais (#TAG:) e subtags (##SUBTAG: ou >>SUBTAG:)
-  const tagRegex = /^(#[A-Z_]+:|##[A-Z_]+:|>>[A-Z_]+:)/gmi;
+  // Mapa de cabeçalhos naturais para tags padronizadas
+  const NATURAL_HEADERS = {
+    'subjetivo': '#Subjetivo',
+    'subjective': '#Subjetivo',
+    's': '#Subjetivo',
+    'objetivo': '#Objetivo',
+    'objective': '#Objetivo',
+    'o': '#Objetivo',
+    'avaliação': '#Avaliacao',
+    'avaliacao': '#Avaliacao',
+    'assessment': '#Avaliacao',
+    'a': '#Avaliacao',
+    'plano': '#Conduta',
+    'conduta': '#Conduta',
+    'plan': '#Conduta',
+    'p': '#Conduta',
+    'hpp': '#HPP',
+    'hda': '#HDA',
+    'queixa principal': '#QP',
+    'qp': '#QP',
+    'historia': '#HDA',
+    'history': '#HDA',
+    'exame fisico': '#ExameFisico',
+    'physical exam': '#ExameFisico'
+  };
+
+  const lines = text.split(/\r?\n/);
   const sections = [];
-  let currentIndex = 0;
-  let sectionId = 0;
+  let currentSection = {
+    id: 'section-pre',
+    contentLines: [],
+    tag: null,
+    category: null,
+    isMainTag: false,
+    isSubTag: false
+  };
+  let sectionCounter = 0;
 
-  // Encontrar todas as posições de tags
-  const tagMatches = [...text.matchAll(tagRegex)];
-  
-  if (tagMatches.length === 0) {
-    // Se não há tags, dividir por quebras de linha duplas
-    const paragraphs = text.split('\n\n').filter(p => p.trim());
-    return paragraphs.map((paragraph, index) => ({
-      id: `section-${index}`,
-      content: paragraph.trim(),
-      tag: null,
-      category: null
-    }));
-  }
+  const flushCurrentSection = () => {
+    if (currentSection.contentLines.length > 0 || currentSection.tag) {
+      const content = currentSection.contentLines.join('\n').trim();
+      // Adiciona seção se tiver conteúdo OU se for uma tag explícita (mesmo vazia)
+      if (content || currentSection.tag) {
+        // Encontrar categoria se tiver tag
+        let tagInfo = null;
+        if (currentSection.tag) {
+          const cleanTagName = currentSection.tag.replace(/^[#:>]+/, '');
+          tagInfo = availableTags.find(t => 
+            t.name?.toLowerCase() === cleanTagName.toLowerCase() || 
+            t.code?.toLowerCase() === currentSection.tag.toLowerCase()
+          );
+        }
 
-  // Processar seções com tags
-  tagMatches.forEach((match, index) => {
-    const tagStart = match.index;
-    const nextTagStart = tagMatches[index + 1]?.index || text.length;
+        sections.push({
+          id: currentSection.id,
+          content: content,
+          tag: currentSection.tag ? currentSection.tag.replace(/^[#:>]+/, '') : null,
+          tagCode: currentSection.tag, // Preserves the # or ## prefix
+          category: tagInfo?.category || (currentSection.tag ? 'Geral' : null),
+          isMainTag: currentSection.isMainTag,
+          isSubTag: currentSection.isSubTag
+        });
+      }
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     
-    // Extrair conteúdo da seção
-    const sectionContent = text.slice(tagStart, nextTagStart).trim();
-    const tagMatch = sectionContent.match(/^(#[A-Z_]+:|##[A-Z_]+:|>>[A-Z_]+:)(.*)$/is);
+    // 1. Verificar Tag Padrão (#TAG: ou >>TAG:)
+    const standardMatch = line.match(/^\s*(#[A-Z_0-9]+:|##[A-Z_0-9]+:|>>[A-Z_0-9]+:)(.*)$/i);
     
-    if (tagMatch) {
-      const tagName = tagMatch[1].replace(/[#:>]/g, '').trim();
-      const content = tagMatch[2].trim();
+    if (standardMatch) {
+      flushCurrentSection();
       
-      // Encontrar categoria da tag
-      const tagInfo = availableTags.find(t => t.name === tagName);
+      const fullTag = standardMatch[1]; // ex: #Subjetivo:
+      const contentRest = standardMatch[2]; // ex: texto restante
       
-      sections.push({
-        id: `section-${sectionId++}`,
-        content: sectionContent,
+      const isSub = fullTag.startsWith('##') || fullTag.startsWith('>>');
+      const tagName = fullTag.replace(/[:\s]+$/, ''); // remove : do final
+
+      currentSection = {
+        id: `section-${sectionCounter++}`,
+        contentLines: [],
         tag: tagName,
-        category: tagInfo?.category || 'outros',
-        isMainTag: match[0].startsWith('#') && !match[0].startsWith('##'),
-        isSubTag: match[0].startsWith('##') || match[0].startsWith('>>')
-      });
-    }
-  });
+        category: null, // Será resolvido no flush
+        isMainTag: !isSub,
+        isSubTag: isSub
+      };
 
-  // Se há texto antes da primeira tag
-  if (tagMatches[0]?.index > 0) {
-    const preContent = text.slice(0, tagMatches[0].index).trim();
-    if (preContent) {
-      sections.unshift({
-        id: `section-pre`,
-        content: preContent,
-        tag: null,
-        category: null
-      });
+      if (contentRest.trim()) {
+        currentSection.contentLines.push(contentRest.trim());
+      }
+      continue;
     }
+
+    // 2. Verificar Cabeçalho Natural (Subjetivo:, Objetivo:, etc)
+    const naturalMatch = line.match(/^\s*([A-Za-zÀ-ÿ ]+)\s*:\s*(.*)$/);
+    if (naturalMatch) {
+      const headerRaw = naturalMatch[1].trim().toLowerCase();
+      const mappedTag = NATURAL_HEADERS[headerRaw];
+
+      if (mappedTag) {
+        flushCurrentSection();
+        
+        const contentRest = naturalMatch[2];
+
+        currentSection = {
+          id: `section-${sectionCounter++}`,
+          contentLines: [],
+          tag: mappedTag, // Usa a tag mapeada (ex: #Subjetivo)
+          category: null,
+          isMainTag: true,
+          isSubTag: false
+        };
+
+        if (contentRest.trim()) {
+          currentSection.contentLines.push(contentRest.trim());
+        }
+        continue;
+      }
+    }
+
+    // Se não for tag, acumula na seção atual
+    currentSection.contentLines.push(line);
   }
 
-  return sections.length > 0 ? sections : [{ id: 'section-0', content: text, tag: null, category: null }];
+  // Flush da última seção
+  flushCurrentSection();
+
+  // Se não gerou nenhuma seção (texto vazio?), retorna default
+  if (sections.length === 0) {
+    return [{ id: 'section-0', content: text, tag: null, category: null }];
+  }
+
+  // Filtrar seções "pre" vazias se houver outras seções
+  if (sections.length > 1 && sections[0].id === 'section-pre' && !sections[0].content && !sections[0].tag) {
+    sections.shift();
+  }
+
+  return sections;
 };
 
 /**
