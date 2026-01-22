@@ -84,6 +84,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
   const adjacentPanelRef = useRef(null); // div justaposta acima da grid
   const [dayColumns, setDayColumns] = useState([]);
   const [timelineOffsetTop, setTimelineOffsetTop] = useState(0);
+  const [gridTemplateColumns, setGridTemplateColumns] = useState(null);
+  const [overlayTemplateColumns, setOverlayTemplateColumns] = useState(null);
   const [rowHeight, setRowHeight] = useState(22);
 
   const PIXEL_NUDGE = 0.5;
@@ -390,6 +392,18 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
     const measureLayout = () => {
       // Overlay deve começar em 0 dentro da grid; manter cálculo das colunas
       setTimelineOffsetTop(0);
+      const gridWidth = gridRef.current?.clientWidth || 0;
+      const available = Math.max(0, gridWidth - TIME_COL_PX);
+      const baseDayWidth = Math.floor(available / 7);
+      const remainder = available - baseDayWidth * 7;
+      if (baseDayWidth > 0) {
+        const lastDayWidth = baseDayWidth + remainder;
+        setGridTemplateColumns(`${TIME_COL_PX}px repeat(6, ${baseDayWidth}px) ${lastDayWidth}px`);
+        setOverlayTemplateColumns(`repeat(6, ${baseDayWidth}px) ${lastDayWidth}px`);
+      } else {
+        setGridTemplateColumns(GRID_TEMPLATE);
+        setOverlayTemplateColumns('repeat(7, 1fr)');
+      }
       const cols = weekDays.map((_, idx) => {
         const el = dayHeaderRefs.current[idx];
         if (!el || !gridRef.current) return { left: 0, width: 0 };
@@ -682,8 +696,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
 
       <CardContent className="p-0">
         <div
-          ref={headerRef}
-          className=""
+          className="mx-auto max-w-[1200px]"
         >
           {/* Centered Navigation Header */}
           <div className="flex items-center justify-center gap-4 mb-4 px-4 pt-4">
@@ -740,10 +753,12 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             </div>
           )}
 
+          <div ref={headerRef} className="w-full relative flex flex-col" style={{ boxSizing: 'border-box' }}>
+          
           {/* Today button row */}
           <div
-            className="grid items-center mb-2"
-            style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}
+            className="grid items-center mb-2 w-full"
+            style={{ gridTemplateColumns: gridTemplateColumns || GRID_TEMPLATE, columnGap: '0px' }}
           >
             <div />
             {weekDays.map((date, idx) => {
@@ -774,10 +789,10 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
 
           {/* Day headers with centered navigation */}
           <div
-            className="grid items-center mb-0"
-            style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}
+            className="grid items-center mb-0 w-full min-w-0"
+            style={{ gridTemplateColumns: gridTemplateColumns || GRID_TEMPLATE, columnGap: '0px' }}
           >
-            <div className="text-sm font-medium text-theme-text-secondary px-2">
+            <div className="text-sm font-medium text-theme-text-secondary px-2 min-w-0">
               Horário
             </div>
             {weekDays.map((date, dayIndex) => {
@@ -808,12 +823,12 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
                 <div
                   key={`day-header-${dayIndex}`}
                   ref={(el) => { dayHeaderRefs.current[dayIndex] = el; }}
-                  className={`relative flex items-center justify-center ${borderClass}`}
+                  className={`relative flex items-center justify-center min-w-0 ${borderClass}`}
                   style={{ backgroundColor: bgColor }}
                 >
                   <button
                     onClick={() => setSelectedWeek(date)}
-                    className={`flex flex-col items-center justify-center px-3 py-2 h-16 rounded-none text-sm font-medium transition-all border-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-ring_outline focus:ring-offset-theme-background ${isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'
+                    className={`flex flex-col items-center justify-center w-full min-w-0 px-3 py-2 h-16 rounded-none text-sm font-medium transition-all border-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-ring_outline focus:ring-offset-theme-background ${isSelected ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-hover'
                       } ${isToday ? 'text-white' : ''}`}
                     aria-pressed={isSelected}
                   >
@@ -833,8 +848,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
           </div>
 
           {/* (Painel movido acima: ver bloco após botão "Criar horário") */}
-        </div>
-
+        
         {/* Painel rápido: duração e intervalo quando há slot selecionado */}
         {selectedSlotIds && selectedSlotIds.size > 0 && (
           <div
@@ -955,7 +969,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
 
         <div
           ref={gridRef}
-          className="relative mx-auto max-w-[1200px]"
+          className="relative w-full"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
@@ -986,7 +1000,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             <div
               key={`row-${i}`}
               className="grid"
-              style={{ gridTemplateColumns: GRID_TEMPLATE, columnGap: '0px' }}
+              style={{ gridTemplateColumns: gridTemplateColumns || GRID_TEMPLATE, columnGap: '0px' }}
             >
               <div
                 className="text-right text-xs text-theme-text opacity-70 flex items-center justify-end box-border"
@@ -1045,7 +1059,7 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
             className="absolute z-10"
             style={{ left: `${TIME_COL_PX}px`, right: 0, top: '0px', pointerEvents: 'none' }}
           >
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', columnGap: '0px' }}>
+            <div className="grid" style={{ gridTemplateColumns: overlayTemplateColumns || 'repeat(7, 1fr)', columnGap: '0px' }}>
               {weekDays.map((day, dayIndex) => (
                 <div key={`overlay-day-${dayIndex}`} className="relative" style={{ height: `${CELL_ROWS * rowHeight}px` }}>
                   {timeSlots
@@ -1135,6 +1149,8 @@ const WeeklyTimeGrid = ({ selectedDate }) => {
 
           {/* ... existing code ... */}
         </div>
+      </div>
+      </div>
       </CardContent>
 
     </Card>

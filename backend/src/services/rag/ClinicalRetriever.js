@@ -112,7 +112,8 @@ class ClinicalRetriever {
                 _debug_trigger: debug ? {
                     child_path: triggeringChild.doc_path,
                     tag: triggeringChild.metadata?.tag_detected || 'unknown',
-                    child_snippet: triggeringChild.content.substring(0, 50) + '...'
+                    child_snippet: triggeringChild.content.substring(0, 50) + '...',
+                    child_content: triggeringChild.content
                 } : undefined
             };
         });

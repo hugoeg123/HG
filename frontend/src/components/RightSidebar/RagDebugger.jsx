@@ -269,8 +269,17 @@ const RagDebugger = ({ patientId }) => {
                             <div><strong>ID Completo:</strong> {chunk.id}</div>
                             <div><strong>Path:</strong> {chunk.doc_path}</div>
                             {chunk._debug_trigger && (
-                                <div className="bg-yellow-500/10 text-yellow-600 p-1 rounded border border-yellow-500/20 mt-1">
-                                    <strong>Triggered By Child:</strong> {chunk._debug_trigger.tag} ({chunk._debug_trigger.child_path})
+                                <div className="mt-1 space-y-1">
+                                    <div className="bg-yellow-500/10 text-yellow-600 p-1 rounded border border-yellow-500/20">
+                                        <strong>Triggered By Child:</strong> {chunk._debug_trigger.tag}
+                                        <div className="text-[10px] opacity-70">{chunk._debug_trigger.child_path}</div>
+                                    </div>
+                                    {chunk._debug_trigger.child_content && (
+                                        <div className="bg-yellow-500/5 text-yellow-600/90 p-2 rounded border border-yellow-500/10 whitespace-pre-wrap text-[11px]">
+                                            <div className="font-bold mb-1 opacity-80">Conteúdo do Trecho Encontrado:</div>
+                                            {chunk._debug_trigger.child_content}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
